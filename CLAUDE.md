@@ -532,6 +532,64 @@ cclint --verbose --lua=debug_rule.lua g++ test.cpp
 - [yaml-cpp Tutorial](https://github.com/jbeder/yaml-cpp/wiki/Tutorial)
 - [YAML Specification](https://yaml.org/spec/)
 
+## 長時間作業モード
+
+### 指示内容（2026-01-23追加）
+
+ユーザーが不在の間、token使い切るまで自律的に作業を続ける場合の手順：
+
+1. **PRを分けない**: 適宜commitしながら同じブランチで作業を続ける
+2. **TODOリストに従う**: docs/TODO.mdにあるタスクを一つずつ実行
+3. **途中で止めない**: token使い切るまでずっと作業を続ける
+4. **適宜commit**: 意味のある単位でcommitする（PRは後でまとめて作成）
+5. **承認不要**: ユーザーの承認を待たずに進める
+
+### 作業の進め方
+
+```
+1. docs/TODO.mdを読む
+2. 未着手のタスクを見つける
+3. タスクを [>] に変更
+4. タスクを実装
+5. テストする
+6. commitする
+7. タスクを [x] に変更
+8. TODO.mdもcommitする
+9. 次のタスクへ（1に戻る）
+10. token切れまで繰り返す
+```
+
+### commitメッセージの形式
+
+```
+<type>: <タスクの簡潔な説明>
+
+実装内容の詳細:
+- 具体的な変更1
+- 具体的な変更2
+- 具体的な変更3
+
+関連TODO項目: [Milestone X]
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+```
+
+### 注意事項
+
+- 一つのタスクが複雑な場合は、さらに小さいタスクに分割してからcommit
+- ビルドエラーが出た場合は、必ず修正してからcommit
+- テストは可能な限り実行してから commit
+- ドキュメント更新も忘れずに
+- 会話がコンパクトされる可能性があるため、この指示内容をCLAUDE.mdに記録
+
+### 優先順位
+
+1. Milestone 1のタスク（MVP: 最小動作版）
+2. Milestone 2のタスク（ルールシステム基盤）
+3. ドキュメント更新
+4. テスト作成
+5. その他の改善
+
 ## 最後に
 
 このプロジェクトの成功の鍵は **TODO.mdの適切な管理** です。
