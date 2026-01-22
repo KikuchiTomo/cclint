@@ -1,6 +1,6 @@
 # cclint TODO リスト
 
-**最終更新**: 2026-01-22
+**最終更新**: 2026-01-23
 
 このドキュメントはプロジェクトの進捗を管理するためのTODOリストです。
 作業を開始する前に必ずこのリストを確認し、作業が完了したら更新してください。
@@ -14,7 +14,7 @@
 
 ---
 
-## Milestone 0: プロジェクトセットアップ
+## Milestone 0: プロジェクトセットアップ ✅ 完了
 
 ### ドキュメント作成
 - [x] ディレクトリ構造の作成（docs/, src/）
@@ -22,29 +22,29 @@
 - [x] 設計書の作成（docs/design.md）
 - [x] 詳細設計書の作成（docs/detailed_design.md）
 - [x] マイルストーンの作成（docs/milestones.md）
-- [>] TODOリストの作成（docs/TODO.md）
-- [ ] README.mdの作成
-- [ ] CLAUDE.mdの作成
-  - [ ] TODOリスト運用方法の明記
-  - [ ] 開発ガイドラインの記述
-  - [ ] Claude Code利用方法の記述
+- [x] TODOリストの作成（docs/TODO.md）
+- [x] README.mdの作成
+- [x] CLAUDE.mdの作成
+  - [x] TODOリスト運用方法の明記
+  - [x] 開発ガイドラインの記述
+  - [x] Claude Code利用方法の記述
 
 ### プロジェクト設定
-- [ ] .gitignoreの作成
+- [x] .gitignoreの作成
 - [ ] .clang-formatの作成
 - [ ] .clang-tidyの作成
-- [ ] LICENSEファイルの追加
+- [x] LICENSEファイルの追加（リモートに既存）
 
-### ビルドシステム
+### ビルドシステム（Milestone 1に移動）
 - [ ] CMakeLists.txt（ルート）の作成
 - [ ] CMakeLists.txt（src/）の作成
 - [ ] CMakeLists.txt（tests/）の作成
 - [ ] 依存関係の設定
   - [ ] LLVM/Clangの検出
   - [ ] yaml-cppの検出
-  - [ ] Lua 5.4の組み込み
+  - [ ] LuaJIT 2.1の組み込み
 
-### 環境確認
+### 環境確認（Milestone 1に移動）
 - [ ] Ubuntu環境でのビルド確認
 - [ ] macOS環境でのビルド確認
 - [ ] 依存ライブラリのバージョン確認
