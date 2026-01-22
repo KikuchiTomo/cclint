@@ -56,22 +56,22 @@
 ### 1. CLI Module (src/cli/)
 
 #### ArgumentParser
-- [ ] argument_parser.hpp の作成
-- [ ] argument_parser.cpp の実装
-  - [ ] コマンドライン引数の基本解析
-  - [ ] cclintオプションの抽出
-  - [ ] コンパイラコマンドの抽出
-  - [ ] `--config` オプション対応
-  - [ ] `--format` オプション対応
-  - [ ] `-v/--verbose` オプション対応
-  - [ ] `-q/--quiet` オプション対応
-  - [ ] `--help` オプション対応
-  - [ ] `--version` オプション対応
-- [ ] help_formatter.hpp の作成
-- [ ] help_formatter.cpp の実装
-  - [ ] ヘルプメッセージの生成
-  - [ ] 使用例の表示
-  - [ ] オプション一覧の表示
+- [x] argument_parser.hpp の作成
+- [x] argument_parser.cpp の実装
+  - [x] コマンドライン引数の基本解析
+  - [x] cclintオプションの抽出
+  - [x] コンパイラコマンドの抽出
+  - [x] `--config` オプション対応
+  - [x] `--format` オプション対応
+  - [x] `-v/--verbose` オプション対応
+  - [x] `-q/--quiet` オプション対応
+  - [x] `--help` オプション対応
+  - [x] `--version` オプション対応
+- [x] help_formatter.hpp の作成
+- [x] help_formatter.cpp の実装
+  - [x] ヘルプメッセージの生成
+  - [x] 使用例の表示
+  - [x] オプション一覧の表示
 - [ ] 単体テスト（tests/cli/test_argument_parser.cpp）
 
 ### 2. Config Module (src/config/)
