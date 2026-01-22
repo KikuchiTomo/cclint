@@ -31,8 +31,8 @@
 
 ### プロジェクト設定
 - [x] .gitignoreの作成
-- [ ] .clang-formatの作成
-- [ ] .clang-tidyの作成
+- [x] .clang-formatの作成
+- [x] .clang-tidyの作成
 - [x] LICENSEファイルの追加（リモートに既存）
 
 ### ビルドシステム（Milestone 1に移動）
