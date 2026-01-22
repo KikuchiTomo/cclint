@@ -767,6 +767,123 @@ find_nodes_by_name(root, name)
 4. ホームディレクトリの `~/.cclint/config.yaml`
 5. デフォルト設定（ルールなし）
 
+#### 2.2.5 標準Luaスクリプトライブラリ
+
+**設計原則**: 組み込みルールはC++で実装せず、標準的なLuaスクリプトとしてリポジトリに用意する。ユーザーはYAML設定で必要なスクリプトを選択して使用する。
+
+**ディレクトリ構造**:
+```
+cclint/
+├── scripts/
+│   └── rules/
+│       ├── naming/                  # 命名規則ルール
+│       │   ├── function_camelcase.lua
+│       │   ├── class_pascalcase.lua
+│       │   ├── variable_snakecase.lua
+│       │   ├── constant_uppercase.lua
+│       │   ├── macro_uppercase.lua
+│       │   ├── private_method_underscore.lua
+│       │   ├── static_variable_prefix.lua
+│       │   └── global_variable_prefix.lua
+│       ├── style/                   # スタイルルール
+│       │   ├── brace_kr.lua
+│       │   ├── brace_allman.lua
+│       │   ├── if_braces_required.lua
+│       │   ├── switch_break_required.lua
+│       │   ├── max_line_length.lua
+│       │   ├── indentation_spaces.lua
+│       │   └── trailing_whitespace.lua
+│       ├── structure/               # 構造ルール
+│       │   ├── header_guard.lua
+│       │   ├── class_filename_match.lua
+│       │   ├── one_class_per_file.lua
+│       │   ├── include_order.lua
+│       │   └── function_order.lua
+│       ├── spacing/                 # 空行・スペーシングルール
+│       │   ├── blank_after_declaration.lua
+│       │   ├── blank_between_functions.lua
+│       │   ├── section_comment_spacing.lua
+│       │   └── operator_spacing.lua
+│       ├── documentation/           # ドキュメントルール
+│       │   ├── public_api_documented.lua
+│       │   ├── doxygen_format.lua
+│       │   └── todo_format.lua
+│       ├── modernize/               # モダンC++ルール
+│       │   ├── use_auto.lua
+│       │   ├── use_nullptr.lua
+│       │   ├── use_override.lua
+│       │   ├── use_range_for.lua
+│       │   └── avoid_c_style_cast.lua
+│       ├── performance/             # パフォーマンスルール
+│       │   ├── avoid_copy.lua
+│       │   ├── use_move.lua
+│       │   ├── const_reference.lua
+│       │   └── reserve_vector.lua
+│       ├── readability/             # 可読性ルール
+│       │   ├── max_function_length.lua
+│       │   ├── max_parameters.lua
+│       │   ├── cyclomatic_complexity.lua
+│       │   ├── avoid_magic_numbers.lua
+│       │   └── consistent_naming.lua
+│       └── security/                # セキュリティルール
+│           ├── avoid_unsafe_functions.lua
+│           ├── check_buffer_overflow.lua
+│           └── validate_input.lua
+```
+
+**標準スクリプトの要件**:
+1. **自己完結**: 各スクリプトは単独で動作可能
+2. **ドキュメント化**: スクリプト内にコメントで説明を記載
+3. **設定可能**: パラメータを受け取れる構造
+4. **テスト済み**: すべてのスクリプトにテストケースを用意
+
+**使用例**:
+```yaml
+version: 1.0
+
+# 標準スクリプトを使用
+lua_scripts:
+  # 命名規則
+  - path: "${CCLINT_HOME}/scripts/rules/naming/function_camelcase.lua"
+    priority: 10
+  - path: "${CCLINT_HOME}/scripts/rules/naming/class_pascalcase.lua"
+    priority: 10
+  - path: "${CCLINT_HOME}/scripts/rules/naming/private_method_underscore.lua"
+    priority: 15
+
+  # スタイル
+  - path: "${CCLINT_HOME}/scripts/rules/style/brace_kr.lua"
+    priority: 20
+  - path: "${CCLINT_HOME}/scripts/rules/style/if_braces_required.lua"
+    priority: 20
+
+  # 空行
+  - path: "${CCLINT_HOME}/scripts/rules/spacing/blank_between_functions.lua"
+    priority: 30
+    parameters:
+      min_lines: 2
+
+  # プロジェクト固有ルール
+  - path: ".cclint/custom_singleton_check.lua"
+    priority: 100
+```
+
+**ショートカット記法**:
+標準スクリプトは短縮形で指定可能:
+```yaml
+lua_scripts:
+  - naming/function_camelcase
+  - naming/class_pascalcase
+  - style/brace_kr
+  - style/if_braces_required
+```
+
+**標準スクリプトの提供数目標**:
+- Milestone 2: 10-15個の基本的なスクリプト
+- Milestone 3: 30-40個の一般的なスクリプト
+- v1.0リリース: 50個以上の包括的なスクリプト
+- v2.0: 100個以上（コミュニティ貢献含む）
+
 ### 2.3 出力機能
 
 #### 2.3.1 出力形式
