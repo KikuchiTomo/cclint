@@ -33,9 +33,61 @@
 *.lib
 
 # Executables
+cclint
 *.exe
 *.out
 *.app
 
-# debug information files
+# Debug information files
 *.dwo
+
+# Build directories
+build/
+build-*/
+cmake-build-*/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# Cache
+.cclint_cache/
+*.cache
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Test outputs
+Testing/
+CTestTestfile.cmake
+*.log
+
+# Package files
+*.deb
+*.rpm
+*.tar.gz
+*.zip
+
+# Profiling
+gmon.out
+*.gcda
+*.gcno
+*.gcov
+
+# Temporary files
+*.tmp
+*.bak
+*.orig
+
+# Third-party (if not using submodules properly)
+third_party/*/
+!third_party/README.md
