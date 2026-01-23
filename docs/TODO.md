@@ -36,13 +36,13 @@
 - [x] LICENSEファイルの追加（リモートに既存）
 
 ### ビルドシステム（Milestone 1に移動）
-- [ ] CMakeLists.txt（ルート）の作成
-- [ ] CMakeLists.txt（src/）の作成
+- [x] CMakeLists.txt（ルート）の作成
+- [x] CMakeLists.txt（src/）の作成
 - [ ] CMakeLists.txt（tests/）の作成
-- [ ] 依存関係の設定
-  - [ ] LLVM/Clangの検出
-  - [ ] yaml-cppの検出
-  - [ ] LuaJIT 2.1の組み込み
+- [>] 依存関係の設定（外部ライブラリ統合は後続マイルストーン）
+  - [!] LLVM/Clangの検出（Milestone 2）
+  - [!] yaml-cppの検出（Milestone 2）
+  - [!] LuaJIT 2.1の組み込み（Milestone 3）
 
 ### 環境確認（Milestone 1に移動）
 - [ ] Ubuntu環境でのビルド確認
@@ -51,7 +51,12 @@
 
 ---
 
-## Milestone 1: 最小動作版（MVP）
+## Milestone 1: 最小動作版（MVP） - 進捗: 80%
+
+**完了済み**: CLI, Config, Compiler, Diagnostic, Output, Utils, Logger (7モジュール)
+**実装済み**: 100個の標準Luaルールスクリプト
+**ブロック中**: Parser (LLVM/Clang依存), Rule Engine (LuaJIT依存)
+**統合待ち**: Main.cppへの各モジュール統合
 
 ### 1. CLI Module (src/cli/)
 
@@ -230,34 +235,34 @@
   - [x] 文字列検索
 
 #### ロガー
-- [ ] logger.hpp の作成
-- [ ] logger.cpp の実装
-  - [ ] ログレベル設定
-  - [ ] ログ出力（stdout/stderr）
-  - [ ] デバッグログ
+- [x] logger.hpp の作成
+- [x] logger.cpp の実装
+  - [x] ログレベル設定
+  - [x] ログ出力（stdout/stderr）
+  - [x] デバッグログ
 
 ### 8. Main Entry Point
 
 #### main.cpp
-- [ ] main.cpp の作成
-  - [ ] 基本的な実行フロー
-    - [ ] 引数解析
-    - [ ] 設定読み込み
-    - [ ] ソースファイル抽出
-    - [ ] パース（AST構築）
-    - [ ] コンパイラ実行（オプション）
-    - [ ] 結果出力
-  - [ ] エラーハンドリング
-    - [ ] try-catch
-    - [ ] 終了コードの決定
-  - [ ] --help, --version の処理
+- [x] main.cpp の作成
+  - [>] 基本的な実行フロー（部分実装）
+    - [x] 引数解析
+    - [!] 設定読み込み（ConfigLoader実装済、main.cpp統合待ち）
+    - [!] ソースファイル抽出（CompilerWrapper実装済、main.cpp統合待ち）
+    - [!] パース（AST構築）（LLVM/Clang依存、Milestone 2）
+    - [!] コンパイラ実行（オプション）（CompilerWrapper実装済、main.cpp統合待ち）
+    - [!] 結果出力（Formatter実装済、main.cpp統合待ち）
+  - [x] エラーハンドリング
+    - [x] try-catch
+    - [x] 終了コードの決定
+  - [x] --help, --version の処理
 
 ### 9. Build & Testing
 
 #### ビルドシステム
-- [ ] CMakeLists.txtの完成
+- [x] CMakeLists.txtの完成（基本ビルドシステム）
 - [ ] ビルドスクリプトの作成（build.sh）
-- [ ] インストールターゲットの作成
+- [x] インストールターゲットの作成（バイナリとLuaスクリプト）
 
 #### テスト
 - [ ] Google Testの統合
@@ -273,7 +278,23 @@
   - [ ] テスト実行
   - [ ] コードカバレッジ
 
-### 10. Documentation
+### 10. Lua Rule Scripts (scripts/rules/)
+
+#### 標準ルールライブラリ
+- [x] **100個の標準Luaルールスクリプト作成完了**
+- [x] Naming ルール（9個）: class-name-camelcase, function-name-lowercase, constant-name-uppercase, enum-name-camelcase, namespace-name-lowercase, member-variable-prefix, typedef-suffix, global-variable-prefix, bool-variable-prefix, macro-name-uppercase, template-parameter-name
+- [x] Style ルール（8個）: braces-on-new-line, indent-width, max-line-length, space-after-control-statement, consistent-pointer-declaration, consistent-bracing, namespace-closing-comment, function-definition-style, empty-line-before-block
+- [x] Structure ルール（4個）: one-class-per-file, header-guard, include-order, forward-declaration-namespace
+- [x] Spacing ルール（5個）: max-consecutive-empty-lines, trailing-whitespace, operator-spacing, no-tab-character, blank-line-after-declaration
+- [x] Documentation ルール（4個）: require-function-comments, todo-comment, file-header, copyright-header
+- [x] Modernize ルール（18個）: use-nullptr, use-auto, use-override, use-using, use-noexcept, use-nodiscard, use-emplace, use-equals-default, use-equals-delete, use-default-member-init, use-constexpr, raw-string-literal, use-final, use-designated-initializers, use-enum-class, use-transparent-comparators, use-lambda, avoid-bind, use-range-based-for, use-structured-bindings
+- [x] Performance ルール（15個）: pass-by-const-reference, avoid-unnecessary-copy, move-const-arg, reserve-vector, static-const-string, unnecessary-value-param, inline-small-functions, make-shared-preference, loop-invariant-code, prefer-prefix-increment, string-concatenation, redundant-string-init, avoid-temporary-objects, prefer-algorithm, avoid-default-arguments-virtual
+- [x] Readability ルール（19個）: max-function-length, no-magic-numbers, simplify-boolean-expr, switch-has-default, unused-parameter, else-after-return, avoid-nested-conditionals, consistent-declaration-parameter-name, identifier-naming, prefer-nullptr-comparison, function-cognitive-complexity, explicit-bool-conversion, avoid-c-cast, redundant-declaration, confusing-else, implicit-fallthrough, misleading-indentation, variables-one-per-line, comparison-order, multiline-comment-style
+- [x] Security ルール（11個）: no-unsafe-functions, check-array-bounds, memset-zero-length, no-rand, no-system-call, hardcoded-credentials, integer-overflow, signed-unsigned-comparison, uninitialized-variable, buffer-overflow-risk, null-pointer-dereference, toctou-race
+- [x] scripts/README.md 作成（ルール使用方法ドキュメント）
+- [x] .cclint.example.yaml 更新（全100ルールの設定例）
+
+### 11. Documentation
 
 - [ ] ビルド手順のドキュメント（docs/build.md）
 - [ ] 基本的な使い方（docs/usage.md）
