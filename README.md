@@ -345,16 +345,16 @@ This project is in early development. See [TODO.md](docs/TODO.md) for current pr
 - ✅ Build system (CMake) with C++17
 
 **Lua Rule Library**:
-- ✅ **60 standard Lua rule scripts** across 9 categories:
-  - Naming (7 rules): Class names, function names, constants, enums, namespaces, members, typedefs
-  - Style (5 rules): Braces, indentation, line length, control statement spacing, pointer declarations
+- ✅ **100 standard Lua rule scripts** across 9 categories:
+  - Naming (9 rules): Class names, function names, constants, enums, namespaces, members, typedefs, globals, booleans
+  - Style (8 rules): Braces, indentation, line length, control statement spacing, pointer declarations, consistent bracing, closing comments, function definition style
   - Structure (4 rules): One class per file, header guards, include order, forward declarations
-  - Spacing (4 rules): Empty lines, trailing whitespace, operator spacing, tab characters
-  - Documentation (3 rules): Function comments, file headers, TODO comments
-  - Modernize (12 rules): nullptr, auto, override, using, noexcept, nodiscard, emplace, equals default/delete, constexpr, raw strings
-  - Performance (8 rules): Const references, unnecessary copies, move, reserve, static strings, value params, inline, make_shared
-  - Readability (11 rules): Function length, magic numbers, boolean expressions, switch defaults, unused parameters, nesting, identifiers, complexity, nullptr comparison
-  - Security (6 rules): Unsafe functions, system calls, rand(), array bounds, memset, hardcoded credentials
+  - Spacing (5 rules): Empty lines, trailing whitespace, operator spacing, tab characters, blank lines after declarations
+  - Documentation (4 rules): Function comments, file headers, TODO comments, copyright headers
+  - Modernize (18 rules): nullptr, auto, override, using, noexcept, nodiscard, emplace, equals default/delete, constexpr, raw strings, final, designated initializers, enum class, transparent comparators, lambda, avoid bind, range-for, structured bindings
+  - Performance (15 rules): Const references, unnecessary copies, move, reserve, static strings, value params, inline, make_shared, loop invariants, prefix increment, string concatenation, redundant init, temporaries, algorithms, virtual default args
+  - Readability (19 rules): Function length, magic numbers, boolean expressions, switch defaults, unused parameters, nesting, identifiers, complexity, nullptr comparison, bool conversion, C-casts, redundant declarations, confusing else, fallthrough, misleading indentation, one var per line, comparison order, multiline comments
+  - Security (11 rules): Unsafe functions, system calls, rand(), array bounds, memset, hardcoded credentials, integer overflow, signed/unsigned comparison, uninitialized variables, buffer overflow, null dereference, TOCTOU
 
 **Documentation**:
 - ✅ Comprehensive design documents (requirements, architecture, detailed design)
