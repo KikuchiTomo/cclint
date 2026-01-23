@@ -8,6 +8,11 @@ set(CCLINT_SOURCES
     compiler/wrapper.cpp
     compiler/detector.cpp
     diagnostic/diagnostic.cpp
+    output/formatter.cpp
+    output/text_formatter.cpp
+    output/json_formatter.cpp
+    output/xml_formatter.cpp
+    output/formatter_factory.cpp
 )
 
 # 実行ファイルを作成
