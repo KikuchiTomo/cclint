@@ -13,6 +13,8 @@ set(CCLINT_SOURCES
     output/json_formatter.cpp
     output/xml_formatter.cpp
     output/formatter_factory.cpp
+    utils/file_utils.cpp
+    utils/string_utils.cpp
 )
 
 # 実行ファイルを作成
