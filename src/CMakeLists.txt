@@ -3,6 +3,8 @@ set(CCLINT_SOURCES
     main.cpp
     cli/argument_parser.cpp
     cli/help_formatter.cpp
+    config/config_loader.cpp
+    config/yaml_config.cpp
 )
 
 # 実行ファイルを作成
