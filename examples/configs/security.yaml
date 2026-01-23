@@ -1,0 +1,69 @@
+# Security-focused configuration
+# Emphasizes security vulnerabilities and unsafe practices
+
+version: 1.0
+cpp_standard: cpp17
+
+# Security rules - All mandatory
+lua_scripts:
+  # Critical security issues
+  - path: "${CCLINT_HOME}/scripts/rules/security/no-unsafe-functions.lua"
+    priority: 100
+  - path: "${CCLINT_HOME}/scripts/rules/security/check-array-bounds.lua"
+    priority: 100
+  - path: "${CCLINT_HOME}/scripts/rules/security/buffer-overflow-risk.lua"
+    priority: 100
+  - path: "${CCLINT_HOME}/scripts/rules/security/null-pointer-dereference.lua"
+    priority: 100
+
+  # System security
+  - path: "${CCLINT_HOME}/scripts/rules/security/no-system-call.lua"
+    priority: 100
+  - path: "${CCLINT_HOME}/scripts/rules/security/hardcoded-credentials.lua"
+    priority: 100
+
+  # Memory safety
+  - path: "${CCLINT_HOME}/scripts/rules/security/memset-zero-length.lua"
+    priority: 95
+  - path: "${CCLINT_HOME}/scripts/rules/security/uninitialized-variable.lua"
+    priority: 95
+
+  # Numeric safety
+  - path: "${CCLINT_HOME}/scripts/rules/security/integer-overflow.lua"
+    priority: 95
+  - path: "${CCLINT_HOME}/scripts/rules/security/signed-unsigned-comparison.lua"
+    priority: 90
+
+  # Randomness
+  - path: "${CCLINT_HOME}/scripts/rules/security/no-rand.lua"
+    priority: 90
+
+  # Race conditions
+  - path: "${CCLINT_HOME}/scripts/rules/security/toctou-race.lua"
+    priority: 85
+
+  # Related modernization (safer alternatives)
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-nullptr.lua"
+    priority: 95
+
+  # Related readability (prevent bugs)
+  - path: "${CCLINT_HOME}/scripts/rules/readability/avoid-c-cast.lua"
+    priority: 90
+  - path: "${CCLINT_HOME}/scripts/rules/readability/prefer-nullptr-comparison.lua"
+    priority: 85
+  - path: "${CCLINT_HOME}/scripts/rules/readability/switch-has-default.lua"
+    priority: 85
+
+  # Structure
+  - path: "${CCLINT_HOME}/scripts/rules/structure/header-guard.lua"
+    priority: 100
+
+# Strict output settings
+output_format: text
+max_errors: 0  # Show all security issues
+show_compiler_output: false
+
+# Settings
+fail_fast: false  # Check all files for security issues
+parallel_rules: true
+enable_cache: true

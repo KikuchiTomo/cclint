@@ -1,0 +1,130 @@
+# Strict cclint configuration
+# Comprehensive rules for high code quality standards
+
+version: 1.0
+cpp_standard: cpp17
+
+# Strict file filtering
+include_patterns:
+  - "src/**/*.cpp"
+  - "src/**/*.hpp"
+  - "include/**/*.h"
+
+exclude_patterns:
+  - "third_party/**"
+  - "build/**"
+  - "*.pb.h"
+  - "*.pb.cc"
+  - "*_generated.*"
+
+# Comprehensive rule set
+lua_scripts:
+  # Naming conventions - All rules
+  - path: "${CCLINT_HOME}/scripts/rules/naming/class-name-camelcase.lua"
+    priority: 100
+  - path: "${CCLINT_HOME}/scripts/rules/naming/function-name-lowercase.lua"
+    priority: 100
+  - path: "${CCLINT_HOME}/scripts/rules/naming/constant-name-uppercase.lua"
+    priority: 100
+  - path: "${CCLINT_HOME}/scripts/rules/naming/enum-name-camelcase.lua"
+    priority: 100
+  - path: "${CCLINT_HOME}/scripts/rules/naming/namespace-name-lowercase.lua"
+    priority: 100
+
+  # Style - Enforce consistent style
+  - path: "${CCLINT_HOME}/scripts/rules/style/indent-width.lua"
+    priority: 95
+  - path: "${CCLINT_HOME}/scripts/rules/style/max-line-length.lua"
+    priority: 95
+  - path: "${CCLINT_HOME}/scripts/rules/style/consistent-pointer-declaration.lua"
+    priority: 95
+  - path: "${CCLINT_HOME}/scripts/rules/style/consistent-bracing.lua"
+    priority: 95
+
+  # Structure - Essential
+  - path: "${CCLINT_HOME}/scripts/rules/structure/header-guard.lua"
+    priority: 100
+  - path: "${CCLINT_HOME}/scripts/rules/structure/include-order.lua"
+    priority: 90
+
+  # Spacing - No tolerance
+  - path: "${CCLINT_HOME}/scripts/rules/spacing/trailing-whitespace.lua"
+    priority: 95
+  - path: "${CCLINT_HOME}/scripts/rules/spacing/no-tab-character.lua"
+    priority: 95
+  - path: "${CCLINT_HOME}/scripts/rules/spacing/operator-spacing.lua"
+    priority: 90
+
+  # Documentation - Required
+  - path: "${CCLINT_HOME}/scripts/rules/documentation/require-function-comments.lua"
+    priority: 85
+  - path: "${CCLINT_HOME}/scripts/rules/documentation/file-header.lua"
+    priority: 85
+
+  # Modernize - C++11/14/17 features mandatory
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-nullptr.lua"
+    priority: 95
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-override.lua"
+    priority: 95
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-auto.lua"
+    priority: 90
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-using.lua"
+    priority: 90
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-noexcept.lua"
+    priority: 90
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-equals-default.lua"
+    priority: 85
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-equals-delete.lua"
+    priority: 85
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-enum-class.lua"
+    priority: 85
+
+  # Performance - Critical
+  - path: "${CCLINT_HOME}/scripts/rules/performance/pass-by-const-reference.lua"
+    priority: 95
+  - path: "${CCLINT_HOME}/scripts/rules/performance/avoid-unnecessary-copy.lua"
+    priority: 95
+  - path: "${CCLINT_HOME}/scripts/rules/performance/reserve-vector.lua"
+    priority: 90
+  - path: "${CCLINT_HOME}/scripts/rules/performance/make-shared-preference.lua"
+    priority: 85
+
+  # Readability - Essential
+  - path: "${CCLINT_HOME}/scripts/rules/readability/max-function-length.lua"
+    priority: 90
+  - path: "${CCLINT_HOME}/scripts/rules/readability/no-magic-numbers.lua"
+    priority: 90
+  - path: "${CCLINT_HOME}/scripts/rules/readability/switch-has-default.lua"
+    priority: 85
+  - path: "${CCLINT_HOME}/scripts/rules/readability/avoid-nested-conditionals.lua"
+    priority: 85
+  - path: "${CCLINT_HOME}/scripts/rules/readability/function-cognitive-complexity.lua"
+    priority: 85
+
+  # Security - All rules mandatory
+  - path: "${CCLINT_HOME}/scripts/rules/security/no-unsafe-functions.lua"
+    priority: 100
+  - path: "${CCLINT_HOME}/scripts/rules/security/check-array-bounds.lua"
+    priority: 100
+  - path: "${CCLINT_HOME}/scripts/rules/security/no-system-call.lua"
+    priority: 100
+  - path: "${CCLINT_HOME}/scripts/rules/security/no-rand.lua"
+    priority: 95
+  - path: "${CCLINT_HOME}/scripts/rules/security/buffer-overflow-risk.lua"
+    priority: 95
+  - path: "${CCLINT_HOME}/scripts/rules/security/null-pointer-dereference.lua"
+    priority: 95
+
+# Output settings
+output_format: text
+max_errors: 0  # Show all errors
+show_compiler_output: false
+
+# Performance
+num_threads: 0  # Auto-detect
+enable_cache: true
+cache_directory: ".cclint_cache"
+
+# Strict mode
+fail_fast: false  # Check all files
+parallel_rules: true

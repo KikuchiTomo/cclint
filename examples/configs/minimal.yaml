@@ -1,0 +1,17 @@
+# Minimal cclint configuration
+# Just the essentials for basic linting
+
+version: 1.0
+
+# Use only a few essential rules
+lua_scripts:
+  # Naming conventions
+  - path: "${CCLINT_HOME}/scripts/rules/naming/class-name-camelcase.lua"
+    priority: 100
+
+  # Header guards
+  - path: "${CCLINT_HOME}/scripts/rules/structure/header-guard.lua"
+    priority: 90
+
+# Output format
+output_format: text
