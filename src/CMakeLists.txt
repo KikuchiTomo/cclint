@@ -5,6 +5,8 @@ set(CCLINT_SOURCES
     cli/help_formatter.cpp
     config/config_loader.cpp
     config/yaml_config.cpp
+    compiler/wrapper.cpp
+    compiler/detector.cpp
 )
 
 # 実行ファイルを作成
