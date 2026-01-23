@@ -2,6 +2,8 @@
 
 このディレクトリには、cclintの標準Luaルールスクリプトが含まれています。
 
+**🎊 合計100個のLuaルールスクリプトを提供！**
+
 ## ディレクトリ構成
 
 ```
@@ -48,9 +50,9 @@ lua_scripts:
       allow_underscores: false
 ```
 
-## 利用可能なルール（全50ルール）
+## 利用可能なルール（全100ルール）
 
-### Naming（命名規則） - 6ルール
+### Naming（命名規則） - 9ルール
 
 - **class-name-camelcase**: クラス名はCamelCaseであるべき
 - **constant-name-uppercase**: 定数名はUPPER_CASEであるべき
