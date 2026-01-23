@@ -7,6 +7,7 @@ set(CCLINT_SOURCES
     config/yaml_config.cpp
     compiler/wrapper.cpp
     compiler/detector.cpp
+    diagnostic/diagnostic.cpp
 )
 
 # 実行ファイルを作成
