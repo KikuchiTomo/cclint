@@ -352,6 +352,8 @@
   - [x] 変数名チェック（snake_case）
   - [x] クラス名チェック（PascalCase）
   - [x] 定数名チェック（UPPER_CASE）
+  - [x] アクセス指定子ごとのメソッド命名チェック（public/protected/private）
+  - [x] AST解析を使ったチェック（check_ast実装）
 - [ ] 単体テスト（tests/rules/builtin/test_naming_convention.cpp）
 
 #### ヘッダーガードルール
@@ -417,7 +419,7 @@
   - [x] RuleBase継承
   - [x] スクリプトロード
   - [x] check_file実装
-  - [ ] check_ast実装（独自AST対応、統合作業が必要）
+  - [x] check_ast実装（独自AST対応完了）
 
 #### Lua Bridge
 - [x] lua_bridge.hpp の作成
@@ -425,7 +427,7 @@
   - [x] C++からLua関数の呼び出し
   - [x] LuaからC++関数の呼び出し
   - [x] データ型変換（C++ ⇔ Lua）
-  - [ ] ASTノードのLua公開（独自AST対応、統合作業が必要）
+  - [x] ASTノードのLua公開（独自AST対応完了）
 
 ### 2. Lua API Implementation
 
@@ -435,16 +437,20 @@
 - [x] report_info の実装
 
 #### ASTアクセスAPI
-- [ ] get_node_type の実装（独自AST対応、統合作業が必要）
-- [ ] get_node_name の実装（独自AST対応、統合作業が必要）
-- [ ] get_node_location の実装（独自AST対応、統合作業が必要）
-- [ ] get_children の実装（独自AST対応、統合作業が必要）
-- [ ] get_parent の実装（独自AST対応、統合作業が必要）
+- [x] get_classes の実装（クラス一覧取得）
+- [x] get_class_info の実装（クラス情報取得）
+- [x] get_methods の実装（メソッド一覧取得）
+- [x] get_method_info の実装（メソッド情報取得、アクセス指定子対応）
+- [ ] get_node_type の実装（汎用ノードアクセス、将来の拡張）
+- [ ] get_node_name の実装（汎用ノードアクセス、将来の拡張）
+- [ ] get_node_location の実装（汎用ノードアクセス、将来の拡張）
+- [ ] get_children の実装（汎用ノードアクセス、将来の拡張）
+- [ ] get_parent の実装（汎用ノードアクセス、将来の拡張）
 
 #### ユーティリティAPI
 - [x] match_pattern の実装
 - [x] get_file_content の実装
-- [ ] get_source_range の実装（独自AST対応、統合作業が必要）
+- [ ] get_source_range の実装（将来の拡張）
 
 ### 3. Lua Sandbox
 
@@ -480,11 +486,18 @@
 - [x] サイクロマティック複雑度チェック（examples/rules/complexity.lua）
 - [x] TODOコメント検出（examples/rules/todo_detector.lua）
 - [x] 使用例ルール（examples/rules/example_rule.lua）
+- [x] アクセス指定子ごとのメソッド命名チェック（examples/rules/method_naming_by_access.lua）
+- [x] シンプルなクラス名チェック（examples/rules/simple_class_check.lua）
+- [x] テスト用サンプルコード（tests/samples/naming_test.cpp）
+- [x] Lua命名ルール設定例（examples/configs/lua_naming_rules.yaml）
 
 ### 6. Documentation
 
 - [x] サンプルルールREADME（examples/rules/README.md）
 - [x] Lua API リファレンス（docs/lua_api.md）
+  - [x] AST アクセス API の説明追加
+  - [x] check_ast() 関数の説明追加
+  - [x] アクセス指定子ベースのチェック例追加
 - [x] Luaルール作成ガイド（examples/rules/README.mdに統合済み）
 
 ### 7. Testing

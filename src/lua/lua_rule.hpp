@@ -32,6 +32,10 @@ public:
     void check_ast(clang::ASTUnit* ast_unit,
                    diagnostic::DiagnosticEngine& diag_engine) override;
 
+    void check_ast(const std::string& file_path,
+                   std::shared_ptr<parser::TranslationUnitNode> ast,
+                   diagnostic::DiagnosticEngine& diag_engine) override;
+
     /// スクリプトのロードに成功したかどうか
     bool is_loaded() const { return loaded_; }
 

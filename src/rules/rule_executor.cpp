@@ -52,7 +52,7 @@ std::vector<RuleExecutionStats> RuleExecutor::execute_ast_rules(
         auto start_time = std::chrono::steady_clock::now();
 
         try {
-            // 独自ASTを使ったルール実行
+            // 独自ASTを使ったルール実行（ビルトインルールとLuaルール両方）
             rule->check_ast(file_path, ast, diag_engine);
 
             auto end_time = std::chrono::steady_clock::now();

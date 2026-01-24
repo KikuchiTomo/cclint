@@ -1,0 +1,53 @@
+# lua_naming_rules.yaml
+# Luaルールを使った命名規則チェックの設定例
+
+# 基本設定
+output_format: text
+severity: warning
+max_errors: 0
+
+# ファイルパターン
+include:
+  - "**/*.cpp"
+  - "**/*.hpp"
+  - "**/*.cc"
+  - "**/*.h"
+
+exclude:
+  - "build/**"
+  - "third_party/**"
+  - "**/*.test.cpp"
+
+# Luaルール
+lua_rules:
+  # アクセス指定子ごとの命名規則チェック
+  - name: method-naming-by-access
+    script: examples/rules/method_naming_by_access.lua
+    enabled: true
+    severity: warning
+
+  # シンプルなクラス名チェック
+  - name: simple-class-check
+    script: examples/rules/simple_class_check.lua
+    enabled: true
+    severity: warning
+
+# ビルトインルール（オプション）
+rules:
+  naming-convention:
+    enabled: true
+    severity: warning
+    options:
+      check_functions: true
+      check_classes: true
+      check_variables: true
+      # アクセス指定子ごとのチェックを有効化
+      check_method_access: true
+      # パターンの設定
+      function_pattern: "^[a-z][a-zA-Z0-9]*$"
+      class_pattern: "^[A-Z][a-zA-Z0-9]*$"
+      variable_pattern: "^[a-z][a-z0-9_]*$"
+      # アクセス指定子ごとのパターン
+      public_method_pattern: "^[a-z][a-zA-Z0-9]*$"
+      protected_method_pattern: "^[a-z][a-z0-9_]*$"
+      private_method_pattern: "^_[a-z][a-z0-9_]*$"

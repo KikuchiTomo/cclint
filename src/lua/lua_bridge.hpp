@@ -9,6 +9,11 @@
 #include <vector>
 
 namespace cclint {
+
+namespace parser {
+class TranslationUnitNode;
+}
+
 namespace lua {
 
 /// LuaとC++の橋渡しを行うクラス
@@ -27,6 +32,10 @@ public:
     /// @param file_path ファイルパス
     void set_current_file(const std::string& file_path);
 
+    /// 現在のASTを設定
+    /// @param ast AST
+    void set_current_ast(std::shared_ptr<parser::TranslationUnitNode> ast);
+
     /// C++ APIをLuaに登録
     void register_api();
 
@@ -41,13 +50,23 @@ private:
     std::shared_ptr<LuaEngine> lua_engine_;
     diagnostic::DiagnosticEngine* diag_engine_ = nullptr;
     std::string current_file_;
+    std::shared_ptr<parser::TranslationUnitNode> current_ast_;
 
     // Luaから呼び出されるC++関数（static）
+    // 診断報告
     static int lua_report_error(lua_State* L);
     static int lua_report_warning(lua_State* L);
     static int lua_report_info(lua_State* L);
+
+    // テキスト処理
     static int lua_get_file_content(lua_State* L);
     static int lua_match_pattern(lua_State* L);
+
+    // AST アクセス API
+    static int lua_get_classes(lua_State* L);
+    static int lua_get_class_info(lua_State* L);
+    static int lua_get_methods(lua_State* L);
+    static int lua_get_method_info(lua_State* L);
 
     // ヘルパー関数
     void report_diagnostic(const std::string& file_path, int line, int column,

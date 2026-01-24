@@ -172,6 +172,149 @@ end
 
 **Security Note:** This function is sandboxed and can only read files within the project directory.
 
+### AST Access API
+
+cclint provides a custom C++ parser that exposes Abstract Syntax Tree (AST) information to Lua scripts. This enables sophisticated structural checks beyond simple pattern matching.
+
+#### `cclint.get_classes()`
+
+Returns a list of all class/struct names in the current file.
+
+**Parameters:** None
+
+**Returns:**
+- `classes` (table): Array of class names (strings)
+
+**Example:**
+```lua
+local classes = cclint.get_classes()
+for i = 1, #classes do
+    print("Found class: " .. classes[i])
+end
+```
+
+#### `cclint.get_class_info(class_name)`
+
+Returns detailed information about a specific class.
+
+**Parameters:**
+- `class_name` (string): Name of the class to query
+
+**Returns:**
+- `info` (table or nil): Class information table, or nil if not found
+
+**Table Fields:**
+- `name` (string): Class name
+- `is_struct` (boolean): True if struct, false if class
+- `line` (number): Line number where class is defined
+
+**Example:**
+```lua
+local info = cclint.get_class_info("MyClass")
+if info then
+    print("Class: " .. info.name)
+    print("Line: " .. info.line)
+    if info.is_struct then
+        print("This is a struct")
+    else
+        print("This is a class")
+    end
+end
+```
+
+#### `cclint.get_methods(class_name)`
+
+Returns a list of all method names in a class.
+
+**Parameters:**
+- `class_name` (string): Name of the class to query
+
+**Returns:**
+- `methods` (table): Array of method names (strings)
+
+**Example:**
+```lua
+local methods = cclint.get_methods("MyClass")
+for i = 1, #methods do
+    print("Found method: " .. methods[i])
+end
+```
+
+#### `cclint.get_method_info(class_name, method_name)`
+
+Returns detailed information about a specific method.
+
+**Parameters:**
+- `class_name` (string): Name of the class
+- `method_name` (string): Name of the method
+
+**Returns:**
+- `info` (table or nil): Method information table, or nil if not found
+
+**Table Fields:**
+- `name` (string): Method name
+- `return_type` (string): Return type of the method
+- `line` (number): Line number where method is defined
+- `is_const` (boolean): True if const method
+- `is_static` (boolean): True if static method
+- `is_virtual` (boolean): True if virtual method
+- `access` (string): Access specifier - "public", "protected", "private", or "none"
+
+**Example:**
+```lua
+local info = cclint.get_method_info("MyClass", "getValue")
+if info then
+    print("Method: " .. info.name)
+    print("Return type: " .. info.return_type)
+    print("Access: " .. info.access)
+
+    if info.is_const then
+        print("This is a const method")
+    end
+
+    if info.is_static then
+        print("This is a static method")
+    end
+
+    if info.is_virtual then
+        print("This is a virtual method")
+    end
+end
+```
+
+**Access Specifier Based Checking Example:**
+```lua
+function check_ast(file_path)
+    local classes = cclint.get_classes()
+
+    for i = 1, #classes do
+        local class_name = classes[i]
+        local methods = cclint.get_methods(class_name)
+
+        for j = 1, #methods do
+            local method_name = methods[j]
+            local info = cclint.get_method_info(class_name, method_name)
+
+            if info and info.access == "public" then
+                -- Check public method naming convention
+                if not method_name:match("^[a-z][a-zA-Z0-9]*$") then
+                    cclint.report_warning(info.line, 0,
+                        "Public method '" .. method_name ..
+                        "' should use camelCase")
+                end
+            elseif info and info.access == "private" then
+                -- Check private method naming convention
+                if not method_name:match("^_[a-z][a-z0-9_]*$") then
+                    cclint.report_warning(info.line, 0,
+                        "Private method '" .. method_name ..
+                        "' should start with _ and use snake_case")
+                end
+            end
+        end
+    end
+end
+```
+
 ## Rule Structure
 
 A complete rule script should follow this structure:
@@ -181,7 +324,7 @@ A complete rule script should follow this structure:
 rule_description = "Brief description of the rule"
 rule_category = "category-name"
 
--- Main check function (required)
+-- Main check function for text-based analysis (optional)
 function check_file(file_path)
     -- Access global variables
     local content = file_content
@@ -196,7 +339,21 @@ function check_file(file_path)
         end
     end
 end
+
+-- AST-based check function (optional)
+function check_ast(file_path)
+    -- Access AST information
+    local classes = cclint.get_classes()
+
+    for i = 1, #classes do
+        local class_name = classes[i]
+        -- Perform structural checks
+        check_class_structure(class_name)
+    end
+end
 ```
+
+**Note:** You can implement either `check_file()` for text-based checking, `check_ast()` for AST-based checking, or both. If both are implemented, both will be called during analysis.
 
 ## Lua Pattern Syntax
 
@@ -294,16 +451,112 @@ function check_file(file_path)
 end
 ```
 
+## AST-Based Example
+
+Here's a complete example rule that checks method naming based on access specifiers:
+
+```lua
+-- Method Naming by Access Specifier
+rule_description = "Check method naming conventions based on access specifiers"
+rule_category = "naming"
+
+-- Naming patterns
+local public_pattern = "^[a-z][a-zA-Z0-9]*$"     -- camelCase
+local protected_pattern = "^[a-z][a-z0-9_]*$"    -- snake_case
+local private_pattern = "^_[a-z][a-z0-9_]*$"     -- _snake_case
+
+-- Main AST check function
+function check_ast(file_path)
+    local classes = cclint.get_classes()
+
+    if not classes then
+        return
+    end
+
+    for i = 1, #classes do
+        local class_name = classes[i]
+        check_class_methods(class_name)
+    end
+end
+
+-- Check all methods in a class
+function check_class_methods(class_name)
+    local methods = cclint.get_methods(class_name)
+
+    if not methods then
+        return
+    end
+
+    for i = 1, #methods do
+        local method_name = methods[i]
+        local info = cclint.get_method_info(class_name, method_name)
+
+        if info then
+            check_method_naming(class_name, method_name, info)
+        end
+    end
+end
+
+-- Check individual method naming
+function check_method_naming(class_name, method_name, info)
+    -- Skip constructors/destructors
+    if method_name == class_name or method_name:match("^~") then
+        return
+    end
+
+    local access = info.access
+    local line = info.line
+
+    if access == "public" then
+        if not method_name:match(public_pattern) then
+            cclint.report_warning(line, 0,
+                string.format(
+                    "Public method '%s::%s' should use camelCase",
+                    class_name, method_name
+                )
+            )
+        end
+    elseif access == "protected" then
+        if not method_name:match(protected_pattern) then
+            cclint.report_warning(line, 0,
+                string.format(
+                    "Protected method '%s::%s' should use snake_case",
+                    class_name, method_name
+                )
+            )
+        end
+    elseif access == "private" then
+        if not method_name:match(private_pattern) then
+            cclint.report_warning(line, 0,
+                string.format(
+                    "Private method '%s::%s' should start with _ and use snake_case",
+                    class_name, method_name
+                )
+            )
+        end
+    end
+end
+```
+
 ## Configuration Example
 
-To use the above rule in your `.cclint.yaml`:
+To use the above rules in your `.cclint.yaml`:
 
 ```yaml
-lua_scripts:
-  - path: rules/magic_number_detector.lua
-    priority: 100
+lua_rules:
+  # Text-based rule
+  - name: magic-number-detector
+    script: rules/magic_number_detector.lua
+    enabled: true
+    severity: warning
     parameters:
       ignored_numbers: "0,1,-1,2,10,100"
+
+  # AST-based rule
+  - name: method-naming-by-access
+    script: rules/method_naming_by_access.lua
+    enabled: true
+    severity: warning
 ```
 
 ## Best Practices
