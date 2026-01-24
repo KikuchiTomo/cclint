@@ -25,6 +25,7 @@ set(CCLINT_SOURCES
     rules/builtin/naming_convention.cpp
     rules/builtin/header_guard.cpp
     rules/builtin/max_line_length.cpp
+    rules/builtin/function_complexity.cpp
     engine/analysis_engine.cpp
     engine/incremental.cpp
     lua/lua_engine.cpp

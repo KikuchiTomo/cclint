@@ -4,6 +4,7 @@
 #include "rules/builtin/naming_convention.hpp"
 #include "rules/builtin/header_guard.hpp"
 #include "rules/builtin/max_line_length.hpp"
+#include "rules/builtin/function_complexity.hpp"
 #include "utils/file_utils.hpp"
 #include "utils/logger.hpp"
 
@@ -40,6 +41,8 @@ void AnalysisEngine::initialize_rules() {
         std::make_unique<rules::builtin::HeaderGuardRule>());
     registry.register_rule(
         std::make_unique<rules::builtin::MaxLineLengthRule>());
+    registry.register_rule(
+        std::make_unique<rules::builtin::FunctionComplexityRule>());
 
     // 設定からルールを有効化/無効化
     for (const auto& rule_config : config_.rules) {
