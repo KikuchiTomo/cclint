@@ -16,6 +16,11 @@ class Stmt;
 } // namespace clang
 
 namespace cclint {
+
+namespace parser {
+class TranslationUnitNode;
+}
+
 namespace rules {
 
 /// ルールのパラメータを表す型
@@ -54,13 +59,26 @@ public:
         (void)diag_engine;
     }
 
-    /// AST全体に対するチェック
+    /// AST全体に対するチェック (Clang AST)
     /// @param ast_unit ASTUnit
     /// @param diag_engine 診断エンジン
     virtual void check_ast(clang::ASTUnit* ast_unit,
                            diagnostic::DiagnosticEngine& diag_engine) {
         // デフォルトは何もしない（オプショナル）
         (void)ast_unit;
+        (void)diag_engine;
+    }
+
+    /// AST全体に対するチェック (独自AST)
+    /// @param file_path ファイルパス
+    /// @param ast 独自AST
+    /// @param diag_engine 診断エンジン
+    virtual void check_ast(const std::string& file_path,
+                           std::shared_ptr<parser::TranslationUnitNode> ast,
+                           diagnostic::DiagnosticEngine& diag_engine) {
+        // デフォルトは何もしない（オプショナル）
+        (void)file_path;
+        (void)ast;
         (void)diag_engine;
     }
 

@@ -2,9 +2,17 @@
 
 #include "rules/rule_base.hpp"
 
+#include <memory>
 #include <regex>
 
 namespace cclint {
+
+namespace parser {
+class ASTNode;
+class TranslationUnitNode;
+class ClassNode;
+}
+
 namespace rules {
 namespace builtin {
 
@@ -26,6 +34,11 @@ public:
                     const std::string& content,
                     diagnostic::DiagnosticEngine& diag_engine) override;
 
+    // AST解析を使ったチェック（アクセス指定子対応）
+    void check_ast(const std::string& file_path,
+                   std::shared_ptr<parser::TranslationUnitNode> ast,
+                   diagnostic::DiagnosticEngine& diag_engine) override;
+
 private:
     // チェック対象の命名パターン
     std::regex function_pattern_;
@@ -33,10 +46,16 @@ private:
     std::regex variable_pattern_;
     std::regex constant_pattern_;
 
+    // アクセス指定子ごとのメソッド命名パターン
+    std::regex public_method_pattern_;
+    std::regex protected_method_pattern_;
+    std::regex private_method_pattern_;
+
     bool check_functions_ = true;
     bool check_classes_ = true;
     bool check_variables_ = true;
     bool check_constants_ = true;
+    bool check_method_access_ = false;  // アクセス指定子ごとのチェックを有効化
 
     void check_function_names(const std::string& file_path,
                               const std::string& content,
@@ -53,6 +72,15 @@ private:
     void check_constant_names(const std::string& file_path,
                               const std::string& content,
                               diagnostic::DiagnosticEngine& diag_engine);
+
+    // ASTベースのクラスメソッドチェック
+    void check_class_methods(const std::string& file_path,
+                            std::shared_ptr<parser::ClassNode> class_node,
+                            diagnostic::DiagnosticEngine& diag_engine);
+
+    void check_ast_recursive(const std::string& file_path,
+                            std::shared_ptr<parser::ASTNode> node,
+                            diagnostic::DiagnosticEngine& diag_engine);
 };
 
 } // namespace builtin

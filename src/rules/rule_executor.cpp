@@ -41,11 +41,40 @@ std::vector<RuleExecutionStats> RuleExecutor::execute_ast_rules(
     auto enabled_rules = registry.get_enabled_rules();
 
     for (auto* rule : enabled_rules) {
-        // 独自ASTを使ったルール実行
-        // 現在はスキップ（将来的にcheck_ast_nodeメソッドを追加予定）
-        utils::Logger::instance().debug(
-            "AST-based rule execution not yet implemented for rule: " +
-            rule->name());
+        if (!rule->is_enabled()) {
+            continue;
+        }
+
+        RuleExecutionStats rule_stats;
+        rule_stats.rule_name = rule->name();
+
+        size_t initial_diagnostic_count = diag_engine.get_diagnostics().size();
+        auto start_time = std::chrono::steady_clock::now();
+
+        try {
+            // 独自ASTを使ったルール実行
+            rule->check_ast(file_path, ast, diag_engine);
+
+            auto end_time = std::chrono::steady_clock::now();
+            rule_stats.execution_time = std::chrono::duration_cast<
+                std::chrono::milliseconds>(end_time - start_time);
+
+            rule_stats.diagnostics_count =
+                diag_engine.get_diagnostics().size() - initial_diagnostic_count;
+
+        } catch (const std::exception& e) {
+            auto end_time = std::chrono::steady_clock::now();
+            rule_stats.execution_time = std::chrono::duration_cast<
+                std::chrono::milliseconds>(end_time - start_time);
+
+            rule_stats.failed = true;
+            rule_stats.error_message = e.what();
+
+            utils::Logger::instance().error(
+                "AST rule execution failed: " + rule->name() + " - " + e.what());
+        }
+
+        stats.push_back(rule_stats);
     }
 
     return stats;

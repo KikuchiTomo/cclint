@@ -1,4 +1,5 @@
 #include "rules/builtin/naming_convention.hpp"
+#include "parser/ast.hpp"
 #include "utils/string_utils.hpp"
 
 #include <sstream>
@@ -20,6 +21,11 @@ NamingConventionRule::NamingConventionRule() {
 
     // 定数名: UPPER_CASE
     constant_pattern_ = std::regex(R"([A-Z][A-Z0-9_]*)");
+
+    // アクセス指定子ごとのメソッド命名（デフォルトは全て snake_case）
+    public_method_pattern_ = std::regex(R"([a-z][a-z0-9_]*)");
+    protected_method_pattern_ = std::regex(R"([a-z][a-z0-9_]*)");
+    private_method_pattern_ = std::regex(R"([a-z][a-z0-9_]*)");
 }
 
 void NamingConventionRule::initialize(const RuleParameters& params) {
@@ -43,6 +49,20 @@ void NamingConventionRule::initialize(const RuleParameters& params) {
     }
     if (params.count("class_pattern")) {
         class_pattern_ = std::regex(params.at("class_pattern"));
+    }
+
+    // アクセス指定子ごとのメソッド命名パターン
+    if (params.count("public_method_pattern")) {
+        public_method_pattern_ = std::regex(params.at("public_method_pattern"));
+        check_method_access_ = true;
+    }
+    if (params.count("protected_method_pattern")) {
+        protected_method_pattern_ = std::regex(params.at("protected_method_pattern"));
+        check_method_access_ = true;
+    }
+    if (params.count("private_method_pattern")) {
+        private_method_pattern_ = std::regex(params.at("private_method_pattern"));
+        check_method_access_ = true;
     }
 }
 
@@ -219,6 +239,105 @@ void NamingConventionRule::check_constant_names(
                     "' does not follow UPPER_CASE convention";
                 report_diagnostic(diag_engine, file_path, line_num, 1,
                                   message);
+            }
+        }
+    }
+}
+
+// ASTベースのチェック（アクセス指定子対応）
+void NamingConventionRule::check_ast(
+    const std::string& file_path,
+    std::shared_ptr<parser::TranslationUnitNode> ast,
+    diagnostic::DiagnosticEngine& diag_engine) {
+
+    if (!check_method_access_) {
+        return;  // アクセス指定子チェックが無効な場合はスキップ
+    }
+
+    check_ast_recursive(file_path, ast, diag_engine);
+}
+
+void NamingConventionRule::check_ast_recursive(
+    const std::string& file_path,
+    std::shared_ptr<parser::ASTNode> node,
+    diagnostic::DiagnosticEngine& diag_engine) {
+
+    if (!node) {
+        return;
+    }
+
+    // クラスノードの場合、メソッドをチェック
+    if (node->type == parser::ASTNodeType::Class) {
+        auto class_node = std::dynamic_pointer_cast<parser::ClassNode>(node);
+        if (class_node) {
+            check_class_methods(file_path, class_node, diag_engine);
+        }
+    }
+
+    // 子ノードを再帰的にチェック
+    for (const auto& child : node->children) {
+        check_ast_recursive(file_path, child, diag_engine);
+    }
+}
+
+void NamingConventionRule::check_class_methods(
+    const std::string& file_path,
+    std::shared_ptr<parser::ClassNode> class_node,
+    diagnostic::DiagnosticEngine& diag_engine) {
+
+    for (const auto& child : class_node->children) {
+        // メソッドノードの場合
+        if (child->type == parser::ASTNodeType::Function ||
+            child->type == parser::ASTNodeType::Method) {
+
+            auto func_node = std::dynamic_pointer_cast<parser::FunctionNode>(child);
+            if (!func_node) {
+                continue;
+            }
+
+            std::string method_name = func_node->name;
+
+            // コンストラクタ・デストラクタは除外
+            if (method_name == class_node->name ||
+                method_name[0] == '~') {
+                continue;
+            }
+
+            // operator オーバーロードは除外
+            if (method_name.find("operator") == 0) {
+                continue;
+            }
+
+            // アクセス指定子に応じたパターンチェック
+            std::regex* pattern = nullptr;
+            std::string access_name;
+
+            switch (func_node->access) {
+                case parser::AccessSpecifier::Public:
+                    pattern = &public_method_pattern_;
+                    access_name = "public";
+                    break;
+                case parser::AccessSpecifier::Protected:
+                    pattern = &protected_method_pattern_;
+                    access_name = "protected";
+                    break;
+                case parser::AccessSpecifier::Private:
+                    pattern = &private_method_pattern_;
+                    access_name = "private";
+                    break;
+                default:
+                    continue;  // Noneの場合はスキップ
+            }
+
+            if (pattern && !std::regex_match(method_name, *pattern)) {
+                std::ostringstream msg;
+                msg << access_name << " method '" << method_name
+                    << "' in class '" << class_node->name
+                    << "' does not follow the configured naming pattern";
+
+                report_diagnostic(diag_engine, file_path,
+                                func_node->position.line,
+                                func_node->position.column, msg.str());
             }
         }
     }
