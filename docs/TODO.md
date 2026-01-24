@@ -723,15 +723,19 @@
 - [x] 修正プレビュー（--fix-preview）
 - [x] Fixer実装（diagnostic/fixer.hpp/cpp）
 
-### データフロー解析
-- [ ] より詳細なデータフロー解析
-- [ ] 未初期化変数の検出
-- [ ] nullポインタチェック
+### データフロー解析 ✅ 基礎実装完了
+- [x] より詳細なデータフロー解析（DataFlowAnalyzer実装）
+- [x] 未初期化変数の検出
+- [x] nullポインタチェック（基礎実装）
+- [x] DataFlowAnalyzer実装（engine/dataflow_analyzer.hpp/cpp）
 
-### プラグインシステム
-- [ ] 共有ライブラリとしてのルール
-- [ ] プラグインAPI
-- [ ] 動的ロード
+### プラグインシステム ✅ 完了
+- [x] 共有ライブラリとしてのルール
+- [x] プラグインAPI（include/cclint/plugin_api.h）
+- [x] 動的ロード（PluginLoader実装）
+- [x] PluginLoader実装（rules/plugin_loader.hpp/cpp）
+- [x] サンプルプラグイン（examples/plugins/example_plugin.cpp）
+- [x] プラグイン開発ガイド（docs/plugin_development.md）
 
 ### Windows対応
 - [ ] Windows環境でのビルド

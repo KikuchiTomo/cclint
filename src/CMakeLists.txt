@@ -23,6 +23,7 @@ set(CCLINT_SOURCES
     rules/rule_base.cpp
     rules/rule_registry.cpp
     rules/rule_executor.cpp
+    rules/plugin_loader.cpp
     rules/builtin/naming_convention.cpp
     rules/builtin/header_guard.cpp
     rules/builtin/max_line_length.cpp
@@ -30,6 +31,7 @@ set(CCLINT_SOURCES
     engine/analysis_engine.cpp
     engine/incremental.cpp
     engine/dependency_tracker.cpp
+    engine/dataflow_analyzer.cpp
     lua/lua_engine.cpp
     lua/lua_bridge.cpp
     lua/lua_rule.cpp
