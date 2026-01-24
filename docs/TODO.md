@@ -140,22 +140,25 @@
 ### 4. Parser Module (src/parser/)
 
 #### AST定義
-- [ ] ast.hpp の作成
-  - [ ] ASTノードの基底クラス定義
+- [x] ast.hpp の作成
+  - [x] ASTノードの基底クラス定義
+  - [x] TranslationUnit, Namespace, Class, Function, Variable等のノード
+  - [x] SourcePosition によるソースコード位置追跡
 
-#### ClangParser
-- [ ] clang_parser.hpp の作成
-- [ ] clang_parser.cpp の実装
-  - [ ] Clang libtooling の初期化
-  - [ ] ASTUnitの生成
-  - [ ] コンパイラフラグの変換
-  - [ ] パースエラーのハンドリング
-- [ ] ASTVisitor基底クラスの実装
-  - [ ] VisitFunctionDecl
-  - [ ] VisitVarDecl
-  - [ ] VisitCXXRecordDecl
-  - [ ] VisitNamespaceDecl
-- [ ] 単体テスト（tests/parser/test_clang_parser.cpp）
+#### 簡易C++パーサー（独自実装）
+- [x] lexer.hpp/cpp の作成
+  - [x] トークン化（識別子、リテラル、キーワード、演算子）
+  - [x] コメント処理
+  - [x] プリプロセッサディレクティブ対応
+- [x] simple_parser.hpp/cpp の作成
+  - [x] 再帰下降パーサーの実装
+  - [x] namespace, class, struct, enum の解析
+  - [x] 関数/メソッド定義の解析
+  - [x] 変数/フィールド宣言の解析
+  - [x] エラーリカバリ機能
+- [ ] 単体テスト（tests/parser/test_simple_parser.cpp）
+
+注: LLVM/Clangではなく独自の簡易パーサーを実装
 
 ### 5. Diagnostic Module (src/diagnostic/)
 
@@ -414,7 +417,7 @@
   - [x] RuleBase継承
   - [x] スクリプトロード
   - [x] check_file実装
-  - [~] check_ast実装（LLVM/Clang依存のため保留）
+  - [ ] check_ast実装（独自AST対応、統合作業が必要）
 
 #### Lua Bridge
 - [x] lua_bridge.hpp の作成
@@ -422,7 +425,7 @@
   - [x] C++からLua関数の呼び出し
   - [x] LuaからC++関数の呼び出し
   - [x] データ型変換（C++ ⇔ Lua）
-  - [~] ASTノードのLua公開（LLVM/Clang依存のため保留）
+  - [ ] ASTノードのLua公開（独自AST対応、統合作業が必要）
 
 ### 2. Lua API Implementation
 
@@ -432,16 +435,16 @@
 - [x] report_info の実装
 
 #### ASTアクセスAPI
-- [~] get_node_type の実装（LLVM/Clang依存のため保留）
-- [~] get_node_name の実装（LLVM/Clang依存のため保留）
-- [~] get_node_location の実装（LLVM/Clang依存のため保留）
-- [~] get_children の実装（LLVM/Clang依存のため保留）
-- [~] get_parent の実装（LLVM/Clang依存のため保留）
+- [ ] get_node_type の実装（独自AST対応、統合作業が必要）
+- [ ] get_node_name の実装（独自AST対応、統合作業が必要）
+- [ ] get_node_location の実装（独自AST対応、統合作業が必要）
+- [ ] get_children の実装（独自AST対応、統合作業が必要）
+- [ ] get_parent の実装（独自AST対応、統合作業が必要）
 
 #### ユーティリティAPI
 - [x] match_pattern の実装
 - [x] get_file_content の実装
-- [~] get_source_range の実装（LLVM/Clang依存のため保留）
+- [ ] get_source_range の実装（独自AST対応、統合作業が必要）
 
 ### 3. Lua Sandbox
 
@@ -526,11 +529,14 @@
 
 ### 3. Incremental Analysis
 
-- [~] 変更ファイルの検出（v2.0以降で実装予定）
-  - [~] git diffとの統合
-  - [~] タイムスタンプチェック
-- [~] 部分解析（v2.0以降で実装予定）
-- [~] 依存関係の追跡（v2.0以降で実装予定）
+- [x] 変更ファイルの検出（engine/incremental.hpp/cpp）
+  - [x] git diffとの統合（get_git_modified_files）
+  - [x] タイムスタンプチェック（is_file_modified）
+- [x] 部分解析（filter_modified_files）
+- [x] 状態管理（.cclint_state ファイル）
+  - [x] ファイル状態の保存/読み込み
+  - [x] Config::enable_incremental オプション
+- [~] 依存関係の追跡（#include解析、v2.0以降で実装予定）
 
 ### 4. Performance Monitoring
 
