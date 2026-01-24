@@ -261,22 +261,28 @@
 
 #### ビルドシステム
 - [x] CMakeLists.txtの完成（基本ビルドシステム）
-- [ ] ビルドスクリプトの作成（build.sh）
+- [x] ビルドスクリプトの作成（build.sh）
 - [x] インストールターゲットの作成（バイナリとLuaスクリプト）
 
 #### テスト
 - [ ] Google Testの統合
-- [ ] テストディレクトリの作成（tests/）
+- [x] テストディレクトリの作成（tests/）
+  - [x] tests/unit/ (単体テスト)
+  - [x] tests/integration/ (統合テスト)
+  - [x] tests/samples/ (テスト用サンプルコード)
+  - [x] tests/README.md (テストガイド)
+  - [x] テスト用CMakeLists.txt
+  - [x] サンプルコード (valid, invalid, style_issues, security_issues, performance_issues)
 - [ ] 統合テスト（tests/integration/）
   - [ ] 基本的な実行テスト
   - [ ] エラーハンドリングのテスト
 
 #### CI/CD
-- [ ] GitHub Actions設定（.github/workflows/ci.yml）
-  - [ ] Ubuntu環境でのビルド
-  - [ ] macOS環境でのビルド
-  - [ ] テスト実行
-  - [ ] コードカバレッジ
+- [x] GitHub Actions設定（.github/workflows/ci.yml）
+  - [x] Ubuntu環境でのビルド
+  - [x] macOS環境でのビルド
+  - [x] テスト実行
+  - [x] コードカバレッジ
 
 ### 10. Lua Rule Scripts (scripts/rules/)
 
@@ -296,9 +302,13 @@
 
 ### 11. Documentation
 
-- [ ] ビルド手順のドキュメント（docs/build.md）
-- [ ] 基本的な使い方（docs/usage.md）
-- [ ] トラブルシューティング（docs/troubleshooting.md）
+- [x] ビルド手順のドキュメント（docs/build.md）
+- [x] 基本的な使い方（docs/usage.md）
+- [x] トラブルシューティング（docs/troubleshooting.md）
+- [ ] FAQ（docs/FAQ.md）
+- [ ] 貢献ガイド（CONTRIBUTING.md）
+- [ ] 変更履歴（CHANGELOG.md）
+- [ ] 行動規範（CODE_OF_CONDUCT.md）
 
 ---
 
