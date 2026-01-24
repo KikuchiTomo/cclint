@@ -2,7 +2,7 @@
 
 このディレクトリには、cclintの標準Luaルールスクリプトが含まれています。
 
-**🎊 合計100個のLuaルールスクリプトを提供！**
+**🎊 合計102個のLuaルールスクリプトを提供！**
 
 ## ディレクトリ構成
 
@@ -50,16 +50,18 @@ lua_scripts:
       allow_underscores: false
 ```
 
-## 利用可能なルール（全100ルール）
+## 利用可能なルール（全102ルール）
 
-### Naming（命名規則） - 9ルール
+### Naming（命名規則） - 11ルール
 
 - **class-name-camelcase**: クラス名はCamelCaseであるべき
 - **constant-name-uppercase**: 定数名はUPPER_CASEであるべき
 - **enum-name-camelcase**: 列挙型名はCamelCaseであるべき
 - **function-name-lowercase**: 関数名はlower_case（スネークケース）であるべき
 - **member-variable-prefix**: メンバ変数には接頭辞を付けるべき
+- **method-naming-by-access**: アクセス指定子ごとのメソッド命名規則（AST解析）
 - **namespace-name-lowercase**: 名前空間名はlowercaseであるべき
+- **simple-class-check**: クラス名がPascalCaseであることをチェック（AST解析）
 
 ### Style（スタイル） - 4ルール
 

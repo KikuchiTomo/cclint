@@ -22,13 +22,13 @@ exclude:
 lua_rules:
   # アクセス指定子ごとの命名規則チェック
   - name: method-naming-by-access
-    script: examples/rules/method_naming_by_access.lua
+    script: scripts/rules/naming/method_naming_by_access.lua
     enabled: true
     severity: warning
 
   # シンプルなクラス名チェック
   - name: simple-class-check
-    script: examples/rules/simple_class_check.lua
+    script: scripts/rules/naming/simple_class_check.lua
     enabled: true
     severity: warning
 

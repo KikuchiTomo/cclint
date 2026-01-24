@@ -54,7 +54,7 @@
 ## Milestone 1: 最小動作版（MVP） - 進捗: 80%
 
 **完了済み**: CLI, Config, Compiler, Diagnostic, Output, Utils, Logger (7モジュール)
-**実装済み**: 100個の標準Luaルールスクリプト
+**実装済み**: 102個の標準Luaルールスクリプト（AST解析対応ルール含む）
 **ブロック中**: Parser (LLVM/Clang依存), Rule Engine (LuaJIT依存)
 **統合待ち**: Main.cppへの各モジュール統合
 
@@ -290,8 +290,8 @@
 ### 10. Lua Rule Scripts (scripts/rules/)
 
 #### 標準ルールライブラリ
-- [x] **100個の標準Luaルールスクリプト作成完了**
-- [x] Naming ルール（9個）: class-name-camelcase, function-name-lowercase, constant-name-uppercase, enum-name-camelcase, namespace-name-lowercase, member-variable-prefix, typedef-suffix, global-variable-prefix, bool-variable-prefix, macro-name-uppercase, template-parameter-name
+- [x] **102個の標準Luaルールスクリプト作成完了**
+- [x] Naming ルール（11個）: class-name-camelcase, function-name-lowercase, constant-name-uppercase, enum-name-camelcase, namespace-name-lowercase, member-variable-prefix, typedef-suffix, global-variable-prefix, bool-variable-prefix, macro-name-uppercase, template-parameter-name, method-naming-by-access（AST解析）, simple-class-check（AST解析）
 - [x] Style ルール（8個）: braces-on-new-line, indent-width, max-line-length, space-after-control-statement, consistent-pointer-declaration, consistent-bracing, namespace-closing-comment, function-definition-style, empty-line-before-block
 - [x] Structure ルール（4個）: one-class-per-file, header-guard, include-order, forward-declaration-namespace
 - [x] Spacing ルール（5個）: max-consecutive-empty-lines, trailing-whitespace, operator-spacing, no-tab-character, blank-line-after-declaration
@@ -641,15 +641,15 @@
 
 ### 1. Documentation
 
-- [ ] README.md完成版
-- [ ] INSTALL.md の作成
-- [ ] USER_GUIDE.md の作成
-- [ ] API_REFERENCE.md の作成
-- [ ] TROUBLESHOOTING.md の作成
-- [ ] FAQ.md の作成
+- [x] README.md完成版
+- [ ] INSTALL.md の作成（docs/build.mdで代用可能）
+- [x] USER_GUIDE.md の作成（docs/usage.mdで実現）
+- [x] API_REFERENCE.md の作成（docs/lua_api.mdで実現）
+- [x] TROUBLESHOOTING.md の作成（docs/troubleshooting.md）
+- [x] FAQ.md の作成（docs/FAQ.md）
 - [ ] CHANGELOG.md の作成
-- [ ] CONTRIBUTING.md の作成
-- [ ] CODE_OF_CONDUCT.md の作成
+- [x] CONTRIBUTING.md の作成
+- [>] CODE_OF_CONDUCT.md の作成
 
 ### 2. Examples & Samples
 
