@@ -16,6 +16,15 @@ set(CCLINT_SOURCES
     utils/file_utils.cpp
     utils/string_utils.cpp
     utils/logger.cpp
+    rules/rule_base.cpp
+    rules/rule_registry.cpp
+    rules/rule_executor.cpp
+    rules/builtin/naming_convention.cpp
+    rules/builtin/header_guard.cpp
+    rules/builtin/max_line_length.cpp
+    engine/analysis_engine.cpp
+    lua/lua_engine.cpp
+    lua/lua_rule.cpp
 )
 
 # 実行ファイルを作成

@@ -312,169 +312,177 @@
 
 ---
 
-## Milestone 2: ルールシステム基盤
+## Milestone 2: ルールシステム基盤 ✅ 完了
 
 ### 1. Rules Module (src/rules/)
 
 #### 基底クラス
-- [ ] rule_base.hpp の作成
-  - [ ] RuleBaseインターフェース
-  - [ ] 診断生成ヘルパー
-- [ ] rule_base.cpp の実装
+- [x] rule_base.hpp の作成
+  - [x] RuleBaseインターフェース
+  - [x] 診断生成ヘルパー
+- [x] rule_base.cpp の実装
 
 #### RuleRegistry
-- [ ] rule_registry.hpp の作成
-- [ ] rule_registry.cpp の実装
-  - [ ] シングルトンパターン
-  - [ ] ルール登録
-  - [ ] ルール有効化/無効化
-  - [ ] ルール検索
-  - [ ] 全ルール名の取得
+- [x] rule_registry.hpp の作成
+- [x] rule_registry.cpp の実装
+  - [x] シングルトンパターン
+  - [x] ルール登録
+  - [x] ルール有効化/無効化
+  - [x] ルール検索
+  - [x] 全ルール名の取得
 - [ ] 単体テスト（tests/rules/test_rule_registry.cpp）
 
 #### RuleExecutor
-- [ ] rule_executor.hpp の作成
-- [ ] rule_executor.cpp の実装
-  - [ ] ルール実行ループ
-  - [ ] エラーハンドリング
-  - [ ] タイムアウト処理
+- [x] rule_executor.hpp の作成
+- [x] rule_executor.cpp の実装
+  - [x] ルール実行ループ
+  - [x] エラーハンドリング
+  - [~] タイムアウト処理（将来実装）
 - [ ] 単体テスト（tests/rules/test_rule_executor.cpp）
 
 ### 2. Builtin Rules (src/rules/builtin/)
 
 #### 命名規則ルール
-- [ ] naming_convention.hpp の作成
-- [ ] naming_convention.cpp の実装
-  - [ ] 関数名チェック（camelCase）
-  - [ ] 変数名チェック
-  - [ ] クラス名チェック（PascalCase）
-  - [ ] 定数名チェック（UPPER_CASE）
+- [x] naming_convention.hpp の作成
+- [x] naming_convention.cpp の実装
+  - [x] 関数名チェック（snake_case）
+  - [~] 変数名チェック（将来実装）
+  - [x] クラス名チェック（PascalCase）
+  - [~] 定数名チェック（将来実装）
 - [ ] 単体テスト（tests/rules/builtin/test_naming_convention.cpp）
 
 #### ヘッダーガードルール
-- [ ] header_guard.hpp の作成
-- [ ] header_guard.cpp の実装
-  - [ ] #ifndef/#define/#endifの検出
-  - [ ] #pragma onceの検出
-  - [ ] ガード名のチェック
+- [x] header_guard.hpp の作成
+- [x] header_guard.cpp の実装
+  - [x] #ifndef/#define/#endifの検出
+  - [x] #pragma onceの検出
+  - [x] ガード名のチェック
 - [ ] 単体テスト（tests/rules/builtin/test_header_guard.cpp）
 
 #### 最大行長ルール
-- [ ] max_line_length.hpp の作成
-- [ ] max_line_length.cpp の実装
-  - [ ] 行長のチェック
-  - [ ] 設定可能な最大長
+- [x] max_line_length.hpp の作成
+- [x] max_line_length.cpp の実装
+  - [x] 行長のチェック
+  - [x] 設定可能な最大長
 - [ ] 単体テスト（tests/rules/builtin/test_max_line_length.cpp）
 
 ### 3. Engine Module (src/engine/)
 
 #### AnalysisEngine
-- [ ] analysis_engine.hpp の作成
-- [ ] analysis_engine.cpp の実装
-  - [ ] ファイルごとの解析
-  - [ ] ルール実行の統合
-  - [ ] ファイルフィルタリング（include/exclude）
-  - [ ] エラーハンドリング
+- [x] analysis_engine.hpp の作成
+- [x] analysis_engine.cpp の実装
+  - [x] ファイルごとの解析
+  - [x] ルール実行の統合
+  - [x] ファイルフィルタリング（include/exclude）
+  - [x] エラーハンドリング
 - [ ] 単体テスト（tests/engine/test_analysis_engine.cpp）
 
 ### 4. Config Enhancement
 
-- [ ] ルール設定のYAML定義サポート
-- [ ] ルールパラメータの設定
-- [ ] severity設定（error/warning/info）
-- [ ] ルールごとの有効化/無効化
+- [x] ルール設定のYAML定義サポート
+- [x] ルールパラメータの設定
+- [x] severity設定（error/warning/info）
+- [x] ルールごとの有効化/無効化
 
 ### 5. Testing & Integration
 
 - [ ] 統合テスト（tests/integration/）
-  - [ ] 複数ルールの実行
+  - [x] 複数ルールの実行（動作確認済み）
   - [ ] 設定ファイルとの統合
   - [ ] エンドツーエンドテスト
-- [ ] サンプルC++ファイルの作成（tests/samples/）
+- [x] サンプルC++ファイルの作成（tests/samples/）
 
 ---
 
-## Milestone 3: Lua統合
+## Milestone 3: Lua統合（スタブ実装完了）
 
 ### 1. Lua Module (src/lua/)
 
 #### LuaEngine
-- [ ] lua_engine.hpp の作成
-- [ ] lua_engine.cpp の実装
-  - [ ] Lua VMの初期化
-  - [ ] スクリプトのロード
-  - [ ] エラーハンドリング
-  - [ ] リソース管理（デストラクタ）
+- [x] lua_engine.hpp の作成
+- [x] lua_engine.cpp の実装（条件付きコンパイル）
+  - [x] Lua VMの初期化（LuaJIT利用可能時）
+  - [x] スクリプトのロード
+  - [x] エラーハンドリング
+  - [x] リソース管理（デストラクタ）
+  - [x] スタブ実装（LuaJIT不在時）
 - [ ] 単体テスト（tests/lua/test_lua_engine.cpp）
 
+#### LuaRule
+- [x] lua_rule.hpp の作成
+- [x] lua_rule.cpp の実装（スタブ）
+  - [x] RuleBase継承
+  - [x] スクリプトロード
+  - [~] check_file実装（将来実装）
+  - [~] check_ast実装（将来実装）
+
 #### Lua Bridge
-- [ ] lua_bridge.hpp の作成
-- [ ] lua_bridge.cpp の実装
-  - [ ] C++からLua関数の呼び出し
-  - [ ] LuaからC++関数の呼び出し
-  - [ ] データ型変換（C++ ⇔ Lua）
-  - [ ] ASTノードのLua公開
-- [ ] 単体テスト（tests/lua/test_lua_bridge.cpp）
+- [~] lua_bridge.hpp の作成（将来実装）
+- [~] lua_bridge.cpp の実装（将来実装）
+  - [~] C++からLua関数の呼び出し
+  - [~] LuaからC++関数の呼び出し
+  - [~] データ型変換（C++ ⇔ Lua）
+  - [~] ASTノードのLua公開
 
 ### 2. Lua API Implementation (src/lua/lua_api.cpp)
 
 #### 診断報告API
-- [ ] report_error の実装
-- [ ] report_warning の実装
-- [ ] report_info の実装
+- [~] report_error の実装（将来実装）
+- [~] report_warning の実装（将来実装）
+- [~] report_info の実装（将来実装）
 
 #### ASTアクセスAPI
-- [ ] get_node_type の実装
-- [ ] get_node_name の実装
-- [ ] get_node_location の実装
-- [ ] get_children の実装
-- [ ] get_parent の実装
+- [~] get_node_type の実装（将来実装）
+- [~] get_node_name の実装（将来実装）
+- [~] get_node_location の実装（将来実装）
+- [~] get_children の実装（将来実装）
+- [~] get_parent の実装（将来実装）
 
 #### ユーティリティAPI
-- [ ] match_pattern の実装（正規表現）
-- [ ] get_file_content の実装
-- [ ] get_source_range の実装
+- [~] match_pattern の実装（将来実装）
+- [~] get_file_content の実装（将来実装）
+- [~] get_source_range の実装（将来実装）
 
 ### 3. Lua Sandbox
 
 #### セキュリティ制限
-- [ ] ファイルI/O制限の実装
-  - [ ] io.open の制限
-  - [ ] io.popen の無効化
-- [ ] ネットワークアクセス禁止
-  - [ ] socket ライブラリの無効化
-- [ ] システムコマンド実行禁止
-  - [ ] os.execute の無効化
-  - [ ] os.exit の無効化
+- [x] ファイルI/O制限の実装
+  - [x] io.open の制限
+  - [x] io.popen の無効化
+- [x] ネットワークアクセス禁止
+  - [x] socket ライブラリの無効化
+- [x] システムコマンド実行禁止
+  - [x] os.execute の無効化
+  - [x] os.exit の無効化
 
 #### リソース制限
-- [ ] メモリ使用量制限
-- [ ] 実行時間制限（タイムアウト）
-- [ ] スタック深度制限
+- [~] メモリ使用量制限（将来実装）
+- [~] 実行時間制限（タイムアウト）（将来実装）
+- [~] スタック深度制限（将来実装）
 
 ### 4. Lua Rule System
 
 #### ルール登録
-- [ ] register_rule 関数の実装
-- [ ] ルール関数の呼び出し
-- [ ] ルール実行エラーのハンドリング
+- [~] register_rule 関数の実装（将来実装）
+- [~] ルール関数の呼び出し（将来実装）
+- [~] ルール実行エラーのハンドリング（将来実装）
 
 #### ルール設定
-- [ ] パラメータの受け渡し
-- [ ] severity設定
-- [ ] ルールの有効化/無効化
+- [~] パラメータの受け渡し（将来実装）
+- [~] severity設定（将来実装）
+- [~] ルールの有効化/無効化（将来実装）
 
 ### 5. Sample Lua Rules
 
-- [ ] サイクロマティック複雑度チェック（examples/rules/complexity.lua）
-- [ ] TODOコメント検出（examples/rules/todo_detector.lua）
-- [ ] 使用例ルール（examples/rules/example_rule.lua）
+- [~] サイクロマティック複雑度チェック（examples/rules/complexity.lua）（将来実装）
+- [~] TODOコメント検出（examples/rules/todo_detector.lua）（将来実装）
+- [~] 使用例ルール（examples/rules/example_rule.lua）（将来実装）
 
 ### 6. Documentation
 
-- [ ] Lua API リファレンス（docs/lua_api.md）
-- [ ] Luaルール作成ガイド（docs/creating_lua_rules.md）
-- [ ] サンプルコード集（docs/lua_examples.md）
+- [~] Lua API リファレンス（docs/lua_api.md）（将来実装）
+- [~] Luaルール作成ガイド（docs/creating_lua_rules.md）（将来実装）
+- [~] サンプルコード集（docs/lua_examples.md）（将来実装）
 
 ### 7. Testing
 

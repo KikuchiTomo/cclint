@@ -56,6 +56,9 @@ public:
     // パターンに一致するファイルを検索
     static std::vector<std::string> glob(const std::string& pattern);
 
+    // グロブパターンマッチング
+    static bool glob_match(const std::string& path, const std::string& pattern);
+
 private:
     FileUtils() = default;
 };

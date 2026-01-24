@@ -6,6 +6,7 @@
 #include "diagnostic/diagnostic.hpp"
 #include "output/formatter_factory.hpp"
 #include "utils/logger.hpp"
+#include "engine/analysis_engine.hpp"
 
 #include <iostream>
 #include <string>
@@ -115,35 +116,64 @@ int main(int argc, char** argv) {
             }
         }
 
-        // 診断エンジンの初期化
-        diagnostic::DiagnosticEngine diag_engine;
+        // 解析エンジンの初期化
+        logger.info("Initializing analysis engine...");
+        cclint::engine::AnalysisEngine analysis_engine(config);
 
-        // TODO: ここでパーサーとルールエンジンを統合
-        // 現在はダミーの診断を生成（開発中であることを示す）
-        logger.warning(
-            "AST parsing and rule execution not yet implemented");
-        logger.info("Required dependencies for full functionality:");
-        logger.info("  - LLVM/Clang libtooling (for C++ parsing)");
-        logger.info("  - LuaJIT 2.1 (for rule execution)");
-        logger.info("  - yaml-cpp (for YAML config parsing)");
+        // ソースファイルの解析
+        if (!result.source_files.empty()) {
+            logger.info("Analyzing " +
+                        std::to_string(result.source_files.size()) +
+                        " source file(s)...");
+
+            auto analysis_results =
+                analysis_engine.analyze_files(result.source_files);
+
+            // 解析結果のサマリーをログ出力
+            size_t success_count = 0;
+            size_t failed_count = 0;
+            for (const auto& res : analysis_results) {
+                if (res.success) {
+                    success_count++;
+                } else {
+                    failed_count++;
+                    logger.error("Failed to analyze: " + res.file_path +
+                                 " - " + res.error_message);
+                }
+            }
+
+            logger.info("Successfully analyzed " +
+                        std::to_string(success_count) + " file(s)");
+            if (failed_count > 0) {
+                logger.warning("Failed to analyze " +
+                               std::to_string(failed_count) + " file(s)");
+            }
+
+        } else {
+            logger.warning("No source files found to analyze");
+        }
+
+        // すべての診断を取得
+        auto all_diagnostics = analysis_engine.get_all_diagnostics();
 
         // 出力フォーマッタの作成
         auto formatter =
             output::FormatterFactory::create(config.output_format);
 
         // 診断結果の出力
-        formatter->format(diag_engine.get_diagnostics(), std::cout);
+        formatter->format(all_diagnostics, std::cout);
 
         // 統計情報の表示
         if (args.verbosity > 0) {
             logger.info("Analysis complete");
-            logger.info("Errors: " + std::to_string(diag_engine.error_count()));
+            logger.info(
+                "Errors: " + std::to_string(analysis_engine.get_error_count()));
             logger.info("Warnings: " +
-                        std::to_string(diag_engine.warning_count()));
+                        std::to_string(analysis_engine.get_warning_count()));
         }
 
         // 終了コードの決定
-        if (diag_engine.error_count() > 0) {
+        if (analysis_engine.get_error_count() > 0) {
             return 1;  // エラーがある場合
         }
 

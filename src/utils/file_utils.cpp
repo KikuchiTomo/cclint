@@ -159,4 +159,53 @@ std::vector<std::string> FileUtils::glob(const std::string& pattern) {
     return results;
 }
 
+bool FileUtils::glob_match(const std::string& path,
+                           const std::string& pattern) {
+    // 簡易的なグロブマッチング実装
+    // サポート: *, **
+
+    // **/* のようなパターンは常にマッチ
+    if (pattern == "**/*" || pattern == "*") {
+        return true;
+    }
+
+    // パターンにワイルドカードがない場合は完全一致
+    if (pattern.find('*') == std::string::npos) {
+        return path == pattern;
+    }
+
+    // **/pattern のようなパターン
+    if (pattern.rfind("**/", 0) == 0) {
+        std::string suffix = pattern.substr(3);
+        return path.find(suffix) != std::string::npos;
+    }
+
+    // *.ext のようなパターン
+    if (pattern[0] == '*' && pattern.find('*', 1) == std::string::npos) {
+        std::string suffix = pattern.substr(1);
+        if (path.length() >= suffix.length()) {
+            return path.compare(path.length() - suffix.length(),
+                                suffix.length(), suffix) == 0;
+        }
+        return false;
+    }
+
+    // prefix* のようなパターン
+    if (pattern.back() == '*' &&
+        pattern.find('*') == pattern.length() - 1) {
+        std::string prefix = pattern.substr(0, pattern.length() - 1);
+        return path.rfind(prefix, 0) == 0;
+    }
+
+    // より複雑なパターンは正規表現を使うべきだが、
+    // ここでは簡易的に部分一致でチェック
+    std::string pattern_copy = pattern;
+    size_t star_pos;
+    while ((star_pos = pattern_copy.find('*')) != std::string::npos) {
+        pattern_copy.replace(star_pos, 1, "");
+    }
+
+    return path.find(pattern_copy) != std::string::npos;
+}
+
 }  // namespace utils
