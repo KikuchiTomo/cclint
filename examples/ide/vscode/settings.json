@@ -1,0 +1,48 @@
+{
+    // VSCode Settings for cclint integration
+    // Place this in .vscode/settings.json in your project
+
+    // Run cclint on save
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 1000,
+
+    // C++ specific settings
+    "C_Cpp.errorSquiggles": "enabled",
+    "C_Cpp.codeAnalysis.clangTidy.enabled": false, // Disable clang-tidy if using cclint
+
+    // LSP Server configuration (for real-time analysis)
+    "cclint.lsp.enabled": true,
+    "cclint.lsp.path": "/usr/local/bin/cclint-lsp",
+    "cclint.lsp.configPath": "${workspaceFolder}/.cclint.yaml",
+
+    // cclint configuration
+    "cclint.enable": true,
+    "cclint.runOnSave": true,
+    "cclint.configFile": "${workspaceFolder}/.cclint.yaml",
+    "cclint.outputFormat": "text",
+
+    // Problem matcher configuration
+    "problemMatcher": [
+        {
+            "name": "cclint",
+            "owner": "cclint",
+            "fileLocation": "absolute",
+            "pattern": {
+                "regexp": "^(.+):(\\d+):(\\d+):\\s+(warning|error|info)\\s+\\[(.+)\\]:\\s+(.+)$",
+                "file": 1,
+                "line": 2,
+                "column": 3,
+                "severity": 4,
+                "code": 5,
+                "message": 6
+            }
+        }
+    ],
+
+    // File associations
+    "files.associations": {
+        "*.cpp": "cpp",
+        "*.hpp": "cpp",
+        ".cclint.yaml": "yaml"
+    }
+}

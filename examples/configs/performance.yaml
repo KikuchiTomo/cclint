@@ -1,0 +1,70 @@
+# Performance-focused configuration
+# Emphasizes efficient code and optimization opportunities
+
+version: 1.0
+cpp_standard: cpp17
+
+# Performance rules
+lua_scripts:
+  # Critical performance issues
+  - path: "${CCLINT_HOME}/scripts/rules/performance/pass-by-const-reference.lua"
+    priority: 100
+  - path: "${CCLINT_HOME}/scripts/rules/performance/avoid-unnecessary-copy.lua"
+    priority: 100
+  - path: "${CCLINT_HOME}/scripts/rules/performance/move-const-arg.lua"
+    priority: 95
+
+  # Container optimization
+  - path: "${CCLINT_HOME}/scripts/rules/performance/reserve-vector.lua"
+    priority: 95
+  - path: "${CCLINT_HOME}/scripts/rules/performance/unnecessary-value-param.lua"
+    priority: 90
+
+  # String optimization
+  - path: "${CCLINT_HOME}/scripts/rules/performance/static-const-string.lua"
+    priority: 90
+  - path: "${CCLINT_HOME}/scripts/rules/performance/string-concatenation.lua"
+    priority: 85
+  - path: "${CCLINT_HOME}/scripts/rules/performance/redundant-string-init.lua"
+    priority: 85
+
+  # Function optimization
+  - path: "${CCLINT_HOME}/scripts/rules/performance/inline-small-functions.lua"
+    priority: 80
+  - path: "${CCLINT_HOME}/scripts/rules/performance/loop-invariant-code.lua"
+    priority: 85
+
+  # Modern C++ performance
+  - path: "${CCLINT_HOME}/scripts/rules/performance/make-shared-preference.lua"
+    priority: 90
+  - path: "${CCLINT_HOME}/scripts/rules/performance/prefer-prefix-increment.lua"
+    priority: 75
+  - path: "${CCLINT_HOME}/scripts/rules/performance/avoid-temporary-objects.lua"
+    priority: 85
+
+  # Algorithm usage
+  - path: "${CCLINT_HOME}/scripts/rules/performance/prefer-algorithm.lua"
+    priority: 80
+
+  # Virtual function considerations
+  - path: "${CCLINT_HOME}/scripts/rules/performance/avoid-default-arguments-virtual.lua"
+    priority: 75
+
+  # Related modernization rules
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-emplace.lua"
+    priority: 90
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-transparent-comparators.lua"
+    priority: 80
+
+  # Basic structure
+  - path: "${CCLINT_HOME}/scripts/rules/structure/header-guard.lua"
+    priority: 100
+
+# Output
+output_format: text
+show_compiler_output: true
+
+# Performance settings
+enable_cache: true
+num_threads: 0  # Use all cores
+parallel_rules: true

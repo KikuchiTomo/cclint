@@ -1,0 +1,111 @@
+{
+  "name": "cclint-vscode",
+  "displayName": "cclint",
+  "description": "cclint C++ Linter integration for VSCode",
+  "version": "0.1.0",
+  "publisher": "cclint",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Linters",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "c++",
+    "cpp",
+    "linter",
+    "cclint"
+  ],
+  "activationEvents": [
+    "onLanguage:cpp",
+    "onLanguage:c"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "cclint.restart",
+        "title": "cclint: Restart LSP Server"
+      },
+      {
+        "command": "cclint.runOnCurrentFile",
+        "title": "cclint: Run on Current File"
+      }
+    ],
+    "configuration": {
+      "title": "cclint",
+      "properties": {
+        "cclint.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable cclint"
+        },
+        "cclint.path": {
+          "type": "string",
+          "default": "cclint",
+          "description": "Path to cclint executable"
+        },
+        "cclint.configFile": {
+          "type": "string",
+          "default": "${workspaceFolder}/.cclint.yaml",
+          "description": "Path to cclint configuration file"
+        },
+        "cclint.outputFormat": {
+          "type": "string",
+          "default": "text",
+          "enum": ["text", "json", "xml"],
+          "description": "Output format for cclint"
+        },
+        "cclint.runOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run cclint on file save"
+        },
+        "cclint.lsp.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable cclint LSP server for real-time analysis"
+        },
+        "cclint.lsp.path": {
+          "type": "string",
+          "default": "cclint-lsp",
+          "description": "Path to cclint-lsp executable"
+        },
+        "cclint.lsp.configPath": {
+          "type": "string",
+          "default": "${workspaceFolder}/.cclint.yaml",
+          "description": "Path to configuration file for LSP server"
+        }
+      }
+    },
+    "problemMatchers": [
+      {
+        "name": "cclint",
+        "owner": "cclint",
+        "fileLocation": "absolute",
+        "pattern": {
+          "regexp": "^(.+):(\\d+):(\\d+):\\s+(warning|error|info)\\s+\\[(.+)\\]:\\s+(.+)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "code": 5,
+          "message": 6
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "node ./extension.js",
+    "watch": "node ./extension.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.75.0",
+    "@types/node": "^18.0.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^8.1.0"
+  }
+}

@@ -1,0 +1,87 @@
+# Modern C++ focused configuration
+# Emphasizes C++11/14/17/20 best practices
+
+version: 1.0
+cpp_standard: cpp17
+
+# Modernize rules - Encourage modern C++ features
+lua_scripts:
+  # Core modernization
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-nullptr.lua"
+    priority: 100
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-override.lua"
+    priority: 100
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-auto.lua"
+    priority: 95
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-using.lua"
+    priority: 95
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-noexcept.lua"
+    priority: 95
+
+  # Modern initialization
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-equals-default.lua"
+    priority: 90
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-equals-delete.lua"
+    priority: 90
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-default-member-init.lua"
+    priority: 90
+
+  # C++11/14/17 features
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-constexpr.lua"
+    priority: 90
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-enum-class.lua"
+    priority: 90
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-nodiscard.lua"
+    priority: 85
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-final.lua"
+    priority: 85
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/raw-string-literal.lua"
+    priority: 80
+
+  # Modern containers and algorithms
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-emplace.lua"
+    priority: 90
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-transparent-comparators.lua"
+    priority: 80
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-range-based-for.lua"
+    priority: 85
+
+  # Modern functional programming
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-lambda.lua"
+    priority: 80
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/avoid-bind.lua"
+    priority: 85
+
+  # C++17 features
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-structured-bindings.lua"
+    priority: 80
+  - path: "${CCLINT_HOME}/scripts/rules/modernize/use-designated-initializers.lua"
+    priority: 75
+
+  # Performance with modern C++
+  - path: "${CCLINT_HOME}/scripts/rules/performance/make-shared-preference.lua"
+    priority: 90
+  - path: "${CCLINT_HOME}/scripts/rules/performance/avoid-unnecessary-copy.lua"
+    priority: 90
+  - path: "${CCLINT_HOME}/scripts/rules/performance/pass-by-const-reference.lua"
+    priority: 85
+
+  # Readability
+  - path: "${CCLINT_HOME}/scripts/rules/readability/avoid-c-cast.lua"
+    priority: 95
+  - path: "${CCLINT_HOME}/scripts/rules/readability/explicit-bool-conversion.lua"
+    priority: 85
+  - path: "${CCLINT_HOME}/scripts/rules/readability/prefer-nullptr-comparison.lua"
+    priority: 80
+
+  # Essential structure
+  - path: "${CCLINT_HOME}/scripts/rules/structure/header-guard.lua"
+    priority: 100
+
+# Output
+output_format: text
+show_compiler_output: true
+
+# Performance
+enable_cache: true
+parallel_rules: true

@@ -1,0 +1,104 @@
+// Jenkinsfile for cclint integration
+// This file defines a Jenkins pipeline that includes cclint for C++ code linting
+
+pipeline {
+    agent any
+
+    environment {
+        CC = 'gcc'
+        CXX = 'g++'
+        CCLINT_HOME = '/usr/local/share/cclint'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                script {
+                    // Install cclint if not already installed
+                    sh '''
+                        if ! command -v cclint &> /dev/null; then
+                            echo "Installing cclint..."
+                            git clone https://github.com/KikuchiTomo/cclint.git /tmp/cclint
+                            cd /tmp/cclint
+                            ./build.sh
+                            sudo make -C build install
+                        else
+                            echo "cclint already installed"
+                        fi
+                    '''
+                }
+            }
+        }
+
+        stage('Lint') {
+            steps {
+                script {
+                    // Run cclint with text output
+                    sh '''
+                        cclint --format=text g++ -std=c++17 src/*.cpp > cclint-output.txt || true
+                        cat cclint-output.txt
+                    '''
+
+                    // Run cclint with JSON output for parsing
+                    sh '''
+                        cclint --format=json g++ -std=c++17 src/*.cpp > cclint-report.json || true
+                    '''
+                }
+            }
+            post {
+                always {
+                    // Archive lint results
+                    archiveArtifacts artifacts: 'cclint-*.txt,cclint-*.json', allowEmptyArchive: true
+
+                    // Parse and publish warnings (requires Warnings Next Generation Plugin)
+                    recordIssues(
+                        enabledForFailure: true,
+                        tool: groovyScript(
+                            parserId: 'cclint-parser',
+                            pattern: 'cclint-output.txt'
+                        )
+                    )
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh '''
+                    mkdir -p build
+                    cd build
+                    cmake ..
+                    make -j$(nproc)
+                '''
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh '''
+                    cd build
+                    ctest --output-on-failure
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            // Clean up workspace (optional)
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline succeeded!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}

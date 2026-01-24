@@ -1,0 +1,53 @@
+# GitLab CI configuration for cclint
+# Place this file in your repository as .gitlab-ci.yml
+
+stages:
+  - lint
+  - build
+  - test
+
+# cclint job
+cclint:
+  stage: lint
+  image: gcc:latest
+  before_script:
+    # Install dependencies
+    - apt-get update && apt-get install -y cmake git
+    # Install cclint (adjust the installation method as needed)
+    - git clone https://github.com/KikuchiTomo/cclint.git /tmp/cclint
+    - cd /tmp/cclint && ./build.sh && sudo make -C build install
+    - cd $CI_PROJECT_DIR
+  script:
+    # Run cclint on your C++ files
+    - cclint --format=text g++ -std=c++17 src/*.cpp
+    # Or with a config file
+    # - cclint --config=.cclint.yaml g++ -std=c++17 src/*.cpp
+  artifacts:
+    reports:
+      # Save lint results
+      codequality: cclint-report.json
+    when: always
+  allow_failure: true  # Don't fail the pipeline on lint warnings
+
+# Build job
+build:
+  stage: build
+  image: gcc:latest
+  script:
+    - mkdir build && cd build
+    - cmake ..
+    - make -j$(nproc)
+  artifacts:
+    paths:
+      - build/
+    expire_in: 1 week
+
+# Test job
+test:
+  stage: test
+  image: gcc:latest
+  dependencies:
+    - build
+  script:
+    - cd build
+    - ctest --output-on-failure

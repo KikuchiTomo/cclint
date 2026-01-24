@@ -1,82 +1,263 @@
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
-// cclint version
-constexpr const char* VERSION = "0.1.0-alpha";
-
-void print_version() {
-    std::cout << "cclint version " << VERSION << std::endl;
-    std::cout << "Customizable C++ Linter" << std::endl;
-}
-
-void print_help() {
-    std::cout << "Usage: cclint [OPTIONS] <compiler-command>\n"
-              << "\n"
-              << "A customizable C++ linter with LuaJIT scripting support.\n"
-              << "\n"
-              << "Options:\n"
-              << "  --help              Show this help message\n"
-              << "  --version           Show version information\n"
-              << "  --config=FILE       Specify configuration file\n"
-              << "  --format=FORMAT     Output format: text, json, xml (default: text)\n"
-              << "  -v, --verbose       Verbose output\n"
-              << "  -q, --quiet         Quiet mode (errors only)\n"
-              << "\n"
-              << "Examples:\n"
-              << "  cclint g++ -std=c++17 main.cpp\n"
-              << "  cclint --config=.cclint.yaml g++ main.cpp\n"
-              << "  cclint --format=json clang++ -std=c++20 src/*.cpp\n"
-              << "\n"
-              << "Configuration:\n"
-              << "  Create a cclint.yaml file in your project root with:\n"
-              << "  - lua_scripts: paths to Lua rule scripts\n"
-              << "  - Standard scripts available in: ${CCLINT_HOME}/scripts/rules/\n"
-              << "\n"
-              << "For more information, visit:\n"
-              << "  https://github.com/KikuchiTomo/cclint\n"
-              << std::endl;
-}
+#include "cli/argument_parser.hpp"
+#include "cli/help_formatter.hpp"
+#include "compiler/detector.hpp"
+#include "compiler/wrapper.hpp"
+#include "config/config_loader.hpp"
+#include "diagnostic/diagnostic.hpp"
+#include "diagnostic/fixer.hpp"
+#include "engine/analysis_engine.hpp"
+#include "output/formatter_factory.hpp"
+#include "utils/logger.hpp"
 
 int main(int argc, char** argv) {
-    // 引数を vector に変換
-    std::vector<std::string> args(argv, argv + argc);
+    try {
+        // コマンドライン引数解析
+        cli::ArgumentParser parser;
+        auto args = parser.parse(argc, argv);
 
-    // 引数が1つもない場合はヘルプを表示
-    if (args.size() == 1) {
-        print_help();
+        // --help
+        if (args.show_help || (argc == 1)) {
+            std::cout << cli::HelpFormatter::format_help();
+            return 0;
+        }
+
+        // --version
+        if (args.show_version) {
+            std::cout << cli::HelpFormatter::format_version();
+            return 0;
+        }
+
+        // ロガーの初期化
+        utils::Logger& logger = utils::Logger::instance();
+        if (args.verbosity == 0) {
+            logger.set_level(utils::LogLevel::Error);
+        } else if (args.verbosity == 1) {
+            logger.set_level(utils::LogLevel::Info);
+        } else {
+            logger.set_level(utils::LogLevel::Debug);
+        }
+
+        logger.info("cclint starting...");
+
+        // 設定ファイルの読み込み
+        config::ConfigLoader config_loader;
+        config::Config config;
+
+        if (args.config_file) {
+            logger.info("Loading config from: " + *args.config_file);
+            config = config_loader.load_from_file(*args.config_file);
+        } else {
+            logger.info("Using default config or searching for config file");
+            config = config_loader.load(std::nullopt, ".");
+            auto loaded_path = config_loader.get_loaded_config_path();
+            if (loaded_path) {
+                logger.info("Loaded config from: " + *loaded_path);
+            } else {
+                logger.info("Using default configuration");
+            }
+        }
+
+        // コマンドラインオプションで設定を上書き
+        if (!args.output_format.empty()) {
+            config.output_format = args.output_format;
+        }
+        if (args.max_errors > 0) {
+            config.max_errors = args.max_errors;
+        }
+        if (args.num_threads > 0) {
+            config.num_threads = args.num_threads;
+        }
+        config.enable_cache = args.enable_cache;
+
+        // コンパイラコマンドが指定されていなければエラー
+        if (args.compiler_command.empty()) {
+            std::cerr << "Error: No compiler command specified\n";
+            std::cerr << "Usage: cclint [OPTIONS] <compiler-command>\n";
+            std::cerr << "Try 'cclint --help' for more information.\n";
+            return 1;
+        }
+
+        // コンパイラの検出
+        compiler::CompilerDetector detector;
+        auto compiler_info = detector.detect(args.compiler_command);
+        if (compiler_info.type != compiler::CompilerType::Unknown) {
+            logger.info("Detected compiler: " + compiler_info.name + " version " +
+                        compiler_info.version);
+        } else {
+            logger.warning("Could not detect compiler type");
+        }
+
+        // コンパイラコマンドの実行
+        logger.info("Executing compiler command...");
+        compiler::CompilerWrapper wrapper(args.compiler_command);
+        auto result = wrapper.execute();
+
+        logger.info("Compiler exit code: " + std::to_string(result.exit_code));
+
+        // ソースファイルの表示
+        if (!result.source_files.empty()) {
+            logger.info("Source files found:");
+            for (const auto& file : result.source_files) {
+                logger.info("  - " + file);
+            }
+        }
+
+        // コンパイラフラグの表示
+        if (!result.compiler_flags.empty() && args.verbosity > 1) {
+            logger.debug("Compiler flags:");
+            for (const auto& flag : result.compiler_flags) {
+                logger.debug("  - " + flag);
+            }
+        }
+
+        // コンパイラ出力の表示（設定による）
+        if (config.show_compiler_output) {
+            if (!result.stdout_output.empty()) {
+                std::cout << result.stdout_output;
+            }
+            if (!result.stderr_output.empty()) {
+                std::cerr << result.stderr_output;
+            }
+        }
+
+        // 解析エンジンの初期化
+        logger.info("Initializing analysis engine...");
+        cclint::engine::AnalysisEngine analysis_engine(config);
+
+        // ソースファイルの解析
+        if (!result.source_files.empty()) {
+            logger.info("Analyzing " + std::to_string(result.source_files.size()) +
+                        " source file(s)...");
+
+            auto analysis_results = analysis_engine.analyze_files(result.source_files);
+
+            // 解析結果のサマリーをログ出力
+            size_t success_count = 0;
+            size_t failed_count = 0;
+            for (const auto& res : analysis_results) {
+                if (res.success) {
+                    success_count++;
+                } else {
+                    failed_count++;
+                    logger.error("Failed to analyze: " + res.file_path + " - " + res.error_message);
+                }
+            }
+
+            logger.info("Successfully analyzed " + std::to_string(success_count) + " file(s)");
+            if (failed_count > 0) {
+                logger.warning("Failed to analyze " + std::to_string(failed_count) + " file(s)");
+            }
+
+        } else {
+            logger.warning("No source files found to analyze");
+        }
+
+        // すべての診断を取得
+        auto all_diagnostics = analysis_engine.get_all_diagnostics();
+
+        // 出力フォーマッタの作成
+        auto formatter = output::FormatterFactory::create(config.output_format);
+
+        // 診断結果の出力
+        formatter->format(all_diagnostics, std::cout);
+
+        // 自動修正の適用
+        if (args.enable_fix || args.fix_preview) {
+            logger.info("Applying automatic fixes...");
+            diagnostic::Fixer fixer(args.fix_preview);
+            size_t fixed_files = fixer.apply_fixes(all_diagnostics);
+
+            if (fixed_files > 0) {
+                logger.info("Fixed " + std::to_string(fixed_files) + " file(s)");
+
+                if (args.fix_preview) {
+                    logger.info("=== Fix Preview ===");
+                    for (const auto& [filename, content] : fixer.get_preview()) {
+                        logger.info("File: " + filename);
+                        logger.info("Modified content preview:");
+                        // 最初の数行のみ表示
+                        std::istringstream iss(content);
+                        std::string line;
+                        int line_count = 0;
+                        while (std::getline(iss, line) && line_count < 20) {
+                            std::cout << line << "\n";
+                            line_count++;
+                        }
+                        if (line_count >= 20) {
+                            std::cout << "... (more lines)\n";
+                        }
+                    }
+                } else {
+                    // 実際にファイルに書き込む
+                    size_t written = fixer.write_fixes();
+                    logger.info("Wrote fixes to " + std::to_string(written) + " file(s)");
+                }
+            } else {
+                logger.info("No fixes to apply");
+            }
+        }
+
+        // 統計情報の表示
+        if (args.verbosity > 0) {
+            logger.info("Analysis complete");
+
+            auto stats = analysis_engine.get_stats();
+            logger.info("Files analyzed: " + std::to_string(stats.analyzed_files) + "/" +
+                        std::to_string(stats.total_files));
+
+            if (stats.skipped_files > 0) {
+                logger.info("Files skipped: " + std::to_string(stats.skipped_files));
+            }
+
+            if (stats.failed_files > 0) {
+                logger.warning("Files failed: " + std::to_string(stats.failed_files));
+            }
+
+            if (stats.stopped_early) {
+                logger.warning("Analysis stopped early (max_errors reached)");
+            }
+
+            logger.info("Errors: " + std::to_string(analysis_engine.get_error_count()));
+            logger.info("Warnings: " + std::to_string(analysis_engine.get_warning_count()));
+
+            if (args.verbosity > 1 || args.enable_profile) {
+                logger.info("Total time: " + std::to_string(stats.total_time.count()) + "ms");
+            }
+
+            // プロファイリングモード: 詳細な統計を表示
+            if (args.enable_profile) {
+                logger.info("=== Profiling Information ===");
+                logger.info("Cached files: " + std::to_string(stats.cached_files));
+                logger.info("Cache hit rate: " +
+                            std::to_string(stats.total_files > 0
+                                               ? (stats.cached_files * 100.0 / stats.total_files)
+                                               : 0.0) +
+                            "%");
+                logger.info("Average time per file: " +
+                            std::to_string(stats.analyzed_files > 0
+                                               ? (stats.total_time.count() / stats.analyzed_files)
+                                               : 0) +
+                            "ms");
+                logger.info("Memory usage (estimated): " +
+                            std::to_string(stats.memory_usage_bytes / (1024 * 1024)) + " MB");
+            }
+        }
+
+        // 終了コードの決定
+        if (analysis_engine.get_error_count() > 0) {
+            return 1;  // エラーがある場合
+        }
+
+        logger.info("cclint finished successfully");
         return 0;
+
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 2;
     }
-
-    // 最初の引数をチェック
-    std::string first_arg = args[1];
-
-    if (first_arg == "--help" || first_arg == "-h") {
-        print_help();
-        return 0;
-    }
-
-    if (first_arg == "--version") {
-        print_version();
-        return 0;
-    }
-
-    // まだ実装されていないことを通知
-    std::cout << "cclint is under active development.\n"
-              << "\n"
-              << "Current status:\n"
-              << "  [x] Project documentation complete\n"
-              << "  [x] 100+ Lua APIs designed\n"
-              << "  [x] Standard script library structure defined\n"
-              << "  [ ] Command-line parser (Milestone 1)\n"
-              << "  [ ] Configuration loader (Milestone 1)\n"
-              << "  [ ] C++ parser integration (Milestone 1)\n"
-              << "  [ ] Rule engine (Milestone 2)\n"
-              << "  [ ] LuaJIT integration (Milestone 3)\n"
-              << "\n"
-              << "See docs/milestones.md for the development roadmap.\n"
-              << "Use --help to see the planned features.\n"
-              << std::endl;
-
-    return 0;
 }
