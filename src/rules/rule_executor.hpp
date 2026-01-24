@@ -13,6 +13,11 @@ class ASTUnit;
 }
 
 namespace cclint {
+
+namespace parser {
+class TranslationUnitNode;
+}
+
 namespace rules {
 
 /// ルール実行の統計情報
@@ -43,11 +48,21 @@ public:
         const std::string& content,
         diagnostic::DiagnosticEngine& diag_engine);
 
-    /// ASTに対してすべての有効なルールを実行
-    /// @param ast_unit ASTUnit
+    /// ASTに対してすべての有効なルールを実行（独自AST）
+    /// @param file_path ファイルパス
+    /// @param ast AST
     /// @param diag_engine 診断エンジン
     /// @return 実行統計のリスト
     std::vector<RuleExecutionStats> execute_ast_rules(
+        const std::string& file_path,
+        std::shared_ptr<parser::TranslationUnitNode> ast,
+        diagnostic::DiagnosticEngine& diag_engine);
+
+    /// ASTに対してすべての有効なルールを実行（Clang AST）
+    /// @param ast_unit ASTUnit
+    /// @param diag_engine 診断エンジン
+    /// @return 実行統計のリスト
+    std::vector<RuleExecutionStats> execute_clang_ast_rules(
         clang::ASTUnit* ast_unit,
         diagnostic::DiagnosticEngine& diag_engine);
 

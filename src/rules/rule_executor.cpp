@@ -1,4 +1,5 @@
 #include "rules/rule_executor.hpp"
+#include "parser/ast.hpp"
 #include "rules/rule_registry.hpp"
 #include "utils/logger.hpp"
 
@@ -30,6 +31,27 @@ std::vector<RuleExecutionStats> RuleExecutor::execute_text_rules(
 }
 
 std::vector<RuleExecutionStats> RuleExecutor::execute_ast_rules(
+    const std::string& file_path,
+    std::shared_ptr<parser::TranslationUnitNode> ast,
+    diagnostic::DiagnosticEngine& diag_engine) {
+
+    std::vector<RuleExecutionStats> stats;
+
+    auto& registry = RuleRegistry::instance();
+    auto enabled_rules = registry.get_enabled_rules();
+
+    for (auto* rule : enabled_rules) {
+        // 独自ASTを使ったルール実行
+        // 現在はスキップ（将来的にcheck_ast_nodeメソッドを追加予定）
+        utils::Logger::instance().debug(
+            "AST-based rule execution not yet implemented for rule: " +
+            rule->name());
+    }
+
+    return stats;
+}
+
+std::vector<RuleExecutionStats> RuleExecutor::execute_clang_ast_rules(
     clang::ASTUnit* ast_unit,
     diagnostic::DiagnosticEngine& diag_engine) {
 

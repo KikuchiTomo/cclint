@@ -1,4 +1,5 @@
 #include "engine/analysis_engine.hpp"
+#include "parser/simple_parser.hpp"
 #include "rules/rule_registry.hpp"
 #include "rules/builtin/naming_convention.hpp"
 #include "rules/builtin/header_guard.hpp"
@@ -132,7 +133,35 @@ FileAnalysisResult AnalysisEngine::analyze_file(
         auto stats = rule_executor_->execute_text_rules(file_path, content,
                                                          diag_engine);
 
-        // TODO: AST解析とASTベースのルール実行（Milestone 2+）
+        // AST解析（C++ファイルのみ）
+        if (file_path.find(".cpp") != std::string::npos ||
+            file_path.find(".cc") != std::string::npos ||
+            file_path.find(".cxx") != std::string::npos ||
+            file_path.find(".hpp") != std::string::npos ||
+            file_path.find(".h") != std::string::npos) {
+
+            try {
+                parser::SimpleParser parser(content, file_path);
+                auto ast = parser.parse();
+
+                if (parser.has_errors()) {
+                    utils::Logger::instance().debug(
+                        "AST parse warnings for " + file_path);
+                }
+
+                // ASTベースのルール実行
+                auto ast_stats = rule_executor_->execute_ast_rules(
+                    file_path, ast, diag_engine);
+
+                // 統計をマージ
+                stats.insert(stats.end(), ast_stats.begin(), ast_stats.end());
+
+            } catch (const std::exception& e) {
+                utils::Logger::instance().warning(
+                    "AST parsing failed for " + file_path + ": " +
+                    e.what());
+            }
+        }
 
         // 結果を保存
         result.success = true;
