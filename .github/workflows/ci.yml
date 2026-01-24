@@ -58,7 +58,7 @@ jobs:
 
     - name: Upload binary artifact
       if: matrix.build_type == 'Release' && matrix.compiler == 'g++-11'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: cclint-ubuntu-${{ matrix.compiler }}
         path: build/src/cclint
@@ -103,7 +103,7 @@ jobs:
 
     - name: Upload binary artifact
       if: matrix.build_type == 'Release'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: cclint-macos
         path: build/src/cclint
@@ -159,8 +159,8 @@ jobs:
       run: |
         SCRIPT_COUNT=$(find scripts/rules -name '*.lua' | wc -l)
         echo "Found $SCRIPT_COUNT Lua rule scripts"
-        if [ $SCRIPT_COUNT -ne 100 ]; then
-          echo "Expected 100 Lua scripts, found $SCRIPT_COUNT"
+        if [ $SCRIPT_COUNT -ne 102 ]; then
+          echo "Expected 102 Lua scripts, found $SCRIPT_COUNT"
           exit 1
         fi
 
