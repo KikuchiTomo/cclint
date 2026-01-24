@@ -7,6 +7,9 @@ set(CCLINT_SOURCES
     config/yaml_config.cpp
     compiler/wrapper.cpp
     compiler/detector.cpp
+    parser/ast.cpp
+    parser/lexer.cpp
+    parser/simple_parser.cpp
     diagnostic/diagnostic.cpp
     output/formatter.cpp
     output/text_formatter.cpp
@@ -23,6 +26,7 @@ set(CCLINT_SOURCES
     rules/builtin/header_guard.cpp
     rules/builtin/max_line_length.cpp
     engine/analysis_engine.cpp
+    engine/incremental.cpp
     lua/lua_engine.cpp
     lua/lua_bridge.cpp
     lua/lua_rule.cpp

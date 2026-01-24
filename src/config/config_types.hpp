@@ -46,6 +46,11 @@ struct Config {
     bool enable_cache = true;
     std::string cache_directory = ".cclint_cache";
 
+    // インクリメンタル解析設定
+    bool enable_incremental = false;  // インクリメンタル解析を有効化
+    bool use_git_diff = false;  // git diffを使って変更ファイルを検出
+    std::string git_base_ref = "HEAD";  // git diffの比較元
+
     // ルール実行設定
     bool parallel_rules = true;
     bool fail_fast = false;

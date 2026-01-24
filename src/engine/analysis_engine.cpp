@@ -22,6 +22,9 @@ AnalysisEngine::AnalysisEngine(const config::Config& config)
       thread_pool_(config.num_threads > 1
                        ? std::make_unique<parallel::ThreadPool>(
                              config.num_threads)
+                       : nullptr),
+      incremental_(config.enable_incremental
+                       ? std::make_unique<IncrementalAnalyzer>()
                        : nullptr) {
     initialize_rules();
 }
@@ -197,18 +200,38 @@ std::vector<FileAnalysisResult> AnalysisEngine::analyze_files(
     std::vector<FileAnalysisResult> results;
     results.reserve(file_paths.size());
 
-    // 並列処理が有効な場合
-    if (thread_pool_ && file_paths.size() > 1) {
+    // インクリメンタル解析が有効な場合、変更されたファイルのみをフィルタ
+    std::vector<std::string> files_to_analyze;
+    if (incremental_) {
+        if (config_.use_git_diff) {
+            // git diff を使って変更されたファイルを検出
+            files_to_analyze =
+                incremental_->get_git_modified_files(config_.git_base_ref);
+        } else {
+            // タイムスタンプベースの検出
+            files_to_analyze = incremental_->filter_modified_files(file_paths);
+        }
+
         utils::Logger::instance().info(
-            "Analyzing " + std::to_string(file_paths.size()) +
+            "Incremental analysis: " +
+            std::to_string(files_to_analyze.size()) + " / " +
+            std::to_string(file_paths.size()) + " files to analyze");
+    } else {
+        files_to_analyze = file_paths;
+    }
+
+    // 並列処理が有効な場合
+    if (thread_pool_ && files_to_analyze.size() > 1) {
+        utils::Logger::instance().info(
+            "Analyzing " + std::to_string(files_to_analyze.size()) +
             " files in parallel with " + std::to_string(thread_pool_->size()) +
             " threads");
 
         std::vector<std::future<FileAnalysisResult>> futures;
-        futures.reserve(file_paths.size());
+        futures.reserve(files_to_analyze.size());
 
         // すべてのタスクをキューに追加
-        for (const auto& file_path : file_paths) {
+        for (const auto& file_path : files_to_analyze) {
             futures.push_back(thread_pool_->enqueue(
                 [this, file_path]() { return this->analyze_file(file_path); }));
         }
@@ -236,7 +259,7 @@ std::vector<FileAnalysisResult> AnalysisEngine::analyze_files(
 
     } else {
         // シーケンシャル処理
-        for (const auto& file_path : file_paths) {
+        for (const auto& file_path : files_to_analyze) {
             // 早期終了チェック
             if (should_stop_early()) {
                 utils::Logger::instance().warning(
@@ -248,7 +271,17 @@ std::vector<FileAnalysisResult> AnalysisEngine::analyze_files(
 
             auto result = analyze_file(file_path);
             results.push_back(result);
+
+            // インクリメンタル解析が有効な場合、状態を記録
+            if (incremental_ && result.success) {
+                incremental_->record_file_state(file_path);
+            }
         }
+    }
+
+    // インクリメンタル解析の状態を保存
+    if (incremental_) {
+        incremental_->save_state();
     }
 
     // メモリ使用量を概算

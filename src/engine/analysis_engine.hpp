@@ -3,6 +3,7 @@
 #include "cache/file_cache.hpp"
 #include "config/config_types.hpp"
 #include "diagnostic/diagnostic.hpp"
+#include "engine/incremental.hpp"
 #include "parallel/thread_pool.hpp"
 #include "rules/rule_executor.hpp"
 
@@ -79,6 +80,7 @@ private:
     AnalysisEngineStats stats_;
     std::unique_ptr<cache::FileCache> cache_;
     std::unique_ptr<parallel::ThreadPool> thread_pool_;
+    std::unique_ptr<IncrementalAnalyzer> incremental_;
     mutable std::mutex results_mutex_;  // results_とstats_の保護用
 
     /// ファイルがinclude/excludeパターンにマッチするかをチェック
