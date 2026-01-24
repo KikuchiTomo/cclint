@@ -1,0 +1,87 @@
+{
+    // VSCode Tasks Configuration for cclint
+    // Place this file in .vscode/tasks.json in your project
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "cclint: Lint Current File",
+            "type": "shell",
+            "command": "cclint",
+            "args": [
+                "--format=text",
+                "g++",
+                "-std=c++17",
+                "${file}"
+            ],
+            "problemMatcher": {
+                "owner": "cclint",
+                "fileLocation": "absolute",
+                "pattern": {
+                    "regexp": "^(.+):(\\d+):(\\d+):\\s+(warning|error|info)\\s+\\[(.+)\\]:\\s+(.+)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "code": 5,
+                    "message": 6
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "cclint: Lint All Files",
+            "type": "shell",
+            "command": "cclint",
+            "args": [
+                "--config=.cclint.yaml",
+                "--format=text",
+                "g++",
+                "-std=c++17",
+                "src/*.cpp"
+            ],
+            "problemMatcher": {
+                "owner": "cclint",
+                "fileLocation": "absolute",
+                "pattern": {
+                    "regexp": "^(.+):(\\d+):(\\d+):\\s+(warning|error|info)\\s+\\[(.+)\\]:\\s+(.+)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "code": 5,
+                    "message": 6
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "cclint: Lint with JSON Output",
+            "type": "shell",
+            "command": "cclint",
+            "args": [
+                "--format=json",
+                "g++",
+                "-std=c++17",
+                "${workspaceFolder}/src/*.cpp"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        }
+    ]
+}

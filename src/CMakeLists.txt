@@ -24,6 +24,7 @@ set(CCLINT_SOURCES
     rules/builtin/max_line_length.cpp
     engine/analysis_engine.cpp
     lua/lua_engine.cpp
+    lua/lua_bridge.cpp
     lua/lua_rule.cpp
 )
 
