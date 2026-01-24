@@ -737,15 +737,19 @@
 - [x] サンプルプラグイン（examples/plugins/example_plugin.cpp）
 - [x] プラグイン開発ガイド（docs/plugin_development.md）
 
-### Windows対応
-- [ ] Windows環境でのビルド
-- [ ] MSVCサポート
-- [ ] パッケージング（.msi）
+### Windows対応 ✅ 完了
+- [x] Windows環境でのビルド
+- [x] MSVCサポート（プラグインローダーでWindows API対応）
+- [x] Windows ビルドガイド（docs/windows_build.md）
+- [~] パッケージング（.msi）（将来の拡張）
 
-### LSPサーバー
-- [ ] Language Server Protocol実装
-- [ ] リアルタイム解析
-- [ ] IDE統合の強化
+### LSPサーバー ✅ 基礎実装完了
+- [x] Language Server Protocol実装（基礎）
+- [x] LSPServer実装（lsp/lsp_server.hpp/cpp）
+- [x] cclint-lsp 実行ファイル
+- [x] textDocument/didOpen, didChange, didSave, didClose サポート
+- [~] リアルタイム解析（基礎実装済み、より高度な機能は将来）
+- [~] IDE統合の強化（基礎実装済み）
 
 ---
 

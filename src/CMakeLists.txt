@@ -42,8 +42,23 @@ set(CCLINT_SOURCES
 # 実行ファイルを作成
 add_executable(cclint ${CCLINT_SOURCES})
 
+# LSPサーバー用のソースファイル
+set(CCLINT_LSP_SOURCES
+    lsp/lsp_server.cpp
+    lsp/main_lsp.cpp
+    utils/logger.cpp
+)
+
+# LSPサーバー実行ファイルを作成
+add_executable(cclint-lsp ${CCLINT_LSP_SOURCES})
+
 # インクルードディレクトリを設定
 target_include_directories(cclint
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_include_directories(cclint-lsp
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
 )

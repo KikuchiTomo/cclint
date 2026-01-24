@@ -26,6 +26,14 @@ void Logger::set_output(std::ostream* out, std::ostream* err) {
     }
 }
 
+void Logger::set_log_file(const std::string& filepath) {
+    log_file_ = std::make_unique<std::ofstream>(filepath, std::ios::app);
+    if (log_file_->is_open()) {
+        out_ = log_file_.get();
+        err_ = log_file_.get();
+    }
+}
+
 void Logger::debug(const std::string& message) {
     log(LogLevel::Debug, message);
 }

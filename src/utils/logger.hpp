@@ -1,7 +1,9 @@
 #pragma once
 
 #include <iostream>
+#include <fstream>
 #include <string>
+#include <memory>
 
 namespace utils {
 
@@ -28,6 +30,9 @@ public:
 
     // 出力先を設定
     void set_output(std::ostream* out, std::ostream* err = nullptr);
+
+    // ログファイルを設定
+    void set_log_file(const std::string& filepath);
 
     // ログ出力
     void debug(const std::string& message);
@@ -60,6 +65,7 @@ private:
     LogLevel level_ = LogLevel::Info;
     std::ostream* out_ = &std::cout;
     std::ostream* err_ = &std::cerr;
+    std::unique_ptr<std::ofstream> log_file_;
 };
 
 // グローバル関数
