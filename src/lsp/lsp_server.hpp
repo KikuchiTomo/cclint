@@ -1,5 +1,8 @@
 #pragma once
 
+#include "engine/analysis_engine.hpp"
+#include "config/config_loader.hpp"
+
 #include <string>
 #include <memory>
 #include <map>
@@ -42,6 +45,10 @@ private:
 
     // ドキュメント管理
     std::map<std::string, std::string> documents_;  // URI -> content
+
+    // 解析エンジン
+    std::unique_ptr<engine::AnalysisEngine> analysis_engine_;
+    config::Config config_;
 
     /// LSPメッセージをパース
     LSPMessage parse_message(const std::string& content);

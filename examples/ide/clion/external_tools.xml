@@ -1,0 +1,37 @@
+<!-- CLion External Tools configuration for cclint
+     Place in: .idea/externalTools/external_tools.xml
+     Or configure via: Settings → Tools → External Tools
+-->
+<toolSet name="cclint">
+  <tool name="cclint - Check Current File" showInMainMenu="true" showInEditor="true" showInProject="true" showInSearchPopup="true" disabled="false" useConsole="true" showConsoleOnStdOut="false" showConsoleOnStdErr="false" synchronizeAfterRun="false">
+    <exec>
+      <option name="COMMAND" value="cclint" />
+      <option name="PARAMETERS" value="--config=$ProjectFileDir$/.cclint.yaml g++ $FilePath$" />
+      <option name="WORKING_DIRECTORY" value="$ProjectFileDir$" />
+    </exec>
+  </tool>
+
+  <tool name="cclint - Check All Files" showInMainMenu="true" showInEditor="false" showInProject="true" showInSearchPopup="true" disabled="false" useConsole="true" showConsoleOnStdOut="false" showConsoleOnStdErr="false" synchronizeAfterRun="false">
+    <exec>
+      <option name="COMMAND" value="cclint" />
+      <option name="PARAMETERS" value="--config=$ProjectFileDir$/.cclint.yaml g++ $ProjectFileDir$/src/*.cpp" />
+      <option name="WORKING_DIRECTORY" value="$ProjectFileDir$" />
+    </exec>
+  </tool>
+
+  <tool name="cclint - Auto Fix Current File" showInMainMenu="true" showInEditor="true" showInProject="true" showInSearchPopup="true" disabled="false" useConsole="true" showConsoleOnStdOut="false" showConsoleOnStdErr="false" synchronizeAfterRun="true">
+    <exec>
+      <option name="COMMAND" value="cclint" />
+      <option name="PARAMETERS" value="--config=$ProjectFileDir$/.cclint.yaml --fix g++ $FilePath$" />
+      <option name="WORKING_DIRECTORY" value="$ProjectFileDir$" />
+    </exec>
+  </tool>
+
+  <tool name="cclint - Profile Analysis" showInMainMenu="true" showInEditor="false" showInProject="true" showInSearchPopup="true" disabled="false" useConsole="true" showConsoleOnStdOut="false" showConsoleOnStdErr="false" synchronizeAfterRun="false">
+    <exec>
+      <option name="COMMAND" value="cclint" />
+      <option name="PARAMETERS" value="--config=$ProjectFileDir$/.cclint.yaml --profile g++ $FilePath$" />
+      <option name="WORKING_DIRECTORY" value="$ProjectFileDir$" />
+    </exec>
+  </tool>
+</toolSet>

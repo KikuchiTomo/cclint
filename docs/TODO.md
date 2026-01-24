@@ -743,13 +743,18 @@
 - [x] Windows ビルドガイド（docs/windows_build.md）
 - [~] パッケージング（.msi）（将来の拡張）
 
-### LSPサーバー ✅ 基礎実装完了
-- [x] Language Server Protocol実装（基礎）
+### LSPサーバー ✅ 完了
+- [x] Language Server Protocol実装
 - [x] LSPServer実装（lsp/lsp_server.hpp/cpp）
 - [x] cclint-lsp 実行ファイル
 - [x] textDocument/didOpen, didChange, didSave, didClose サポート
-- [~] リアルタイム解析（基礎実装済み、より高度な機能は将来）
-- [~] IDE統合の強化（基礎実装済み）
+- [x] リアルタイム解析（AnalysisEngine統合完了）
+- [x] IDE統合の強化
+  - [x] VSCode拡張機能（extension.js, package.json）
+  - [x] CLion統合（external_tools.xml, README）
+  - [x] Vim/Neovim統合（ALE, Native LSP, coc.nvim, Quickfix）
+  - [x] 自動修正対応
+  - [x] プロファイリング対応
 
 ---
 

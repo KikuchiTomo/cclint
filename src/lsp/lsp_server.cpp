@@ -1,13 +1,24 @@
 #include "lsp_server.hpp"
 #include "utils/logger.hpp"
+#include "utils/file_utils.hpp"
+#include "config/config_loader.hpp"
 
 #include <sstream>
 #include <iostream>
+#include <fstream>
+#include <filesystem>
 
 namespace cclint {
 namespace lsp {
 
-LSPServer::LSPServer() {}
+LSPServer::LSPServer() {
+    // 設定を読み込む
+    config::ConfigLoader loader;
+    config_ = loader.load(std::nullopt, ".");
+
+    // 解析エンジンを初期化
+    analysis_engine_ = std::make_unique<engine::AnalysisEngine>(config_);
+}
 
 LSPServer::~LSPServer() {
     stop();
@@ -258,21 +269,82 @@ std::string LSPServer::handle_text_document_did_close(const std::string& params)
 }
 
 void LSPServer::analyze_document(const std::string& uri) {
-    // ドキュメントを解析して診断を送信
-    // 実際には AnalysisEngine を使って解析する
-
     auto it = documents_.find(uri);
     if (it == documents_.end()) {
         return;
     }
 
-    // 簡易実装: 診断なし（空の配列）を返す
-    std::ostringstream diagnostics_json;
-    diagnostics_json << "{\"uri\":\"" << uri << "\",\"diagnostics\":[]}";
+    // URIをファイルパスに変換（file:// スキームを削除）
+    std::string file_path = uri;
+    if (file_path.find("file://") == 0) {
+        file_path = file_path.substr(7);
+    }
 
-    send_notification("textDocument/publishDiagnostics", diagnostics_json.str());
+    // 一時ファイルに内容を書き込む（メモリ上のコンテンツを解析するため）
+    std::string temp_path = "/tmp/cclint_lsp_" + std::to_string(std::hash<std::string>{}(uri)) + ".cpp";
+    try {
+        std::ofstream temp_file(temp_path);
+        temp_file << it->second;
+        temp_file.close();
 
-    utils::Logger::instance().debug("LSP: Analyzed " + uri);
+        // ファイルを解析
+        auto results = analysis_engine_->analyze_files({temp_path});
+
+        // 診断メッセージを収集
+        auto all_diagnostics = analysis_engine_->get_all_diagnostics();
+
+        // JSON形式で診断を送信
+        std::ostringstream diagnostics_json;
+        diagnostics_json << "{\"uri\":\"" << uri << "\",\"diagnostics\":[";
+
+        bool first = true;
+        for (const auto& diag : all_diagnostics) {
+            if (!first) diagnostics_json << ",";
+            first = false;
+
+            // Severityを変換
+            int severity = 2; // Warning
+            switch (diag.severity) {
+                case diagnostic::Severity::Error:
+                    severity = 1;
+                    break;
+                case diagnostic::Severity::Warning:
+                    severity = 2;
+                    break;
+                case diagnostic::Severity::Info:
+                    severity = 3;
+                    break;
+                case diagnostic::Severity::Note:
+                    severity = 4;
+                    break;
+            }
+
+            diagnostics_json << "{";
+            diagnostics_json << "\"range\":{";
+            diagnostics_json << "\"start\":{\"line\":" << (diag.location.line - 1)
+                           << ",\"character\":" << diag.location.column << "},";
+            diagnostics_json << "\"end\":{\"line\":" << (diag.location.line - 1)
+                           << ",\"character\":" << (diag.location.column + 10) << "}";
+            diagnostics_json << "},";
+            diagnostics_json << "\"severity\":" << severity << ",";
+            diagnostics_json << "\"source\":\"cclint\",";
+            diagnostics_json << "\"message\":\"" << diag.message << "\"";
+            diagnostics_json << "}";
+        }
+
+        diagnostics_json << "]}";
+
+        send_notification("textDocument/publishDiagnostics", diagnostics_json.str());
+
+        // 一時ファイルを削除
+        std::filesystem::remove(temp_path);
+
+        utils::Logger::instance().debug("LSP: Analyzed " + uri + " - found " +
+                                       std::to_string(all_diagnostics.size()) + " diagnostics");
+
+    } catch (const std::exception& e) {
+        utils::Logger::instance().error("LSP: Failed to analyze " + uri + ": " + e.what());
+    }
 }
 
 } // namespace lsp
