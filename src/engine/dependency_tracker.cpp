@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <queue>
 #include <regex>
+#include <sstream>
 
 #include "utils/file_utils.hpp"
 #include "utils/logger.hpp"
