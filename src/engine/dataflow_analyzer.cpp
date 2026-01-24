@@ -1,14 +1,14 @@
 #include "dataflow_analyzer.hpp"
-#include "utils/logger.hpp"
 
 #include <algorithm>
 #include <functional>
 
+#include "utils/logger.hpp"
+
 namespace cclint {
 namespace engine {
 
-DataFlowAnalysisResult DataFlowAnalyzer::analyze(
-    std::shared_ptr<parser::TranslationUnitNode> ast) {
+DataFlowAnalysisResult DataFlowAnalyzer::analyze(std::shared_ptr<parser::TranslationUnitNode> ast) {
     DataFlowAnalysisResult result;
 
     if (!ast) {
@@ -24,8 +24,8 @@ DataFlowAnalysisResult DataFlowAnalyzer::analyze(
     return result;
 }
 
-std::set<std::string> DataFlowAnalyzer::detect_uninitialized_variables(
-    std::shared_ptr<parser::TranslationUnitNode> ast) {
+std::set<std::string>
+DataFlowAnalyzer::detect_uninitialized_variables(std::shared_ptr<parser::TranslationUnitNode> ast) {
     std::set<std::string> uninitialized;
 
     if (!ast) {
@@ -35,7 +35,8 @@ std::set<std::string> DataFlowAnalyzer::detect_uninitialized_variables(
     // ASTを走査して関数を検索
     std::function<void(std::shared_ptr<parser::ASTNode>)> traverse;
     traverse = [&](std::shared_ptr<parser::ASTNode> node) {
-        if (!node) return;
+        if (!node)
+            return;
 
         if (node->type == parser::ASTNodeType::Function ||
             node->type == parser::ASTNodeType::Method) {
@@ -63,8 +64,8 @@ std::set<std::string> DataFlowAnalyzer::detect_uninitialized_variables(
     return uninitialized;
 }
 
-std::map<std::string, std::vector<int>> DataFlowAnalyzer::detect_null_pointer_risks(
-    std::shared_ptr<parser::TranslationUnitNode> ast) {
+std::map<std::string, std::vector<int>>
+DataFlowAnalyzer::detect_null_pointer_risks(std::shared_ptr<parser::TranslationUnitNode> ast) {
     std::map<std::string, std::vector<int>> risks;
 
     if (!ast) {
@@ -76,7 +77,8 @@ std::map<std::string, std::vector<int>> DataFlowAnalyzer::detect_null_pointer_ri
 
     std::function<void(std::shared_ptr<parser::ASTNode>)> traverse;
     traverse = [&](std::shared_ptr<parser::ASTNode> node) {
-        if (!node) return;
+        if (!node)
+            return;
 
         if (node->type == parser::ASTNodeType::Variable ||
             node->type == parser::ASTNodeType::Field) {
@@ -99,10 +101,10 @@ std::map<std::string, std::vector<int>> DataFlowAnalyzer::detect_null_pointer_ri
     return risks;
 }
 
-void DataFlowAnalyzer::collect_variable_declarations(
-    std::shared_ptr<parser::ASTNode> node,
-    std::map<std::string, bool>& variables) {
-    if (!node) return;
+void DataFlowAnalyzer::collect_variable_declarations(std::shared_ptr<parser::ASTNode> node,
+                                                     std::map<std::string, bool>& variables) {
+    if (!node)
+        return;
 
     if (node->type == parser::ASTNodeType::Variable) {
         auto var = std::dynamic_pointer_cast<parser::VariableNode>(node);
@@ -118,18 +120,17 @@ void DataFlowAnalyzer::collect_variable_declarations(
     }
 }
 
-void DataFlowAnalyzer::collect_variable_usages(
-    std::shared_ptr<parser::ASTNode> node,
-    std::set<std::string>& usages) {
+void DataFlowAnalyzer::collect_variable_usages(std::shared_ptr<parser::ASTNode> node,
+                                               std::set<std::string>& usages) {
     // この関数は将来の拡張のためのスタブ
     // より詳細な解析では、変数の使用箇所を追跡する
     (void)node;
     (void)usages;
 }
 
-std::vector<diagnostic::Diagnostic> DataFlowAnalyzer::generate_diagnostics(
-    const DataFlowAnalysisResult& result,
-    const std::string& filename) {
+std::vector<diagnostic::Diagnostic>
+DataFlowAnalyzer::generate_diagnostics(const DataFlowAnalysisResult& result,
+                                       const std::string& filename) {
     std::vector<diagnostic::Diagnostic> diagnostics;
 
     // 未初期化変数の診断
@@ -150,8 +151,7 @@ std::vector<diagnostic::Diagnostic> DataFlowAnalyzer::generate_diagnostics(
             diagnostic::Diagnostic diag;
             diag.severity = diagnostic::Severity::Warning;
             diag.rule_name = "dataflow-null-pointer-risk";
-            diag.message = "Pointer '" + var_name +
-                           "' may be null when dereferenced";
+            diag.message = "Pointer '" + var_name + "' may be null when dereferenced";
             diag.location.filename = filename;
             diag.location.line = line;
             diag.location.column = 0;
@@ -162,5 +162,5 @@ std::vector<diagnostic::Diagnostic> DataFlowAnalyzer::generate_diagnostics(
     return diagnostics;
 }
 
-} // namespace engine
-} // namespace cclint
+}  // namespace engine
+}  // namespace cclint

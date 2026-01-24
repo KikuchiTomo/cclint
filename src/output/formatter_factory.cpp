@@ -1,20 +1,20 @@
 #include "formatter_factory.hpp"
-#include "json_formatter.hpp"
-#include "text_formatter.hpp"
-#include "xml_formatter.hpp"
 
 #include <algorithm>
 #include <stdexcept>
 
+#include "json_formatter.hpp"
+#include "text_formatter.hpp"
+#include "xml_formatter.hpp"
+
 namespace output {
 
-std::unique_ptr<Formatter> FormatterFactory::create(
-    const std::string& format_name) {
+std::unique_ptr<Formatter> FormatterFactory::create(const std::string& format_name) {
     std::string format = format_name;
 
     // 小文字に変換
     std::transform(format.begin(), format.end(), format.begin(),
-                  [](unsigned char c) { return std::tolower(c); });
+                   [](unsigned char c) { return std::tolower(c); });
 
     if (format == "text" || format == "txt") {
         return std::make_unique<TextFormatter>();
@@ -37,7 +37,7 @@ bool FormatterFactory::is_valid_format(const std::string& format_name) {
 
     // 小文字に変換
     std::transform(format.begin(), format.end(), format.begin(),
-                  [](unsigned char c) { return std::tolower(c); });
+                   [](unsigned char c) { return std::tolower(c); });
 
     return std::find(formats.begin(), formats.end(), format) != formats.end() ||
            format == "txt";  // "txt" も "text" のエイリアスとして許可

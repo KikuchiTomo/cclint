@@ -1,16 +1,17 @@
 #include "lua/lua_rule.hpp"
-#include "utils/logger.hpp"
 
 #include <sstream>
+
+#include "utils/logger.hpp"
 
 namespace cclint {
 namespace lua {
 
-LuaRule::LuaRule(const std::string& script_path,
-                 const std::string& rule_name)
-    : script_path_(script_path), rule_name_(rule_name),
-      description_("Lua rule"), category_("custom") {
-
+LuaRule::LuaRule(const std::string& script_path, const std::string& rule_name)
+    : script_path_(script_path),
+      rule_name_(rule_name),
+      description_("Lua rule"),
+      category_("custom") {
     lua_engine_ = std::make_shared<LuaEngine>();
 
     if (LuaEngine::is_available()) {
@@ -24,8 +25,8 @@ LuaRule::LuaRule(const std::string& script_path,
         }
     } else {
         load_error_ = "LuaJIT is not available";
-        utils::Logger::instance().warning(
-            "Cannot load Lua rule (LuaJIT not available): " + rule_name_);
+        utils::Logger::instance().warning("Cannot load Lua rule (LuaJIT not available): " +
+                                          rule_name_);
     }
 }
 
@@ -46,15 +47,13 @@ void LuaRule::initialize(const rules::RuleParameters& params) {
     }
     lua_setglobal(L, "rule_params");
 
-    utils::Logger::instance().debug("Lua rule parameters set for: " +
-                                     rule_name_);
+    utils::Logger::instance().debug("Lua rule parameters set for: " + rule_name_);
 #else
     (void)params;
 #endif
 }
 
-void LuaRule::check_file(const std::string& file_path,
-                         const std::string& content,
+void LuaRule::check_file(const std::string& file_path, const std::string& content,
                          diagnostic::DiagnosticEngine& diag_engine) {
     if (!loaded_ || !LuaEngine::is_available()) {
         return;
@@ -79,13 +78,13 @@ void LuaRule::check_file(const std::string& file_path,
         if (lua_pcall(L, 1, 0, 0) != 0) {
             std::string error = lua_tostring(L, -1);
             lua_pop(L, 1);
-            utils::Logger::instance().error("Lua rule execution failed: " +
-                                             rule_name_ + " - " + error);
+            utils::Logger::instance().error("Lua rule execution failed: " + rule_name_ + " - " +
+                                            error);
         }
     } else {
         lua_pop(L, 1);
         utils::Logger::instance().debug("Lua rule " + rule_name_ +
-                                         " does not have check_file function");
+                                        " does not have check_file function");
     }
 #else
     (void)file_path;
@@ -94,8 +93,7 @@ void LuaRule::check_file(const std::string& file_path,
 #endif
 }
 
-void LuaRule::check_ast(clang::ASTUnit* ast_unit,
-                        diagnostic::DiagnosticEngine& diag_engine) {
+void LuaRule::check_ast(clang::ASTUnit* ast_unit, diagnostic::DiagnosticEngine& diag_engine) {
     if (!loaded_) {
         return;
     }
@@ -129,13 +127,13 @@ void LuaRule::check_ast(const std::string& file_path,
         if (lua_pcall(L, 1, 0, 0) != 0) {
             std::string error = lua_tostring(L, -1);
             lua_pop(L, 1);
-            utils::Logger::instance().error("Lua AST rule execution failed: " +
-                                             rule_name_ + " - " + error);
+            utils::Logger::instance().error("Lua AST rule execution failed: " + rule_name_ + " - " +
+                                            error);
         }
     } else {
         lua_pop(L, 1);
         utils::Logger::instance().debug("Lua rule " + rule_name_ +
-                                         " does not have check_ast function");
+                                        " does not have check_ast function");
     }
 #else
     (void)file_path;
@@ -148,14 +146,13 @@ void LuaRule::load_script() {
     if (!lua_engine_->load_script(script_path_)) {
         loaded_ = false;
         load_error_ = lua_engine_->get_error_message();
-        utils::Logger::instance().error("Failed to load Lua rule: " +
-                                         rule_name_ + " - " + load_error_);
+        utils::Logger::instance().error("Failed to load Lua rule: " + rule_name_ + " - " +
+                                        load_error_);
         return;
     }
 
     loaded_ = true;
-    utils::Logger::instance().info("Loaded Lua rule: " + rule_name_ +
-                                    " from " + script_path_);
+    utils::Logger::instance().info("Loaded Lua rule: " + rule_name_ + " from " + script_path_);
 }
 
 void LuaRule::load_metadata() {
@@ -176,13 +173,12 @@ void LuaRule::load_metadata() {
     }
     lua_pop(L, 1);
 
-    utils::Logger::instance().debug("Loaded Lua rule metadata: " +
-                                     rule_name_ + " [" + category_ + "]");
+    utils::Logger::instance().debug("Loaded Lua rule metadata: " + rule_name_ + " [" + category_ +
+                                    "]");
 #endif
 }
 
-void LuaRule::push_file_content_to_lua(const std::string& file_path,
-                                        const std::string& content) {
+void LuaRule::push_file_content_to_lua(const std::string& file_path, const std::string& content) {
 #ifdef HAVE_LUAJIT
     lua_State* L = lua_engine_->get_state();
 
@@ -214,5 +210,5 @@ void LuaRule::push_file_content_to_lua(const std::string& file_path,
 #endif
 }
 
-} // namespace lua
-} // namespace cclint
+}  // namespace lua
+}  // namespace cclint

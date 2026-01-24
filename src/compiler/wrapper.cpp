@@ -11,8 +11,7 @@ namespace compiler {
 
 namespace fs = std::filesystem;
 
-CompilerWrapper::CompilerWrapper(const std::vector<std::string>& command)
-    : command_(command) {
+CompilerWrapper::CompilerWrapper(const std::vector<std::string>& command) : command_(command) {
     if (command_.empty()) {
         throw std::invalid_argument("Compiler command cannot be empty");
     }
@@ -40,8 +39,7 @@ CompileResult CompilerWrapper::execute() {
     std::string cmd_with_redirect = cmd + " 2>&1";
 
     // popenでコマンドを実行
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(
-        popen(cmd_with_redirect.c_str(), "r"), pclose);
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd_with_redirect.c_str(), "r"), pclose);
 
     if (!pipe) {
         throw std::runtime_error("Failed to execute compiler command: " + cmd);
@@ -80,8 +78,7 @@ std::vector<std::string> CompilerWrapper::parse_source_files() const {
         // フラグはスキップ
         if (arg.empty() || arg[0] == '-') {
             // -I や -D などのフラグで値を取る場合、次の引数もスキップ
-            if (arg == "-I" || arg == "-D" || arg == "-o" ||
-                arg == "-std" || arg == "-isystem") {
+            if (arg == "-I" || arg == "-D" || arg == "-o" || arg == "-std" || arg == "-isystem") {
                 ++i;  // 次の引数もスキップ
             }
             continue;
@@ -112,8 +109,8 @@ std::vector<std::string> CompilerWrapper::parse_compiler_flags() const {
             flags.push_back(arg);
 
             // 値を取るフラグの場合、次の引数も追加
-            if (arg == "-I" || arg == "-D" || arg == "-o" ||
-                arg == "-std" || arg == "-isystem" || arg == "-include") {
+            if (arg == "-I" || arg == "-D" || arg == "-o" || arg == "-std" || arg == "-isystem" ||
+                arg == "-include") {
                 if (i + 1 < command_.size()) {
                     flags.push_back(command_[i + 1]);
                     ++i;
@@ -133,8 +130,7 @@ bool CompilerWrapper::is_source_file(const std::string& filename) {
     fs::path path(filename);
     std::string ext = path.extension().string();
 
-    return ext == ".cpp" || ext == ".cc" || ext == ".cxx" ||
-           ext == ".c" || ext == ".C";
+    return ext == ".cpp" || ext == ".cc" || ext == ".cxx" || ext == ".c" || ext == ".C";
 }
 
 bool CompilerWrapper::is_header_file(const std::string& filename) {
@@ -145,8 +141,7 @@ bool CompilerWrapper::is_header_file(const std::string& filename) {
     fs::path path(filename);
     std::string ext = path.extension().string();
 
-    return ext == ".h" || ext == ".hpp" || ext == ".hh" ||
-           ext == ".hxx" || ext == ".H";
+    return ext == ".h" || ext == ".hpp" || ext == ".hh" || ext == ".hxx" || ext == ".H";
 }
 
 bool CompilerWrapper::is_compiler_flag(const std::string& arg) {

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../diagnostic/diagnostic.hpp"
-
 #include <ostream>
 #include <string>
 #include <vector>
+
+#include "../diagnostic/diagnostic.hpp"
 
 namespace output {
 
@@ -15,14 +15,14 @@ public:
 
     // 診断メッセージをフォーマットして出力
     virtual void format(const std::vector<diagnostic::Diagnostic>& diagnostics,
-                       std::ostream& out) = 0;
+                        std::ostream& out) = 0;
 
     // ヘッダーを出力
     virtual void write_header(std::ostream& out);
 
     // フッターを出力
     virtual void write_footer(const std::vector<diagnostic::Diagnostic>& diagnostics,
-                             std::ostream& out);
+                              std::ostream& out);
 
 protected:
     // 統計情報を計算
@@ -34,8 +34,7 @@ protected:
         size_t total_count = 0;
     };
 
-    Statistics calculate_statistics(
-        const std::vector<diagnostic::Diagnostic>& diagnostics) const;
+    Statistics calculate_statistics(const std::vector<diagnostic::Diagnostic>& diagnostics) const;
 };
 
 }  // namespace output

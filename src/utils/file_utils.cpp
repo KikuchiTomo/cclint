@@ -20,8 +20,7 @@ std::string FileUtils::read_file(const std::string& path) {
     return oss.str();
 }
 
-void FileUtils::write_file(const std::string& path,
-                           const std::string& content) {
+void FileUtils::write_file(const std::string& path, const std::string& content) {
     std::ofstream ofs(path);
     if (!ofs) {
         throw std::runtime_error("Failed to open file for writing: " + path);
@@ -46,8 +45,7 @@ std::string FileUtils::absolute_path(const std::string& path) {
     return fs::absolute(path).string();
 }
 
-std::string FileUtils::relative_path(const std::string& path,
-                                    const std::string& base) {
+std::string FileUtils::relative_path(const std::string& path, const std::string& base) {
     fs::path p(path);
     fs::path b(base);
     return fs::relative(p, b).string();
@@ -73,14 +71,12 @@ std::string FileUtils::stem(const std::string& path) {
     return fs::path(path).stem().string();
 }
 
-std::string FileUtils::join_path(const std::string& base,
-                                const std::string& path) {
+std::string FileUtils::join_path(const std::string& base, const std::string& path) {
     fs::path result = fs::path(base) / path;
     return result.string();
 }
 
-std::vector<std::string> FileUtils::list_files(const std::string& directory,
-                                              bool recursive) {
+std::vector<std::string> FileUtils::list_files(const std::string& directory, bool recursive) {
     std::vector<std::string> files;
 
     if (!directory_exists(directory)) {
@@ -159,8 +155,7 @@ std::vector<std::string> FileUtils::glob(const std::string& pattern) {
     return results;
 }
 
-bool FileUtils::glob_match(const std::string& path,
-                           const std::string& pattern) {
+bool FileUtils::glob_match(const std::string& path, const std::string& pattern) {
     // 簡易的なグロブマッチング実装
     // サポート: *, **
 
@@ -184,15 +179,13 @@ bool FileUtils::glob_match(const std::string& path,
     if (pattern[0] == '*' && pattern.find('*', 1) == std::string::npos) {
         std::string suffix = pattern.substr(1);
         if (path.length() >= suffix.length()) {
-            return path.compare(path.length() - suffix.length(),
-                                suffix.length(), suffix) == 0;
+            return path.compare(path.length() - suffix.length(), suffix.length(), suffix) == 0;
         }
         return false;
     }
 
     // prefix* のようなパターン
-    if (pattern.back() == '*' &&
-        pattern.find('*') == pattern.length() - 1) {
+    if (pattern.back() == '*' && pattern.find('*') == pattern.length() - 1) {
         std::string prefix = pattern.substr(0, pattern.length() - 1);
         return path.rfind(prefix, 0) == 0;
     }

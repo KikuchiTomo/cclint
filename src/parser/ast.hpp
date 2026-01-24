@@ -165,5 +165,5 @@ public:
     CommentNode() : ASTNode(ASTNodeType::Comment) {}
 };
 
-} // namespace parser
-} // namespace cclint
+}  // namespace parser
+}  // namespace cclint

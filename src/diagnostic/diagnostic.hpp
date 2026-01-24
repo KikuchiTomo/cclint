@@ -6,12 +6,7 @@
 namespace diagnostic {
 
 // 診断メッセージの重要度
-enum class Severity {
-    Error,
-    Warning,
-    Info,
-    Note
-};
+enum class Severity { Error, Warning, Info, Note };
 
 // ソースコードの位置
 struct SourceLocation {
@@ -19,9 +14,7 @@ struct SourceLocation {
     int line = 0;
     int column = 0;
 
-    bool is_valid() const {
-        return !filename.empty() && line > 0 && column >= 0;
-    }
+    bool is_valid() const { return !filename.empty() && line > 0 && column >= 0; }
 
     std::string to_string() const;
 };
@@ -31,9 +24,7 @@ struct SourceRange {
     SourceLocation begin;
     SourceLocation end;
 
-    bool is_valid() const {
-        return begin.is_valid() && end.is_valid();
-    }
+    bool is_valid() const { return begin.is_valid() && end.is_valid(); }
 
     std::string to_string() const;
 };
@@ -75,42 +66,31 @@ public:
     void add_diagnostic(const Diagnostic& diag);
 
     // エラーを追加（簡易API）
-    void add_error(const std::string& rule_name,
-                   const std::string& message,
+    void add_error(const std::string& rule_name, const std::string& message,
                    const SourceLocation& location);
 
     // 警告を追加（簡易API）
-    void add_warning(const std::string& rule_name,
-                     const std::string& message,
+    void add_warning(const std::string& rule_name, const std::string& message,
                      const SourceLocation& location);
 
     // 情報を追加（簡易API）
-    void add_info(const std::string& rule_name,
-                  const std::string& message,
+    void add_info(const std::string& rule_name, const std::string& message,
                   const SourceLocation& location);
 
     // 全ての診断メッセージを取得
-    const std::vector<Diagnostic>& get_diagnostics() const {
-        return diagnostics_;
-    }
+    const std::vector<Diagnostic>& get_diagnostics() const { return diagnostics_; }
 
     // 診断メッセージをクリア
-    void clear() {
-        diagnostics_.clear();
-    }
+    void clear() { diagnostics_.clear(); }
 
     // 統計情報
     size_t error_count() const;
     size_t warning_count() const;
     size_t info_count() const;
-    size_t total_count() const {
-        return diagnostics_.size();
-    }
+    size_t total_count() const { return diagnostics_.size(); }
 
     // エラーがあるか
-    bool has_errors() const {
-        return error_count() > 0;
-    }
+    bool has_errors() const { return error_count() > 0; }
 
 private:
     std::vector<Diagnostic> diagnostics_;

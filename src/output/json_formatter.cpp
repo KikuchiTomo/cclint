@@ -2,9 +2,8 @@
 
 namespace output {
 
-void JsonFormatter::format(
-    const std::vector<diagnostic::Diagnostic>& diagnostics,
-    std::ostream& out) {
+void JsonFormatter::format(const std::vector<diagnostic::Diagnostic>& diagnostics,
+                           std::ostream& out) {
     out << "{\n";
     out << "  \"diagnostics\": [\n";
 
@@ -26,15 +25,13 @@ void JsonFormatter::format(
     out << "}\n";
 }
 
-void JsonFormatter::format_diagnostic(const diagnostic::Diagnostic& diag,
-                                     std::ostream& out,
-                                     bool is_last) {
+void JsonFormatter::format_diagnostic(const diagnostic::Diagnostic& diag, std::ostream& out,
+                                      bool is_last) {
     out << "{\n";
 
     // 重要度
     out << "      \"severity\": \""
-        << escape_json_string(diagnostic::Diagnostic::severity_to_string(diag.severity))
-        << "\",\n";
+        << escape_json_string(diagnostic::Diagnostic::severity_to_string(diag.severity)) << "\",\n";
 
     // ルール名
     out << "      \"rule\": \"" << escape_json_string(diag.rule_name) << "\",\n";
@@ -89,8 +86,7 @@ void JsonFormatter::format_diagnostic(const diagnostic::Diagnostic& diag,
     out << "\n";
 }
 
-void JsonFormatter::format_location(const diagnostic::SourceLocation& loc,
-                                   std::ostream& out) {
+void JsonFormatter::format_location(const diagnostic::SourceLocation& loc, std::ostream& out) {
     out << "{\n";
     out << "        \"file\": \"" << escape_json_string(loc.filename) << "\",\n";
     out << "        \"line\": " << loc.line << ",\n";
@@ -98,8 +94,7 @@ void JsonFormatter::format_location(const diagnostic::SourceLocation& loc,
     out << "      }";
 }
 
-void JsonFormatter::format_range(const diagnostic::SourceRange& range,
-                                std::ostream& out) {
+void JsonFormatter::format_range(const diagnostic::SourceRange& range, std::ostream& out) {
     out << "{\n";
     out << "          \"begin\": ";
     format_location(range.begin, out);
@@ -109,15 +104,13 @@ void JsonFormatter::format_range(const diagnostic::SourceRange& range,
     out << "\n        }";
 }
 
-void JsonFormatter::format_fix_hint(const diagnostic::FixItHint& hint,
-                                   std::ostream& out,
-                                   bool is_last) {
+void JsonFormatter::format_fix_hint(const diagnostic::FixItHint& hint, std::ostream& out,
+                                    bool is_last) {
     out << "{\n";
     out << "          \"range\": ";
     format_range(hint.range, out);
     out << ",\n";
-    out << "          \"replacement\": \""
-        << escape_json_string(hint.replacement_text) << "\"\n";
+    out << "          \"replacement\": \"" << escape_json_string(hint.replacement_text) << "\"\n";
     out << "        }";
     if (!is_last) {
         out << ",";

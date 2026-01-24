@@ -1,24 +1,22 @@
 #include "engine/incremental.hpp"
-#include "utils/logger.hpp"
 
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
 
+#include "utils/logger.hpp"
+
 namespace cclint {
 namespace engine {
 
 namespace fs = std::filesystem;
 
-IncrementalAnalyzer::IncrementalAnalyzer(const std::string& state_file)
-    : state_file_(state_file) {
+IncrementalAnalyzer::IncrementalAnalyzer(const std::string& state_file) : state_file_(state_file) {
     load_state();
 }
 
-bool IncrementalAnalyzer::is_file_modified(
-    const std::string& file_path) const {
-
+bool IncrementalAnalyzer::is_file_modified(const std::string& file_path) const {
     auto it = file_states_.find(file_path);
     if (it == file_states_.end()) {
         // 新規ファイル
@@ -35,9 +33,8 @@ bool IncrementalAnalyzer::is_file_modified(
     return current_time > it->second;
 }
 
-std::vector<std::string> IncrementalAnalyzer::filter_modified_files(
-    const std::vector<std::string>& files) const {
-
+std::vector<std::string>
+IncrementalAnalyzer::filter_modified_files(const std::vector<std::string>& files) const {
     std::vector<std::string> modified_files;
     for (const auto& file : files) {
         if (is_file_modified(file)) {
@@ -48,9 +45,8 @@ std::vector<std::string> IncrementalAnalyzer::filter_modified_files(
     return modified_files;
 }
 
-std::vector<std::string> IncrementalAnalyzer::get_git_modified_files(
-    const std::string& base_ref) const {
-
+std::vector<std::string>
+IncrementalAnalyzer::get_git_modified_files(const std::string& base_ref) const {
     std::vector<std::string> modified_files;
 
     // git diff --name-only を実行
@@ -72,10 +68,8 @@ std::vector<std::string> IncrementalAnalyzer::get_git_modified_files(
         }
 
         // C/C++ファイルのみフィルタ
-        if (line.find(".cpp") != std::string::npos ||
-            line.find(".cc") != std::string::npos ||
-            line.find(".cxx") != std::string::npos ||
-            line.find(".hpp") != std::string::npos ||
+        if (line.find(".cpp") != std::string::npos || line.find(".cc") != std::string::npos ||
+            line.find(".cxx") != std::string::npos || line.find(".hpp") != std::string::npos ||
             line.find(".h") != std::string::npos) {
             modified_files.push_back(line);
         }
@@ -83,9 +77,8 @@ std::vector<std::string> IncrementalAnalyzer::get_git_modified_files(
 
     pclose(pipe);
 
-    utils::Logger::instance().info(
-        "Found " + std::to_string(modified_files.size()) +
-        " modified files via git diff");
+    utils::Logger::instance().info("Found " + std::to_string(modified_files.size()) +
+                                   " modified files via git diff");
 
     return modified_files;
 }
@@ -101,8 +94,8 @@ void IncrementalAnalyzer::save_state() {
     try {
         std::ofstream ofs(state_file_);
         if (!ofs.is_open()) {
-            utils::Logger::instance().warning(
-                "Failed to save incremental state to: " + state_file_);
+            utils::Logger::instance().warning("Failed to save incremental state to: " +
+                                              state_file_);
             return;
         }
 
@@ -111,13 +104,12 @@ void IncrementalAnalyzer::save_state() {
             ofs << path << "\t" << time_count << "\n";
         }
 
-        utils::Logger::instance().debug(
-            "Saved incremental state for " +
-            std::to_string(file_states_.size()) + " files");
+        utils::Logger::instance().debug("Saved incremental state for " +
+                                        std::to_string(file_states_.size()) + " files");
 
     } catch (const std::exception& e) {
-        utils::Logger::instance().warning(
-            "Failed to save incremental state: " + std::string(e.what()));
+        utils::Logger::instance().warning("Failed to save incremental state: " +
+                                          std::string(e.what()));
     }
 }
 
@@ -129,16 +121,15 @@ void IncrementalAnalyzer::clear_state() {
             fs::remove(state_file_);
         }
     } catch (const std::exception& e) {
-        utils::Logger::instance().warning(
-            "Failed to clear incremental state: " + std::string(e.what()));
+        utils::Logger::instance().warning("Failed to clear incremental state: " +
+                                          std::string(e.what()));
     }
 }
 
 void IncrementalAnalyzer::load_state() {
     try {
         if (!fs::exists(state_file_)) {
-            utils::Logger::instance().debug(
-                "No incremental state file found, starting fresh");
+            utils::Logger::instance().debug("No incremental state file found, starting fresh");
             return;
         }
 
@@ -160,20 +151,17 @@ void IncrementalAnalyzer::load_state() {
             }
         }
 
-        utils::Logger::instance().debug(
-            "Loaded incremental state for " +
-            std::to_string(file_states_.size()) + " files");
+        utils::Logger::instance().debug("Loaded incremental state for " +
+                                        std::to_string(file_states_.size()) + " files");
 
     } catch (const std::exception& e) {
-        utils::Logger::instance().warning(
-            "Failed to load incremental state: " + std::string(e.what()));
+        utils::Logger::instance().warning("Failed to load incremental state: " +
+                                          std::string(e.what()));
     }
 }
 
 std::chrono::system_clock::time_point
-IncrementalAnalyzer::get_file_modification_time(
-    const std::string& file_path) const {
-
+IncrementalAnalyzer::get_file_modification_time(const std::string& file_path) const {
     try {
         if (!fs::exists(file_path)) {
             return std::chrono::system_clock::time_point();
@@ -183,8 +171,7 @@ IncrementalAnalyzer::get_file_modification_time(
 
         // Convert file_time to system_clock time_point
         auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
-            ftime - fs::file_time_type::clock::now() +
-            std::chrono::system_clock::now());
+            ftime - fs::file_time_type::clock::now() + std::chrono::system_clock::now());
 
         return sctp;
 
@@ -193,5 +180,5 @@ IncrementalAnalyzer::get_file_modification_time(
     }
 }
 
-} // namespace engine
-} // namespace cclint
+}  // namespace engine
+}  // namespace cclint

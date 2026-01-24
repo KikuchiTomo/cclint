@@ -1,9 +1,9 @@
 #pragma once
 
-#include "config_types.hpp"
-
 #include <istream>
 #include <string>
+
+#include "config_types.hpp"
 
 namespace config {
 

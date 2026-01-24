@@ -13,12 +13,12 @@ struct ParsedArguments {
     int verbosity = 1;  // 0: quiet, 1: normal, 2: verbose
     bool show_help = false;
     bool show_version = false;
-    int max_errors = 0;  // 0 = unlimited
+    int max_errors = 0;   // 0 = unlimited
     int num_threads = 0;  // 0 = auto-detect
     bool enable_cache = true;
     bool enable_profile = false;  // プロファイリングモード
-    bool enable_fix = false;  // 自動修正モード
-    bool fix_preview = false;  // 修正プレビューモード
+    bool enable_fix = false;      // 自動修正モード
+    bool fix_preview = false;     // 修正プレビューモード
 };
 
 class ArgumentParser {
@@ -26,12 +26,10 @@ public:
     ParsedArguments parse(int argc, char** argv);
 
 private:
-    void parse_cclint_options(std::vector<std::string>& args,
-                               ParsedArguments& result);
+    void parse_cclint_options(std::vector<std::string>& args, ParsedArguments& result);
 
     bool is_cclint_option(const std::string& arg);
-    std::vector<std::string> extract_compiler_command(
-        const std::vector<std::string>& args);
+    std::vector<std::string> extract_compiler_command(const std::vector<std::string>& args);
 };
 
 }  // namespace cli

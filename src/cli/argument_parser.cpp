@@ -22,8 +22,7 @@ ParsedArguments ArgumentParser::parse(int argc, char** argv) {
     return result;
 }
 
-void ArgumentParser::parse_cclint_options(std::vector<std::string>& args,
-                                          ParsedArguments& result) {
+void ArgumentParser::parse_cclint_options(std::vector<std::string>& args, ParsedArguments& result) {
     auto it = args.begin();
     while (it != args.end()) {
         if (*it == "--config") {
@@ -83,16 +82,15 @@ void ArgumentParser::parse_cclint_options(std::vector<std::string>& args,
     }
 }
 
-std::vector<std::string> ArgumentParser::extract_compiler_command(
-    const std::vector<std::string>& args) {
+std::vector<std::string>
+ArgumentParser::extract_compiler_command(const std::vector<std::string>& args) {
     return args;  // 残りの引数がすべてコンパイラコマンド
 }
 
 bool ArgumentParser::is_cclint_option(const std::string& arg) {
-    return arg.rfind("--config", 0) == 0 || arg.rfind("--format", 0) == 0 ||
-           arg == "-v" || arg == "--verbose" || arg == "-q" ||
-           arg == "--quiet" || arg == "--help" || arg == "-h" ||
-           arg == "--version";
+    return arg.rfind("--config", 0) == 0 || arg.rfind("--format", 0) == 0 || arg == "-v" ||
+           arg == "--verbose" || arg == "-q" || arg == "--quiet" || arg == "--help" ||
+           arg == "-h" || arg == "--version";
 }
 
 }  // namespace cli

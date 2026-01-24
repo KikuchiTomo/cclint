@@ -27,8 +27,7 @@ public:
     static std::string absolute_path(const std::string& path);
 
     // 相対パスを取得
-    static std::string relative_path(const std::string& path,
-                                     const std::string& base);
+    static std::string relative_path(const std::string& path, const std::string& base);
 
     // パスを正規化
     static std::string normalize_path(const std::string& path);
@@ -46,8 +45,7 @@ public:
     static std::string stem(const std::string& path);
 
     // パスを結合
-    static std::string join_path(const std::string& base,
-                                const std::string& path);
+    static std::string join_path(const std::string& base, const std::string& path);
 
     // ディレクトリ内のファイルを列挙
     static std::vector<std::string> list_files(const std::string& directory,

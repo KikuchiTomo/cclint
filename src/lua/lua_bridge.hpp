@@ -1,12 +1,12 @@
 #pragma once
 
-#include "lua/lua_engine.hpp"
-#include "diagnostic/diagnostic.hpp"
-
 #include <functional>
 #include <memory>
 #include <string>
 #include <vector>
+
+#include "diagnostic/diagnostic.hpp"
+#include "lua/lua_engine.hpp"
 
 namespace cclint {
 
@@ -43,8 +43,7 @@ public:
     /// @param function_name 関数名
     /// @param args 引数
     /// @return 成功した場合true
-    bool call_function(const std::string& function_name,
-                       const std::vector<std::string>& args = {});
+    bool call_function(const std::string& function_name, const std::vector<std::string>& args = {});
 
 private:
     std::shared_ptr<LuaEngine> lua_engine_;
@@ -78,9 +77,8 @@ private:
 
     // ヘルパー関数
     void report_diagnostic(const std::string& file_path, int line, int column,
-                           const std::string& message,
-                           diagnostic::Severity severity);
+                           const std::string& message, diagnostic::Severity severity);
 };
 
-} // namespace lua
-} // namespace cclint
+}  // namespace lua
+}  // namespace cclint

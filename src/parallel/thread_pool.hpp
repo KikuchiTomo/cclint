@@ -53,7 +53,6 @@ private:
 template <typename F, typename... Args>
 auto ThreadPool::enqueue(F&& func, Args&&... args)
     -> std::future<typename std::invoke_result<F, Args...>::type> {
-
     using return_type = typename std::invoke_result<F, Args...>::type;
 
     auto task = std::make_shared<std::packaged_task<return_type()>>(
@@ -75,5 +74,5 @@ auto ThreadPool::enqueue(F&& func, Args&&... args)
     return result;
 }
 
-} // namespace parallel
-} // namespace cclint
+}  // namespace parallel
+}  // namespace cclint

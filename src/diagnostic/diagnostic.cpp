@@ -26,8 +26,7 @@ std::string SourceRange::to_string() const {
 
 std::string FixItHint::to_string() const {
     std::ostringstream oss;
-    oss << "Fix: replace " << range.to_string()
-        << " with \"" << replacement_text << "\"";
+    oss << "Fix: replace " << range.to_string() << " with \"" << replacement_text << "\"";
     return oss.str();
 }
 
@@ -94,8 +93,7 @@ void DiagnosticEngine::add_diagnostic(const Diagnostic& diag) {
     diagnostics_.push_back(diag);
 }
 
-void DiagnosticEngine::add_error(const std::string& rule_name,
-                                 const std::string& message,
+void DiagnosticEngine::add_error(const std::string& rule_name, const std::string& message,
                                  const SourceLocation& location) {
     Diagnostic diag;
     diag.severity = Severity::Error;
@@ -105,8 +103,7 @@ void DiagnosticEngine::add_error(const std::string& rule_name,
     add_diagnostic(diag);
 }
 
-void DiagnosticEngine::add_warning(const std::string& rule_name,
-                                   const std::string& message,
+void DiagnosticEngine::add_warning(const std::string& rule_name, const std::string& message,
                                    const SourceLocation& location) {
     Diagnostic diag;
     diag.severity = Severity::Warning;
@@ -116,8 +113,7 @@ void DiagnosticEngine::add_warning(const std::string& rule_name,
     add_diagnostic(diag);
 }
 
-void DiagnosticEngine::add_info(const std::string& rule_name,
-                                const std::string& message,
+void DiagnosticEngine::add_info(const std::string& rule_name, const std::string& message,
                                 const SourceLocation& location) {
     Diagnostic diag;
     diag.severity = Severity::Info;

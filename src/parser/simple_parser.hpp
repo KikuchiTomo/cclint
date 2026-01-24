@@ -1,11 +1,11 @@
 #pragma once
 
-#include "parser/ast.hpp"
-#include "parser/lexer.hpp"
-
 #include <memory>
 #include <string>
 #include <vector>
+
+#include "parser/ast.hpp"
+#include "parser/lexer.hpp"
 
 namespace cclint {
 namespace parser {
@@ -16,8 +16,7 @@ public:
     /// コンストラクタ
     /// @param source ソースコード
     /// @param filename ファイル名
-    explicit SimpleParser(const std::string& source,
-                         const std::string& filename = "");
+    explicit SimpleParser(const std::string& source, const std::string& filename = "");
 
     /// ASTを構築
     /// @return 翻訳単位（ファイル全体）のAST
@@ -61,5 +60,5 @@ private:
     SourcePosition get_position() const;
 };
 
-} // namespace parser
-} // namespace cclint
+}  // namespace parser
+}  // namespace cclint

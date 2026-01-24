@@ -1,12 +1,12 @@
 #pragma once
 
-#include "engine/analysis_engine.hpp"
-#include "config/config_loader.hpp"
-
-#include <string>
-#include <memory>
-#include <map>
 #include <functional>
+#include <map>
+#include <memory>
+#include <string>
+
+#include "config/config_loader.hpp"
+#include "engine/analysis_engine.hpp"
 
 namespace cclint {
 namespace lsp {
@@ -73,5 +73,5 @@ private:
     void analyze_document(const std::string& uri);
 };
 
-} // namespace lsp
-} // namespace cclint
+}  // namespace lsp
+}  // namespace cclint

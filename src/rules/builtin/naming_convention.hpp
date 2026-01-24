@@ -1,9 +1,9 @@
 #pragma once
 
-#include "rules/rule_base.hpp"
-
 #include <memory>
 #include <regex>
+
+#include "rules/rule_base.hpp"
 
 namespace cclint {
 
@@ -11,7 +11,7 @@ namespace parser {
 class ASTNode;
 class TranslationUnitNode;
 class ClassNode;
-}
+}  // namespace parser
 
 namespace rules {
 namespace builtin {
@@ -30,13 +30,11 @@ public:
 
     void initialize(const RuleParameters& params) override;
 
-    void check_file(const std::string& file_path,
-                    const std::string& content,
+    void check_file(const std::string& file_path, const std::string& content,
                     diagnostic::DiagnosticEngine& diag_engine) override;
 
     // AST解析を使ったチェック（アクセス指定子対応）
-    void check_ast(const std::string& file_path,
-                   std::shared_ptr<parser::TranslationUnitNode> ast,
+    void check_ast(const std::string& file_path, std::shared_ptr<parser::TranslationUnitNode> ast,
                    diagnostic::DiagnosticEngine& diag_engine) override;
 
 private:
@@ -57,32 +55,27 @@ private:
     bool check_constants_ = true;
     bool check_method_access_ = false;  // アクセス指定子ごとのチェックを有効化
 
-    void check_function_names(const std::string& file_path,
-                              const std::string& content,
+    void check_function_names(const std::string& file_path, const std::string& content,
                               diagnostic::DiagnosticEngine& diag_engine);
 
-    void check_class_names(const std::string& file_path,
-                           const std::string& content,
+    void check_class_names(const std::string& file_path, const std::string& content,
                            diagnostic::DiagnosticEngine& diag_engine);
 
-    void check_variable_names(const std::string& file_path,
-                              const std::string& content,
+    void check_variable_names(const std::string& file_path, const std::string& content,
                               diagnostic::DiagnosticEngine& diag_engine);
 
-    void check_constant_names(const std::string& file_path,
-                              const std::string& content,
+    void check_constant_names(const std::string& file_path, const std::string& content,
                               diagnostic::DiagnosticEngine& diag_engine);
 
     // ASTベースのクラスメソッドチェック
     void check_class_methods(const std::string& file_path,
-                            std::shared_ptr<parser::ClassNode> class_node,
-                            diagnostic::DiagnosticEngine& diag_engine);
+                             std::shared_ptr<parser::ClassNode> class_node,
+                             diagnostic::DiagnosticEngine& diag_engine);
 
-    void check_ast_recursive(const std::string& file_path,
-                            std::shared_ptr<parser::ASTNode> node,
-                            diagnostic::DiagnosticEngine& diag_engine);
+    void check_ast_recursive(const std::string& file_path, std::shared_ptr<parser::ASTNode> node,
+                             diagnostic::DiagnosticEngine& diag_engine);
 };
 
-} // namespace builtin
-} // namespace rules
-} // namespace cclint
+}  // namespace builtin
+}  // namespace rules
+}  // namespace cclint

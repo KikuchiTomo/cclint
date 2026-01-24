@@ -1,17 +1,17 @@
 #pragma once
 
+#include <chrono>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <vector>
+
 #include "cache/file_cache.hpp"
 #include "config/config_types.hpp"
 #include "diagnostic/diagnostic.hpp"
 #include "engine/incremental.hpp"
 #include "parallel/thread_pool.hpp"
 #include "rules/rule_executor.hpp"
-
-#include <chrono>
-#include <memory>
-#include <mutex>
-#include <string>
-#include <vector>
 
 namespace cclint {
 namespace engine {
@@ -35,7 +35,7 @@ struct AnalysisEngineStats {
     size_t cached_files = 0;  // キャッシュから取得したファイル数
     std::chrono::milliseconds total_time{0};
     size_t memory_usage_bytes = 0;  // メモリ使用量（概算）
-    bool stopped_early = false;  // max_errorsにより早期終了したかどうか
+    bool stopped_early = false;     // max_errorsにより早期終了したかどうか
 };
 
 /// 解析エンジン
@@ -54,8 +54,7 @@ public:
     /// 複数ファイルを解析
     /// @param file_paths ファイルパスのリスト
     /// @return 解析結果のリスト
-    std::vector<FileAnalysisResult> analyze_files(
-        const std::vector<std::string>& file_paths);
+    std::vector<FileAnalysisResult> analyze_files(const std::vector<std::string>& file_paths);
 
     /// すべての診断を取得
     /// @return すべての診断のリスト
@@ -99,5 +98,5 @@ private:
     void estimate_memory_usage();
 };
 
-} // namespace engine
-} // namespace cclint
+}  // namespace engine
+}  // namespace cclint

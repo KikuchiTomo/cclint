@@ -47,6 +47,32 @@ set(CCLINT_LSP_SOURCES
     lsp/lsp_server.cpp
     lsp/main_lsp.cpp
     utils/logger.cpp
+    config/config_loader.cpp
+    config/yaml_config.cpp
+    engine/analysis_engine.cpp
+    engine/incremental.cpp
+    engine/dependency_tracker.cpp
+    engine/dataflow_analyzer.cpp
+    parallel/thread_pool.cpp
+    cache/file_cache.cpp
+    parser/ast.cpp
+    parser/lexer.cpp
+    parser/simple_parser.cpp
+    rules/rule_base.cpp
+    rules/rule_registry.cpp
+    rules/rule_executor.cpp
+    rules/plugin_loader.cpp
+    rules/builtin/naming_convention.cpp
+    rules/builtin/header_guard.cpp
+    rules/builtin/max_line_length.cpp
+    rules/builtin/function_complexity.cpp
+    diagnostic/diagnostic.cpp
+    diagnostic/fixer.cpp
+    lua/lua_engine.cpp
+    lua/lua_bridge.cpp
+    lua/lua_rule.cpp
+    utils/file_utils.cpp
+    utils/string_utils.cpp
 )
 
 # LSPサーバー実行ファイルを作成

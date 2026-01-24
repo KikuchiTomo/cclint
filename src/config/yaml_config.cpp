@@ -1,7 +1,7 @@
 #include "yaml_config.hpp"
 
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 
 // TODO: yaml-cppの依存関係追加後に有効化
 // #include <yaml-cpp/yaml.h>
@@ -9,8 +9,7 @@
 namespace config {
 
 Config YamlConfig::parse(std::istream& input) {
-    std::string content((std::istreambuf_iterator<char>(input)),
-                        std::istreambuf_iterator<char>());
+    std::string content((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
     return parse_string(content);
 }
 
@@ -177,8 +176,7 @@ void YamlConfig::parse_lua_scripts(const void* yaml_node, Config& config) {
     */
 }
 
-void YamlConfig::parse_include_exclude_patterns(const void* yaml_node,
-                                                  Config& config) {
+void YamlConfig::parse_include_exclude_patterns(const void* yaml_node, Config& config) {
     // TODO: yaml-cpp依存関係追加後に実装
     /*
     const YAML::Node& root = *static_cast<const YAML::Node*>(yaml_node);
@@ -197,8 +195,7 @@ void YamlConfig::parse_include_exclude_patterns(const void* yaml_node,
     */
 }
 
-void YamlConfig::parse_performance_settings(const void* yaml_node,
-                                             Config& config) {
+void YamlConfig::parse_performance_settings(const void* yaml_node, Config& config) {
     // TODO: yaml-cpp依存関係追加後に実装
     /*
     const YAML::Node& root = *static_cast<const YAML::Node*>(yaml_node);
@@ -215,8 +212,7 @@ void YamlConfig::parse_performance_settings(const void* yaml_node,
     */
 }
 
-void YamlConfig::parse_rule_execution_settings(const void* yaml_node,
-                                                Config& config) {
+void YamlConfig::parse_rule_execution_settings(const void* yaml_node, Config& config) {
     // TODO: yaml-cpp依存関係追加後に実装
     /*
     const YAML::Node& root = *static_cast<const YAML::Node*>(yaml_node);

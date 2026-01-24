@@ -6,13 +6,7 @@
 namespace compiler {
 
 // サポートされているコンパイラ
-enum class CompilerType {
-    GCC,
-    Clang,
-    MSVC,
-    AppleClang,
-    Unknown
-};
+enum class CompilerType { GCC, Clang, MSVC, AppleClang, Unknown };
 
 // コンパイラ情報
 struct CompilerInfo {

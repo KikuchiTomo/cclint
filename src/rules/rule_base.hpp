@@ -1,19 +1,19 @@
 #pragma once
 
-#include "diagnostic/diagnostic.hpp"
-#include "config/config_types.hpp"
-
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include "config/config_types.hpp"
+#include "diagnostic/diagnostic.hpp"
 
 namespace clang {
 class ASTUnit;
 class ASTContext;
 class Decl;
 class Stmt;
-} // namespace clang
+}  // namespace clang
 
 namespace cclint {
 
@@ -50,8 +50,7 @@ public:
     /// @param file_path ファイルパス
     /// @param content ファイルの内容
     /// @param diag_engine 診断エンジン
-    virtual void check_file(const std::string& file_path,
-                            const std::string& content,
+    virtual void check_file(const std::string& file_path, const std::string& content,
                             diagnostic::DiagnosticEngine& diag_engine) {
         // デフォルトは何もしない（オプショナル）
         (void)file_path;
@@ -62,8 +61,7 @@ public:
     /// AST全体に対するチェック (Clang AST)
     /// @param ast_unit ASTUnit
     /// @param diag_engine 診断エンジン
-    virtual void check_ast(clang::ASTUnit* ast_unit,
-                           diagnostic::DiagnosticEngine& diag_engine) {
+    virtual void check_ast(clang::ASTUnit* ast_unit, diagnostic::DiagnosticEngine& diag_engine) {
         // デフォルトは何もしない（オプショナル）
         (void)ast_unit;
         (void)diag_engine;
@@ -96,13 +94,9 @@ public:
 
 protected:
     /// 診断を報告するヘルパー関数
-    void report_diagnostic(diagnostic::DiagnosticEngine& diag_engine,
-                           const std::string& file_path,
-                           int line,
-                           int column,
-                           const std::string& message,
-                           const std::vector<diagnostic::FixItHint>& fix_hints =
-                               {}) const;
+    void report_diagnostic(diagnostic::DiagnosticEngine& diag_engine, const std::string& file_path,
+                           int line, int column, const std::string& message,
+                           const std::vector<diagnostic::FixItHint>& fix_hints = {}) const;
 
     /// severity の文字列を取得
     std::string severity_string() const;
@@ -112,5 +106,5 @@ private:
     config::Severity severity_ = config::Severity::Warning;
 };
 
-} // namespace rules
-} // namespace cclint
+}  // namespace rules
+}  // namespace cclint

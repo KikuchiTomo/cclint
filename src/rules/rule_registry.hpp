@@ -1,12 +1,12 @@
 #pragma once
 
-#include "rules/rule_base.hpp"
-
 #include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include "rules/rule_base.hpp"
 
 namespace cclint {
 namespace rules {
@@ -38,8 +38,7 @@ public:
     /// カテゴリでルールをフィルタ
     /// @param category カテゴリ名
     /// @return 指定されたカテゴリのルールのリスト
-    std::vector<RuleBase*> get_rules_by_category(
-        const std::string& category) const;
+    std::vector<RuleBase*> get_rules_by_category(const std::string& category) const;
 
     /// すべてのルールをクリア（テスト用）
     void clear();
@@ -59,5 +58,5 @@ private:
     mutable std::mutex mutex_;  // スレッドセーフ保護用
 };
 
-} // namespace rules
-} // namespace cclint
+}  // namespace rules
+}  // namespace cclint

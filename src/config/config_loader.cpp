@@ -1,9 +1,10 @@
 #include "config_loader.hpp"
-#include "yaml_config.hpp"
 
 #include <filesystem>
 #include <fstream>
 #include <stdexcept>
+
+#include "yaml_config.hpp"
 
 namespace config {
 
@@ -49,8 +50,7 @@ Config ConfigLoader::load_from_file(const std::string& file_path) {
         loaded_config_path_ = file_path;
         return config;
     } catch (const std::exception& e) {
-        throw std::runtime_error("Failed to parse config file '" + file_path +
-                                 "': " + e.what());
+        throw std::runtime_error("Failed to parse config file '" + file_path + "': " + e.what());
     }
 }
 
@@ -61,8 +61,7 @@ Config ConfigLoader::get_default_config() {
     return config;
 }
 
-std::optional<std::string> ConfigLoader::search_config_file(
-    const std::string& start_directory) {
+std::optional<std::string> ConfigLoader::search_config_file(const std::string& start_directory) {
     fs::path current_dir = fs::absolute(start_directory);
 
     // 現在のディレクトリから上位ディレクトリへ遡って検索

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "formatter.hpp"
-
 #include <memory>
 #include <string>
+
+#include "formatter.hpp"
 
 namespace output {
 

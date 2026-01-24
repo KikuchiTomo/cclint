@@ -1,19 +1,14 @@
 #pragma once
 
-#include <iostream>
 #include <fstream>
-#include <string>
+#include <iostream>
 #include <memory>
+#include <string>
 
 namespace utils {
 
 // ログレベル
-enum class LogLevel {
-    Debug,
-    Info,
-    Warning,
-    Error
-};
+enum class LogLevel { Debug, Info, Warning, Error };
 
 // ロガー
 class Logger {
@@ -24,9 +19,7 @@ public:
     void set_level(LogLevel level);
 
     // ログレベルを取得
-    LogLevel get_level() const {
-        return level_;
-    }
+    LogLevel get_level() const { return level_; }
 
     // 出力先を設定
     void set_output(std::ostream* out, std::ostream* err = nullptr);
@@ -41,16 +34,16 @@ public:
     void error(const std::string& message);
 
     // フォーマット付きログ出力（簡易版）
-    template<typename... Args>
+    template <typename... Args>
     void debug(const std::string& format, Args... args);
 
-    template<typename... Args>
+    template <typename... Args>
     void info(const std::string& format, Args... args);
 
-    template<typename... Args>
+    template <typename... Args>
     void warning(const std::string& format, Args... args);
 
-    template<typename... Args>
+    template <typename... Args>
     void error(const std::string& format, Args... args);
 
 private:

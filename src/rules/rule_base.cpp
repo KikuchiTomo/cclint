@@ -3,14 +3,10 @@
 namespace cclint {
 namespace rules {
 
-void RuleBase::report_diagnostic(
-    diagnostic::DiagnosticEngine& diag_engine,
-    const std::string& file_path,
-    int line,
-    int column,
-    const std::string& message,
-    const std::vector<diagnostic::FixItHint>& fix_hints) const {
-
+void RuleBase::report_diagnostic(diagnostic::DiagnosticEngine& diag_engine,
+                                 const std::string& file_path, int line, int column,
+                                 const std::string& message,
+                                 const std::vector<diagnostic::FixItHint>& fix_hints) const {
     diagnostic::Diagnostic diag;
     diag.severity = static_cast<diagnostic::Severity>(severity_);
     diag.rule_name = name();
@@ -25,16 +21,16 @@ void RuleBase::report_diagnostic(
 
 std::string RuleBase::severity_string() const {
     switch (severity_) {
-    case config::Severity::Error:
-        return "error";
-    case config::Severity::Warning:
-        return "warning";
-    case config::Severity::Info:
-        return "info";
-    default:
-        return "unknown";
+        case config::Severity::Error:
+            return "error";
+        case config::Severity::Warning:
+            return "warning";
+        case config::Severity::Info:
+            return "info";
+        default:
+            return "unknown";
     }
 }
 
-} // namespace rules
-} // namespace cclint
+}  // namespace rules
+}  // namespace cclint

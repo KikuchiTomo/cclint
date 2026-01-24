@@ -12,23 +12,16 @@ class FunctionComplexityRule : public RuleBase {
 public:
     FunctionComplexityRule();
 
-    std::string name() const override {
-        return "function-complexity";
-    }
+    std::string name() const override { return "function-complexity"; }
 
-    std::string description() const override {
-        return "Check cyclomatic complexity of functions";
-    }
+    std::string description() const override { return "Check cyclomatic complexity of functions"; }
 
-    std::string category() const override {
-        return "readability";
-    }
+    std::string category() const override { return "readability"; }
 
     void initialize(const RuleParameters& params) override;
 
-    void check_file(const std::string& file_path,
-                   const std::string& content,
-                   diagnostic::DiagnosticEngine& diag_engine) override;
+    void check_file(const std::string& file_path, const std::string& content,
+                    diagnostic::DiagnosticEngine& diag_engine) override;
 
 private:
     int max_complexity_ = 10;  // デフォルト閾値
@@ -40,6 +33,6 @@ private:
     int count_control_statements(const std::string& code) const;
 };
 
-} // namespace builtin
-} // namespace rules
-} // namespace cclint
+}  // namespace builtin
+}  // namespace rules
+}  // namespace cclint

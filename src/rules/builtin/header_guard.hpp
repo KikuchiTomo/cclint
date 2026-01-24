@@ -20,8 +20,7 @@ public:
 
     void initialize(const RuleParameters& params) override;
 
-    void check_file(const std::string& file_path,
-                    const std::string& content,
+    void check_file(const std::string& file_path, const std::string& content,
                     diagnostic::DiagnosticEngine& diag_engine) override;
 
 private:
@@ -33,6 +32,6 @@ private:
     bool has_header_guard(const std::string& content) const;
 };
 
-} // namespace builtin
-} // namespace rules
-} // namespace cclint
+}  // namespace builtin
+}  // namespace rules
+}  // namespace cclint

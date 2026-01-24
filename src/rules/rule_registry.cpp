@@ -52,8 +52,7 @@ std::vector<RuleBase*> RuleRegistry::get_enabled_rules() const {
     return enabled_rules;
 }
 
-std::vector<RuleBase*> RuleRegistry::get_rules_by_category(
-    const std::string& category) const {
+std::vector<RuleBase*> RuleRegistry::get_rules_by_category(const std::string& category) const {
     std::lock_guard<std::mutex> lock(mutex_);
     std::vector<RuleBase*> filtered_rules;
 
@@ -71,5 +70,5 @@ void RuleRegistry::clear() {
     rules_.clear();
 }
 
-} // namespace rules
-} // namespace cclint
+}  // namespace rules
+}  // namespace cclint

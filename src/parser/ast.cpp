@@ -39,5 +39,5 @@ std::string ASTNode::get_type_name() const {
     }
 }
 
-} // namespace parser
-} // namespace cclint
+}  // namespace parser
+}  // namespace cclint

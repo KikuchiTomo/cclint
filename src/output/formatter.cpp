@@ -7,16 +7,15 @@ void Formatter::write_header(std::ostream& out) {
     (void)out;
 }
 
-void Formatter::write_footer(
-    const std::vector<diagnostic::Diagnostic>& diagnostics,
-    std::ostream& out) {
+void Formatter::write_footer(const std::vector<diagnostic::Diagnostic>& diagnostics,
+                             std::ostream& out) {
     // デフォルト実装は何もしない
     (void)diagnostics;
     (void)out;
 }
 
-Formatter::Statistics Formatter::calculate_statistics(
-    const std::vector<diagnostic::Diagnostic>& diagnostics) const {
+Formatter::Statistics
+Formatter::calculate_statistics(const std::vector<diagnostic::Diagnostic>& diagnostics) const {
     Statistics stats;
     stats.total_count = diagnostics.size();
 

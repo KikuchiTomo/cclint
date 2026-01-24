@@ -1,11 +1,11 @@
 #pragma once
 
-#include "rules/rule_base.hpp"
-#include "lua/lua_engine.hpp"
-#include "lua/lua_bridge.hpp"
-
 #include <memory>
 #include <string>
+
+#include "lua/lua_bridge.hpp"
+#include "lua/lua_engine.hpp"
+#include "rules/rule_base.hpp"
 
 namespace cclint {
 namespace lua {
@@ -16,8 +16,7 @@ public:
     /// コンストラクタ
     /// @param script_path Luaスクリプトのパス
     /// @param rule_name ルール名
-    explicit LuaRule(const std::string& script_path,
-                     const std::string& rule_name);
+    explicit LuaRule(const std::string& script_path, const std::string& rule_name);
 
     std::string name() const override { return rule_name_; }
     std::string description() const override { return description_; }
@@ -25,15 +24,12 @@ public:
 
     void initialize(const rules::RuleParameters& params) override;
 
-    void check_file(const std::string& file_path,
-                    const std::string& content,
+    void check_file(const std::string& file_path, const std::string& content,
                     diagnostic::DiagnosticEngine& diag_engine) override;
 
-    void check_ast(clang::ASTUnit* ast_unit,
-                   diagnostic::DiagnosticEngine& diag_engine) override;
+    void check_ast(clang::ASTUnit* ast_unit, diagnostic::DiagnosticEngine& diag_engine) override;
 
-    void check_ast(const std::string& file_path,
-                   std::shared_ptr<parser::TranslationUnitNode> ast,
+    void check_ast(const std::string& file_path, std::shared_ptr<parser::TranslationUnitNode> ast,
                    diagnostic::DiagnosticEngine& diag_engine) override;
 
     /// スクリプトのロードに成功したかどうか
@@ -59,9 +55,8 @@ private:
     void load_metadata();
 
     /// Luaにファイル内容を渡す
-    void push_file_content_to_lua(const std::string& file_path,
-                                   const std::string& content);
+    void push_file_content_to_lua(const std::string& file_path, const std::string& content);
 };
 
-} // namespace lua
-} // namespace cclint
+}  // namespace lua
+}  // namespace cclint

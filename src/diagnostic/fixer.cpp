@@ -1,10 +1,11 @@
 #include "fixer.hpp"
-#include "utils/file_utils.hpp"
-#include "utils/logger.hpp"
 
 #include <algorithm>
 #include <fstream>
 #include <sstream>
+
+#include "utils/file_utils.hpp"
+#include "utils/logger.hpp"
 
 namespace diagnostic {
 
@@ -33,8 +34,7 @@ size_t Fixer::apply_fixes(const std::vector<Diagnostic>& diagnostics) {
     return fixed_files_.size();
 }
 
-void Fixer::apply_fixes_to_file(const std::string& filename,
-                                 const std::vector<FixItHint>& hints) {
+void Fixer::apply_fixes_to_file(const std::string& filename, const std::vector<FixItHint>& hints) {
     if (hints.empty()) {
         return;
     }
@@ -47,23 +47,21 @@ void Fixer::apply_fixes_to_file(const std::string& filename,
     auto sorted_hints = hints;
     std::sort(sorted_hints.begin(), sorted_hints.end(),
               [&content, this](const FixItHint& a, const FixItHint& b) {
-                  size_t offset_a = location_to_offset(
-                      content, a.range.begin.line, a.range.begin.column);
-                  size_t offset_b = location_to_offset(
-                      content, b.range.begin.line, b.range.begin.column);
+                  size_t offset_a =
+                      location_to_offset(content, a.range.begin.line, a.range.begin.column);
+                  size_t offset_b =
+                      location_to_offset(content, b.range.begin.line, b.range.begin.column);
                   return offset_a > offset_b;  // 降順
               });
 
     // 後ろから修正を適用（オフセット位置が変わらないようにするため）
     for (const auto& hint : sorted_hints) {
-        size_t start_offset = location_to_offset(
-            content, hint.range.begin.line, hint.range.begin.column);
-        size_t end_offset = location_to_offset(
-            content, hint.range.end.line, hint.range.end.column);
+        size_t start_offset =
+            location_to_offset(content, hint.range.begin.line, hint.range.begin.column);
+        size_t end_offset = location_to_offset(content, hint.range.end.line, hint.range.end.column);
 
         if (start_offset <= end_offset && end_offset <= content.size()) {
-            content.replace(start_offset, end_offset - start_offset,
-                            hint.replacement_text);
+            content.replace(start_offset, end_offset - start_offset, hint.replacement_text);
         }
     }
 
@@ -80,14 +78,12 @@ std::string Fixer::read_file(const std::string& filename) {
     try {
         return utils::FileUtils::read_file(filename);
     } catch (const std::exception& e) {
-        utils::Logger::instance().error("Failed to read file: " + filename +
-                                        " - " + e.what());
+        utils::Logger::instance().error("Failed to read file: " + filename + " - " + e.what());
         return "";
     }
 }
 
-size_t Fixer::location_to_offset(const std::string& content, int line,
-                                  int column) {
+size_t Fixer::location_to_offset(const std::string& content, int line, int column) {
     if (line <= 0 || column < 0) {
         return 0;
     }
@@ -105,8 +101,7 @@ size_t Fixer::location_to_offset(const std::string& content, int line,
 
     // 列の位置まで移動
     int current_column = 0;
-    while (current_column < column && offset < content.size() &&
-           content[offset] != '\n') {
+    while (current_column < column && offset < content.size() && content[offset] != '\n') {
         offset++;
         current_column++;
     }
@@ -124,8 +119,7 @@ std::string Fixer::get_fixed_content(const std::string& filename) const {
 
 size_t Fixer::write_fixes() {
     if (preview_mode_) {
-        utils::Logger::instance().info(
-            "Preview mode: not writing changes to files");
+        utils::Logger::instance().info("Preview mode: not writing changes to files");
         return 0;
     }
 
@@ -136,12 +130,11 @@ size_t Fixer::write_fixes() {
             utils::Logger::instance().info("Wrote fixes to: " + filename);
             written_count++;
         } catch (const std::exception& e) {
-            utils::Logger::instance().error("Failed to write file: " +
-                                            filename + " - " + e.what());
+            utils::Logger::instance().error("Failed to write file: " + filename + " - " + e.what());
         }
     }
 
     return written_count;
 }
 
-} // namespace diagnostic
+}  // namespace diagnostic

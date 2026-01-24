@@ -7,9 +7,8 @@ void XmlFormatter::write_header(std::ostream& out) {
     out << "<cclint>\n";
 }
 
-void XmlFormatter::format(
-    const std::vector<diagnostic::Diagnostic>& diagnostics,
-    std::ostream& out) {
+void XmlFormatter::format(const std::vector<diagnostic::Diagnostic>& diagnostics,
+                          std::ostream& out) {
     out << indent(1) << "<diagnostics>\n";
 
     for (const auto& diag : diagnostics) {
@@ -19,9 +18,8 @@ void XmlFormatter::format(
     out << indent(1) << "</diagnostics>\n";
 }
 
-void XmlFormatter::write_footer(
-    const std::vector<diagnostic::Diagnostic>& diagnostics,
-    std::ostream& out) {
+void XmlFormatter::write_footer(const std::vector<diagnostic::Diagnostic>& diagnostics,
+                                std::ostream& out) {
     auto stats = calculate_statistics(diagnostics);
 
     out << indent(1) << "<summary>\n";
@@ -34,9 +32,8 @@ void XmlFormatter::write_footer(
     out << "</cclint>\n";
 }
 
-void XmlFormatter::format_diagnostic(const diagnostic::Diagnostic& diag,
-                                    std::ostream& out,
-                                    int indent_level) {
+void XmlFormatter::format_diagnostic(const diagnostic::Diagnostic& diag, std::ostream& out,
+                                     int indent_level) {
     out << indent(indent_level) << "<diagnostic>\n";
 
     // 重要度
@@ -45,12 +42,11 @@ void XmlFormatter::format_diagnostic(const diagnostic::Diagnostic& diag,
         << "</severity>\n";
 
     // ルール名
-    out << indent(indent_level + 1) << "<rule>"
-        << escape_xml_string(diag.rule_name) << "</rule>\n";
+    out << indent(indent_level + 1) << "<rule>" << escape_xml_string(diag.rule_name) << "</rule>\n";
 
     // メッセージ
-    out << indent(indent_level + 1) << "<message>"
-        << escape_xml_string(diag.message) << "</message>\n";
+    out << indent(indent_level + 1) << "<message>" << escape_xml_string(diag.message)
+        << "</message>\n";
 
     // 位置情報
     if (diag.location.is_valid()) {
@@ -87,20 +83,17 @@ void XmlFormatter::format_diagnostic(const diagnostic::Diagnostic& diag,
     out << indent(indent_level) << "</diagnostic>\n";
 }
 
-void XmlFormatter::format_location(const diagnostic::SourceLocation& loc,
-                                  std::ostream& out,
-                                  int indent_level) {
+void XmlFormatter::format_location(const diagnostic::SourceLocation& loc, std::ostream& out,
+                                   int indent_level) {
     out << indent(indent_level) << "<location>\n";
-    out << indent(indent_level + 1) << "<file>"
-        << escape_xml_string(loc.filename) << "</file>\n";
+    out << indent(indent_level + 1) << "<file>" << escape_xml_string(loc.filename) << "</file>\n";
     out << indent(indent_level + 1) << "<line>" << loc.line << "</line>\n";
     out << indent(indent_level + 1) << "<column>" << loc.column << "</column>\n";
     out << indent(indent_level) << "</location>\n";
 }
 
-void XmlFormatter::format_range(const diagnostic::SourceRange& range,
-                               std::ostream& out,
-                               int indent_level) {
+void XmlFormatter::format_range(const diagnostic::SourceRange& range, std::ostream& out,
+                                int indent_level) {
     out << indent(indent_level) << "<range>\n";
     out << indent(indent_level + 1) << "<begin>\n";
     format_location(range.begin, out, indent_level + 2);
@@ -111,13 +104,12 @@ void XmlFormatter::format_range(const diagnostic::SourceRange& range,
     out << indent(indent_level) << "</range>\n";
 }
 
-void XmlFormatter::format_fix_hint(const diagnostic::FixItHint& hint,
-                                  std::ostream& out,
-                                  int indent_level) {
+void XmlFormatter::format_fix_hint(const diagnostic::FixItHint& hint, std::ostream& out,
+                                   int indent_level) {
     out << indent(indent_level) << "<fixit>\n";
     format_range(hint.range, out, indent_level + 1);
-    out << indent(indent_level + 1) << "<replacement>"
-        << escape_xml_string(hint.replacement_text) << "</replacement>\n";
+    out << indent(indent_level + 1) << "<replacement>" << escape_xml_string(hint.replacement_text)
+        << "</replacement>\n";
     out << indent(indent_level) << "</fixit>\n";
 }
 

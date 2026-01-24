@@ -7,11 +7,7 @@
 
 namespace config {
 
-enum class Severity {
-    Error,
-    Warning,
-    Info
-};
+enum class Severity { Error, Warning, Info };
 
 struct LuaScriptConfig {
     std::string path;
@@ -47,8 +43,8 @@ struct Config {
     std::string cache_directory = ".cclint_cache";
 
     // インクリメンタル解析設定
-    bool enable_incremental = false;  // インクリメンタル解析を有効化
-    bool use_git_diff = false;  // git diffを使って変更ファイルを検出
+    bool enable_incremental = false;    // インクリメンタル解析を有効化
+    bool use_git_diff = false;          // git diffを使って変更ファイルを検出
     std::string git_base_ref = "HEAD";  // git diffの比較元
 
     // ルール実行設定

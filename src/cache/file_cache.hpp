@@ -1,11 +1,11 @@
 #pragma once
 
-#include "diagnostic/diagnostic.hpp"
-
 #include <chrono>
 #include <optional>
 #include <string>
 #include <vector>
+
+#include "diagnostic/diagnostic.hpp"
 
 namespace cclint {
 namespace cache {
@@ -35,7 +35,7 @@ public:
     /// @param current_hash 現在のファイルハッシュ
     /// @return キャッシュエントリ（存在しない or 無効な場合はnullopt）
     std::optional<CacheEntry> get(const std::string& file_path,
-                                   const std::string& current_hash) const;
+                                  const std::string& current_hash) const;
 
     /// キャッシュに診断を保存
     /// @param file_path ファイルパス
@@ -64,5 +64,5 @@ private:
     void ensure_cache_dir_exists() const;
 };
 
-} // namespace cache
-} // namespace cclint
+}  // namespace cache
+}  // namespace cclint

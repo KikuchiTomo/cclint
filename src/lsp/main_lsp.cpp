@@ -1,7 +1,7 @@
+#include <iostream>
+
 #include "lsp_server.hpp"
 #include "utils/logger.hpp"
-
-#include <iostream>
 
 int main(int argc, char** argv) {
     (void)argc;

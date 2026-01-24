@@ -9,48 +9,80 @@ namespace parser {
 /// トークンの種類
 enum class TokenType {
     // リテラル
-    Identifier,      // 識別子
-    IntLiteral,      // 整数リテラル
-    StringLiteral,   // 文字列リテラル
-    CharLiteral,     // 文字リテラル
+    Identifier,     // 識別子
+    IntLiteral,     // 整数リテラル
+    StringLiteral,  // 文字列リテラル
+    CharLiteral,    // 文字リテラル
 
     // キーワード
-    Class, Struct, Enum, Namespace, Using, Typedef,
-    Public, Protected, Private,
-    Virtual, Override, Final, Static, Const, Constexpr, Mutable,
-    Void, Int, Bool, Char, Float, Double, Auto,
-    Unsigned, Signed, Long, Short,
-    If, Else, For, While, Do, Switch, Case, Default,
-    Return, Break, Continue,
-    Template, Typename,
+    Class,
+    Struct,
+    Enum,
+    Namespace,
+    Using,
+    Typedef,
+    Public,
+    Protected,
+    Private,
+    Virtual,
+    Override,
+    Final,
+    Static,
+    Const,
+    Constexpr,
+    Mutable,
+    Void,
+    Int,
+    Bool,
+    Char,
+    Float,
+    Double,
+    Auto,
+    Unsigned,
+    Signed,
+    Long,
+    Short,
+    If,
+    Else,
+    For,
+    While,
+    Do,
+    Switch,
+    Case,
+    Default,
+    Return,
+    Break,
+    Continue,
+    Template,
+    Typename,
 
     // 演算子・記号
-    LeftParen,       // (
-    RightParen,      // )
-    LeftBrace,       // {
-    RightBrace,      // }
-    LeftBracket,     // [
-    RightBracket,    // ]
-    Semicolon,       // ;
-    Comma,           // ,
-    Colon,           // :
-    Scope,           // ::
-    Arrow,           // ->
-    Dot,             // .
-    Asterisk,        // *
-    Ampersand,       // &
-    Less,            // <
-    Greater,         // >
-    Equal,           // =
-    Plus,            // +
-    Minus,           // -
-    Slash,           // /
-    Percent,         // %
+    LeftParen,     // (
+    RightParen,    // )
+    LeftBrace,     // {
+    RightBrace,    // }
+    LeftBracket,   // [
+    RightBracket,  // ]
+    Semicolon,     // ;
+    Comma,         // ,
+    Colon,         // :
+    Scope,         // ::
+    Arrow,         // ->
+    Dot,           // .
+    Asterisk,      // *
+    Ampersand,     // &
+    Less,          // <
+    Greater,       // >
+    Equal,         // =
+    Plus,          // +
+    Minus,         // -
+    Slash,         // /
+    Percent,       // %
 
     // その他
-    Comment,         // コメント
-    Preprocessor,    // プリプロセッサディレクティブ
-    Eof,             // ファイル終端
+    Comment,       // コメント
+    Preprocessor,  // プリプロセッサディレクティブ
+    Eof,           // ファイル終端
     Unknown
 };
 
@@ -111,5 +143,5 @@ private:
     bool is_alnum(char c) const;
 };
 
-} // namespace parser
-} // namespace cclint
+}  // namespace parser
+}  // namespace cclint

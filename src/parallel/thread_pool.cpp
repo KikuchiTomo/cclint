@@ -41,8 +41,7 @@ void ThreadPool::worker_thread() {
         {
             std::unique_lock<std::mutex> lock(queue_mutex_);
 
-            condition_.wait(lock,
-                            [this] { return stop_ || !tasks_.empty(); });
+            condition_.wait(lock, [this] { return stop_ || !tasks_.empty(); });
 
             if (stop_ && tasks_.empty()) {
                 return;
@@ -65,5 +64,5 @@ size_t ThreadPool::detect_cpu_cores() {
     return cores > 0 ? cores : 1;
 }
 
-} // namespace parallel
-} // namespace cclint
+}  // namespace parallel
+}  // namespace cclint

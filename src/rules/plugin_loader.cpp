@@ -1,8 +1,9 @@
 #include "plugin_loader.hpp"
-#include "utils/logger.hpp"
-#include "utils/file_utils.hpp"
 
 #include <filesystem>
+
+#include "utils/file_utils.hpp"
+#include "utils/logger.hpp"
 
 // プラットフォーム固有のヘッダー
 #ifdef _WIN32
@@ -16,8 +17,7 @@ namespace rules {
 
 // PluginHandle実装
 
-PluginHandle::PluginHandle(void* handle, const std::string& path)
-    : handle_(handle), path_(path) {
+PluginHandle::PluginHandle(void* handle, const std::string& path) : handle_(handle), path_(path) {
     // APIシンボルを解決
     api_.get_name = nullptr;
     api_.get_description = nullptr;
@@ -27,10 +27,13 @@ PluginHandle::PluginHandle(void* handle, const std::string& path)
 
 #ifdef _WIN32
     api_.get_name = (const char* (*)())GetProcAddress((HMODULE)handle, "cclint_plugin_get_name");
-    api_.get_description = (const char* (*)())GetProcAddress((HMODULE)handle, "cclint_plugin_get_description");
-    api_.get_category = (const char* (*)())GetProcAddress((HMODULE)handle, "cclint_plugin_get_category");
+    api_.get_description =
+        (const char* (*)())GetProcAddress((HMODULE)handle, "cclint_plugin_get_description");
+    api_.get_category =
+        (const char* (*)())GetProcAddress((HMODULE)handle, "cclint_plugin_get_category");
     api_.create_rule = (void* (*)())GetProcAddress((HMODULE)handle, "cclint_plugin_create_rule");
-    api_.destroy_rule = (void (*)(void*))GetProcAddress((HMODULE)handle, "cclint_plugin_destroy_rule");
+    api_.destroy_rule =
+        (void (*)(void*))GetProcAddress((HMODULE)handle, "cclint_plugin_destroy_rule");
 #else
     api_.get_name = (const char* (*)())dlsym(handle, "cclint_plugin_get_name");
     api_.get_description = (const char* (*)())dlsym(handle, "cclint_plugin_get_description");
@@ -139,8 +142,8 @@ bool PluginLoader::load_plugin(const std::string& plugin_path) {
                                         " (error code: " + std::to_string(error) + ")");
 #else
         const char* error = dlerror();
-        utils::Logger::instance().error("Failed to load plugin: " + plugin_path +
-                                        " (" + (error ? error : "unknown error") + ")");
+        utils::Logger::instance().error("Failed to load plugin: " + plugin_path + " (" +
+                                        (error ? error : "unknown error") + ")");
 #endif
         return false;
     }
@@ -149,14 +152,12 @@ bool PluginLoader::load_plugin(const std::string& plugin_path) {
     std::string plugin_name = plugin_handle->get_name();
 
     if (plugin_name.empty()) {
-        utils::Logger::instance().error(
-            "Plugin does not export required symbol: " + plugin_path);
+        utils::Logger::instance().error("Plugin does not export required symbol: " + plugin_path);
         return false;
     }
 
     plugins_[plugin_name] = std::move(plugin_handle);
-    utils::Logger::instance().info("Loaded plugin: " + plugin_name +
-                                   " from " + plugin_path);
+    utils::Logger::instance().info("Loaded plugin: " + plugin_name + " from " + plugin_path);
     return true;
 }
 
@@ -185,8 +186,7 @@ size_t PluginLoader::load_plugins_from_directory(const std::string& directory) {
     return loaded_count;
 }
 
-std::unique_ptr<RuleBase> PluginLoader::create_rule_from_plugin(
-    const std::string& plugin_name) {
+std::unique_ptr<RuleBase> PluginLoader::create_rule_from_plugin(const std::string& plugin_name) {
     auto it = plugins_.find(plugin_name);
     if (it == plugins_.end()) {
         utils::Logger::instance().error("Plugin not found: " + plugin_name);
@@ -209,5 +209,5 @@ void PluginLoader::unload_all() {
     utils::Logger::instance().info("All plugins unloaded");
 }
 
-} // namespace rules
-} // namespace cclint
+}  // namespace rules
+}  // namespace cclint

@@ -8,9 +8,9 @@
 // LuaJIT のヘッダー（条件付きコンパイル）
 #ifdef HAVE_LUAJIT
 extern "C" {
+#include <lauxlib.h>
 #include <lua.h>
 #include <lualib.h>
-#include <lauxlib.h>
 }
 #else
 // LuaJIT がない場合はスタブ定義
@@ -48,8 +48,7 @@ public:
     /// @param function_name 関数名
     /// @param args 引数のリスト
     /// @return 成功した場合true
-    bool call_function(const std::string& function_name,
-                       const std::vector<std::string>& args = {});
+    bool call_function(const std::string& function_name, const std::vector<std::string>& args = {});
 
     /// エラーメッセージを取得
     std::string get_error_message() const { return error_message_; }
@@ -71,5 +70,5 @@ private:
     void register_cpp_api();
 };
 
-} // namespace lua
-} // namespace cclint
+}  // namespace lua
+}  // namespace cclint

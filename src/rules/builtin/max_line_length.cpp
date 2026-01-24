@@ -1,7 +1,8 @@
 #include "rules/builtin/max_line_length.hpp"
-#include "utils/string_utils.hpp"
 
 #include <regex>
+
+#include "utils/string_utils.hpp"
 
 namespace cclint {
 namespace rules {
@@ -21,11 +22,8 @@ void MaxLineLengthRule::initialize(const RuleParameters& params) {
     }
 }
 
-void MaxLineLengthRule::check_file(
-    const std::string& file_path,
-    const std::string& content,
-    diagnostic::DiagnosticEngine& diag_engine) {
-
+void MaxLineLengthRule::check_file(const std::string& file_path, const std::string& content,
+                                   diagnostic::DiagnosticEngine& diag_engine) {
     auto lines = utils::StringUtils::split(content, '\n');
     int line_num = 0;
 
@@ -49,15 +47,13 @@ void MaxLineLengthRule::check_file(
         }
 
         if (line.length() > max_length_) {
-            std::string message =
-                "Line exceeds maximum length of " +
-                std::to_string(max_length_) + " characters (current: " +
-                std::to_string(line.length()) + ")";
+            std::string message = "Line exceeds maximum length of " + std::to_string(max_length_) +
+                                  " characters (current: " + std::to_string(line.length()) + ")";
             report_diagnostic(diag_engine, file_path, line_num, 1, message);
         }
     }
 }
 
-} // namespace builtin
-} // namespace rules
-} // namespace cclint
+}  // namespace builtin
+}  // namespace rules
+}  // namespace cclint

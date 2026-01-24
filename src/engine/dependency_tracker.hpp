@@ -45,8 +45,8 @@ private:
 
     /// 依存関係を更新
     void update_dependency(const std::string& file_path,
-                          const std::vector<std::string>& dependencies);
+                           const std::vector<std::string>& dependencies);
 };
 
-} // namespace engine
-} // namespace cclint
+}  // namespace engine
+}  // namespace cclint

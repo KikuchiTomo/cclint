@@ -1,9 +1,10 @@
 #include "lua/lua_bridge.hpp"
-#include "parser/ast.hpp"
-#include "utils/logger.hpp"
-#include "utils/file_utils.hpp"
 
 #include <regex>
+
+#include "parser/ast.hpp"
+#include "utils/file_utils.hpp"
+#include "utils/logger.hpp"
 
 namespace cclint {
 namespace lua {
@@ -13,8 +14,7 @@ namespace lua {
 // グローバルなブリッジインスタンス（Luaのコールバック用）
 static LuaBridge* g_bridge = nullptr;
 
-LuaBridge::LuaBridge(std::shared_ptr<LuaEngine> lua_engine)
-    : lua_engine_(lua_engine) {
+LuaBridge::LuaBridge(std::shared_ptr<LuaEngine> lua_engine) : lua_engine_(lua_engine) {
     g_bridge = this;
 }
 
@@ -96,16 +96,14 @@ void LuaBridge::register_api() {
 }
 
 bool LuaBridge::call_function(const std::string& function_name,
-                               const std::vector<std::string>& args) {
+                              const std::vector<std::string>& args) {
     return lua_engine_->call_function(function_name, args);
 }
 
-void LuaBridge::report_diagnostic(const std::string& file_path, int line,
-                                   int column, const std::string& message,
-                                   diagnostic::Severity severity) {
+void LuaBridge::report_diagnostic(const std::string& file_path, int line, int column,
+                                  const std::string& message, diagnostic::Severity severity) {
     if (!diag_engine_) {
-        utils::Logger::instance().warning(
-            "Diagnostic engine not set in LuaBridge");
+        utils::Logger::instance().warning("Diagnostic engine not set in LuaBridge");
         return;
     }
 
@@ -132,7 +130,7 @@ int LuaBridge::lua_report_error(lua_State* L) {
     const char* message = luaL_checkstring(L, 3);
 
     g_bridge->report_diagnostic(g_bridge->current_file_, line, column, message,
-                                 diagnostic::Severity::Error);
+                                diagnostic::Severity::Error);
 
     return 0;
 }
@@ -147,7 +145,7 @@ int LuaBridge::lua_report_warning(lua_State* L) {
     const char* message = luaL_checkstring(L, 3);
 
     g_bridge->report_diagnostic(g_bridge->current_file_, line, column, message,
-                                 diagnostic::Severity::Warning);
+                                diagnostic::Severity::Warning);
 
     return 0;
 }
@@ -162,7 +160,7 @@ int LuaBridge::lua_report_info(lua_State* L) {
     const char* message = luaL_checkstring(L, 3);
 
     g_bridge->report_diagnostic(g_bridge->current_file_, line, column, message,
-                                 diagnostic::Severity::Info);
+                                diagnostic::Severity::Info);
 
     return 0;
 }
@@ -224,7 +222,8 @@ int LuaBridge::lua_get_classes(lua_State* L) {
     // ASTを再帰的に走査してクラスを収集
     std::function<void(std::shared_ptr<parser::ASTNode>)> collect_classes;
     collect_classes = [&](std::shared_ptr<parser::ASTNode> node) {
-        if (!node) return;
+        if (!node)
+            return;
 
         if (node->type == parser::ASTNodeType::Class) {
             auto class_node = std::dynamic_pointer_cast<parser::ClassNode>(node);
@@ -256,7 +255,8 @@ int LuaBridge::lua_get_class_info(lua_State* L) {
     std::shared_ptr<parser::ClassNode> found_class;
     std::function<void(std::shared_ptr<parser::ASTNode>)> find_class;
     find_class = [&](std::shared_ptr<parser::ASTNode> node) {
-        if (!node || found_class) return;
+        if (!node || found_class)
+            return;
 
         if (node->type == parser::ASTNodeType::Class) {
             auto class_node = std::dynamic_pointer_cast<parser::ClassNode>(node);
@@ -308,7 +308,8 @@ int LuaBridge::lua_get_methods(lua_State* L) {
     std::shared_ptr<parser::ClassNode> found_class;
     std::function<void(std::shared_ptr<parser::ASTNode>)> find_class;
     find_class = [&](std::shared_ptr<parser::ASTNode> node) {
-        if (!node || found_class) return;
+        if (!node || found_class)
+            return;
 
         if (node->type == parser::ASTNodeType::Class) {
             auto class_node = std::dynamic_pointer_cast<parser::ClassNode>(node);
@@ -362,7 +363,8 @@ int LuaBridge::lua_get_method_info(lua_State* L) {
     std::shared_ptr<parser::ClassNode> found_class;
     std::function<void(std::shared_ptr<parser::ASTNode>)> find_class;
     find_class = [&](std::shared_ptr<parser::ASTNode> node) {
-        if (!node || found_class) return;
+        if (!node || found_class)
+            return;
 
         if (node->type == parser::ASTNodeType::Class) {
             auto class_node = std::dynamic_pointer_cast<parser::ClassNode>(node);
@@ -634,10 +636,9 @@ int LuaBridge::lua_get_source_range(lua_State* L) {
     return 1;
 }
 
-#else // HAVE_LUAJIT が定義されていない場合（スタブ実装）
+#else  // HAVE_LUAJIT が定義されていない場合（スタブ実装）
 
-LuaBridge::LuaBridge(std::shared_ptr<LuaEngine> lua_engine)
-    : lua_engine_(lua_engine) {}
+LuaBridge::LuaBridge(std::shared_ptr<LuaEngine> lua_engine) : lua_engine_(lua_engine) {}
 
 void LuaBridge::set_diagnostic_engine(diagnostic::DiagnosticEngine* diag_engine) {
     (void)diag_engine;
@@ -654,15 +655,14 @@ void LuaBridge::set_current_ast(std::shared_ptr<parser::TranslationUnitNode> ast
 void LuaBridge::register_api() {}
 
 bool LuaBridge::call_function(const std::string& function_name,
-                               const std::vector<std::string>& args) {
+                              const std::vector<std::string>& args) {
     (void)function_name;
     (void)args;
     return false;
 }
 
-void LuaBridge::report_diagnostic(const std::string& file_path, int line,
-                                   int column, const std::string& message,
-                                   diagnostic::Severity severity) {
+void LuaBridge::report_diagnostic(const std::string& file_path, int line, int column,
+                                  const std::string& message, diagnostic::Severity severity) {
     (void)file_path;
     (void)line;
     (void)column;
@@ -731,7 +731,7 @@ int LuaBridge::lua_get_source_range(lua_State* L) {
     return 0;
 }
 
-#endif // HAVE_LUAJIT
+#endif  // HAVE_LUAJIT
 
-} // namespace lua
-} // namespace cclint
+}  // namespace lua
+}  // namespace cclint

@@ -1,16 +1,17 @@
 #include "engine/analysis_engine.hpp"
-#include "parser/simple_parser.hpp"
-#include "rules/rule_registry.hpp"
-#include "rules/builtin/naming_convention.hpp"
-#include "rules/builtin/header_guard.hpp"
-#include "rules/builtin/max_line_length.hpp"
-#include "rules/builtin/function_complexity.hpp"
-#include "utils/file_utils.hpp"
-#include "utils/logger.hpp"
 
 #include <fstream>
 #include <future>
 #include <sstream>
+
+#include "parser/simple_parser.hpp"
+#include "rules/builtin/function_complexity.hpp"
+#include "rules/builtin/header_guard.hpp"
+#include "rules/builtin/max_line_length.hpp"
+#include "rules/builtin/naming_convention.hpp"
+#include "rules/rule_registry.hpp"
+#include "utils/file_utils.hpp"
+#include "utils/logger.hpp"
 
 namespace cclint {
 namespace engine {
@@ -18,16 +19,12 @@ namespace engine {
 AnalysisEngine::AnalysisEngine(const config::Config& config)
     : config_(config),
       rule_executor_(std::make_unique<rules::RuleExecutor>()),
-      cache_(config.enable_cache
-                 ? std::make_unique<cache::FileCache>(config.cache_directory)
-                 : nullptr),
+      cache_(config.enable_cache ? std::make_unique<cache::FileCache>(config.cache_directory)
+                                 : nullptr),
       thread_pool_(config.num_threads > 1
-                       ? std::make_unique<parallel::ThreadPool>(
-                             config.num_threads)
+                       ? std::make_unique<parallel::ThreadPool>(config.num_threads)
                        : nullptr),
-      incremental_(config.enable_incremental
-                       ? std::make_unique<IncrementalAnalyzer>()
-                       : nullptr) {
+      incremental_(config.enable_incremental ? std::make_unique<IncrementalAnalyzer>() : nullptr) {
     initialize_rules();
 }
 
@@ -35,14 +32,10 @@ void AnalysisEngine::initialize_rules() {
     auto& registry = rules::RuleRegistry::instance();
 
     // ビルトインルールを登録
-    registry.register_rule(
-        std::make_unique<rules::builtin::NamingConventionRule>());
-    registry.register_rule(
-        std::make_unique<rules::builtin::HeaderGuardRule>());
-    registry.register_rule(
-        std::make_unique<rules::builtin::MaxLineLengthRule>());
-    registry.register_rule(
-        std::make_unique<rules::builtin::FunctionComplexityRule>());
+    registry.register_rule(std::make_unique<rules::builtin::NamingConventionRule>());
+    registry.register_rule(std::make_unique<rules::builtin::HeaderGuardRule>());
+    registry.register_rule(std::make_unique<rules::builtin::MaxLineLengthRule>());
+    registry.register_rule(std::make_unique<rules::builtin::FunctionComplexityRule>());
 
     // 設定からルールを有効化/無効化
     for (const auto& rule_config : config_.rules) {
@@ -65,19 +58,15 @@ void AnalysisEngine::initialize_rules() {
 
             rule->initialize(params);
 
-            utils::Logger::instance().debug(
-                "Configured rule: " + rule_config.name +
-                " (enabled: " + (rule_config.enabled ? "true" : "false") + ")");
+            utils::Logger::instance().debug("Configured rule: " + rule_config.name + " (enabled: " +
+                                            (rule_config.enabled ? "true" : "false") + ")");
         } else {
-            utils::Logger::instance().warning(
-                "Rule not found in registry: " + rule_config.name);
+            utils::Logger::instance().warning("Rule not found in registry: " + rule_config.name);
         }
     }
 }
 
-FileAnalysisResult AnalysisEngine::analyze_file(
-    const std::string& file_path) {
-
+FileAnalysisResult AnalysisEngine::analyze_file(const std::string& file_path) {
     FileAnalysisResult result;
     result.file_path = file_path;
 
@@ -106,8 +95,7 @@ FileAnalysisResult AnalysisEngine::analyze_file(
             auto cached_entry = cache_->get(file_path, file_hash);
 
             if (cached_entry) {
-                utils::Logger::instance().debug(
-                    "Using cached result for: " + file_path);
+                utils::Logger::instance().debug("Using cached result for: " + file_path);
                 result.success = true;
                 result.diagnostics = cached_entry->diagnostics;
 
@@ -117,8 +105,7 @@ FileAnalysisResult AnalysisEngine::analyze_file(
 
                 auto end_time = std::chrono::steady_clock::now();
                 result.analysis_time =
-                    std::chrono::duration_cast<std::chrono::milliseconds>(
-                        end_time - start_time);
+                    std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
                 stats_.total_time += result.analysis_time;
 
                 results_.push_back(result);
@@ -133,8 +120,7 @@ FileAnalysisResult AnalysisEngine::analyze_file(
         diagnostic::DiagnosticEngine diag_engine;
 
         // ルール実行（テキストベース）
-        auto stats = rule_executor_->execute_text_rules(file_path, content,
-                                                         diag_engine);
+        auto stats = rule_executor_->execute_text_rules(file_path, content, diag_engine);
 
         // AST解析（C++ファイルのみ）
         if (file_path.find(".cpp") != std::string::npos ||
@@ -142,27 +128,23 @@ FileAnalysisResult AnalysisEngine::analyze_file(
             file_path.find(".cxx") != std::string::npos ||
             file_path.find(".hpp") != std::string::npos ||
             file_path.find(".h") != std::string::npos) {
-
             try {
                 parser::SimpleParser parser(content, file_path);
                 auto ast = parser.parse();
 
                 if (parser.has_errors()) {
-                    utils::Logger::instance().debug(
-                        "AST parse warnings for " + file_path);
+                    utils::Logger::instance().debug("AST parse warnings for " + file_path);
                 }
 
                 // ASTベースのルール実行
-                auto ast_stats = rule_executor_->execute_ast_rules(
-                    file_path, ast, diag_engine);
+                auto ast_stats = rule_executor_->execute_ast_rules(file_path, ast, diag_engine);
 
                 // 統計をマージ
                 stats.insert(stats.end(), ast_stats.begin(), ast_stats.end());
 
             } catch (const std::exception& e) {
-                utils::Logger::instance().warning(
-                    "AST parsing failed for " + file_path + ": " +
-                    e.what());
+                utils::Logger::instance().warning("AST parsing failed for " + file_path + ": " +
+                                                  e.what());
             }
         }
 
@@ -184,19 +166,16 @@ FileAnalysisResult AnalysisEngine::analyze_file(
 
         // 統計情報をログ出力
         if (!stats.empty()) {
-            utils::Logger::instance().debug(
-                "Executed " + std::to_string(stats.size()) + " rules on " +
-                file_path);
+            utils::Logger::instance().debug("Executed " + std::to_string(stats.size()) +
+                                            " rules on " + file_path);
             for (const auto& stat : stats) {
                 if (stat.failed) {
-                    utils::Logger::instance().warning(
-                        "Rule " + stat.rule_name + " failed: " +
-                        stat.error_message);
+                    utils::Logger::instance().warning("Rule " + stat.rule_name +
+                                                      " failed: " + stat.error_message);
                 } else if (stat.diagnostics_count > 0) {
                     utils::Logger::instance().debug(
                         "Rule " + stat.rule_name + " found " +
-                        std::to_string(stat.diagnostics_count) +
-                        " issues (took " +
+                        std::to_string(stat.diagnostics_count) + " issues (took " +
                         std::to_string(stat.execution_time.count()) + "ms)");
                 }
             }
@@ -209,13 +188,12 @@ FileAnalysisResult AnalysisEngine::analyze_file(
             std::lock_guard<std::mutex> lock(results_mutex_);
             stats_.failed_files++;
         }
-        utils::Logger::instance().error("Failed to analyze file: " +
-                                         file_path + " - " + e.what());
+        utils::Logger::instance().error("Failed to analyze file: " + file_path + " - " + e.what());
     }
 
     auto end_time = std::chrono::steady_clock::now();
-    result.analysis_time = std::chrono::duration_cast<std::chrono::milliseconds>(
-        end_time - start_time);
+    result.analysis_time =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
 
     {
         std::lock_guard<std::mutex> lock(results_mutex_);
@@ -226,9 +204,8 @@ FileAnalysisResult AnalysisEngine::analyze_file(
     return result;
 }
 
-std::vector<FileAnalysisResult> AnalysisEngine::analyze_files(
-    const std::vector<std::string>& file_paths) {
-
+std::vector<FileAnalysisResult>
+AnalysisEngine::analyze_files(const std::vector<std::string>& file_paths) {
     std::vector<FileAnalysisResult> results;
     results.reserve(file_paths.size());
 
@@ -237,16 +214,14 @@ std::vector<FileAnalysisResult> AnalysisEngine::analyze_files(
     if (incremental_) {
         if (config_.use_git_diff) {
             // git diff を使って変更されたファイルを検出
-            files_to_analyze =
-                incremental_->get_git_modified_files(config_.git_base_ref);
+            files_to_analyze = incremental_->get_git_modified_files(config_.git_base_ref);
         } else {
             // タイムスタンプベースの検出
             files_to_analyze = incremental_->filter_modified_files(file_paths);
         }
 
         utils::Logger::instance().info(
-            "Incremental analysis: " +
-            std::to_string(files_to_analyze.size()) + " / " +
+            "Incremental analysis: " + std::to_string(files_to_analyze.size()) + " / " +
             std::to_string(file_paths.size()) + " files to analyze");
     } else {
         files_to_analyze = file_paths;
@@ -254,10 +229,9 @@ std::vector<FileAnalysisResult> AnalysisEngine::analyze_files(
 
     // 並列処理が有効な場合
     if (thread_pool_ && files_to_analyze.size() > 1) {
-        utils::Logger::instance().info(
-            "Analyzing " + std::to_string(files_to_analyze.size()) +
-            " files in parallel with " + std::to_string(thread_pool_->size()) +
-            " threads");
+        utils::Logger::instance().info("Analyzing " + std::to_string(files_to_analyze.size()) +
+                                       " files in parallel with " +
+                                       std::to_string(thread_pool_->size()) + " threads");
 
         std::vector<std::future<FileAnalysisResult>> futures;
         futures.reserve(files_to_analyze.size());
@@ -273,9 +247,9 @@ std::vector<FileAnalysisResult> AnalysisEngine::analyze_files(
             try {
                 // 早期終了チェック
                 if (should_stop_early()) {
-                    utils::Logger::instance().warning(
-                        "Stopping analysis early: max_errors (" +
-                        std::to_string(config_.max_errors) + ") reached");
+                    utils::Logger::instance().warning("Stopping analysis early: max_errors (" +
+                                                      std::to_string(config_.max_errors) +
+                                                      ") reached");
                     stats_.stopped_early = true;
                     break;
                 }
@@ -284,8 +258,8 @@ std::vector<FileAnalysisResult> AnalysisEngine::analyze_files(
                 results.push_back(result);
 
             } catch (const std::exception& e) {
-                utils::Logger::instance().error(
-                    "Failed to get analysis result: " + std::string(e.what()));
+                utils::Logger::instance().error("Failed to get analysis result: " +
+                                                std::string(e.what()));
             }
         }
 
@@ -294,9 +268,8 @@ std::vector<FileAnalysisResult> AnalysisEngine::analyze_files(
         for (const auto& file_path : files_to_analyze) {
             // 早期終了チェック
             if (should_stop_early()) {
-                utils::Logger::instance().warning(
-                    "Stopping analysis early: max_errors (" +
-                    std::to_string(config_.max_errors) + ") reached");
+                utils::Logger::instance().warning("Stopping analysis early: max_errors (" +
+                                                  std::to_string(config_.max_errors) + ") reached");
                 stats_.stopped_early = true;
                 break;
             }
@@ -331,13 +304,11 @@ bool AnalysisEngine::should_stop_early() const {
     return error_count >= static_cast<size_t>(config_.max_errors);
 }
 
-std::vector<diagnostic::Diagnostic> AnalysisEngine::get_all_diagnostics()
-    const {
+std::vector<diagnostic::Diagnostic> AnalysisEngine::get_all_diagnostics() const {
     std::vector<diagnostic::Diagnostic> all_diagnostics;
 
     for (const auto& result : results_) {
-        all_diagnostics.insert(all_diagnostics.end(),
-                               result.diagnostics.begin(),
+        all_diagnostics.insert(all_diagnostics.end(), result.diagnostics.begin(),
                                result.diagnostics.end());
     }
 
@@ -426,9 +397,8 @@ void AnalysisEngine::estimate_memory_usage() {
     stats_.memory_usage_bytes = total_bytes;
 
     utils::Logger::instance().debug(
-        "Estimated memory usage: " +
-        std::to_string(total_bytes / 1024) + " KB");
+        "Estimated memory usage: " + std::to_string(total_bytes / 1024) + " KB");
 }
 
-} // namespace engine
-} // namespace cclint
+}  // namespace engine
+}  // namespace cclint

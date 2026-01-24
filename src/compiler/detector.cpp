@@ -49,8 +49,7 @@ CompilerType CompilerDetector::detect_type(const std::string& compiler_name) {
     } else if (compiler_name.find("g++") != std::string::npos ||
                compiler_name.find("gcc") != std::string::npos) {
         return CompilerType::GCC;
-    } else if (compiler_name.find("cl.exe") != std::string::npos ||
-               compiler_name == "cl") {
+    } else if (compiler_name.find("cl.exe") != std::string::npos || compiler_name == "cl") {
         return CompilerType::MSVC;
     } else if (compiler_name.find("c++") != std::string::npos ||
                compiler_name.find("cc") != std::string::npos) {
@@ -66,8 +65,7 @@ std::string CompilerDetector::get_version(const std::string& compiler_path) {
     // コンパイラのバージョンを取得
     std::string cmd = compiler_path + " --version 2>&1";
 
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"),
-                                                   pclose);
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
 
     if (!pipe) {
         return "unknown";
@@ -82,8 +80,8 @@ std::string CompilerDetector::get_version(const std::string& compiler_path) {
     return result;
 }
 
-CompilerInfo CompilerDetector::parse_version_output(
-    const std::string& output, const std::string& compiler_path) {
+CompilerInfo CompilerDetector::parse_version_output(const std::string& output,
+                                                    const std::string& compiler_path) {
     CompilerInfo info;
     info.path = compiler_path;
 
@@ -112,8 +110,7 @@ CompilerInfo CompilerDetector::parse_version_output(
         }
     }
     // GCC の検出
-    else if (output.find("gcc") != std::string::npos ||
-             output.find("GCC") != std::string::npos ||
+    else if (output.find("gcc") != std::string::npos || output.find("GCC") != std::string::npos ||
              output.find("g++") != std::string::npos) {
         info.type = CompilerType::GCC;
         info.name = "GCC";

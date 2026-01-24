@@ -1,8 +1,9 @@
 #include "lua/lua_engine.hpp"
-#include "utils/logger.hpp"
 
 #include <fstream>
 #include <sstream>
+
+#include "utils/logger.hpp"
 
 namespace cclint {
 namespace lua {
@@ -77,7 +78,7 @@ bool LuaEngine::execute_string(const std::string& script) {
 }
 
 bool LuaEngine::call_function(const std::string& function_name,
-                               const std::vector<std::string>& args) {
+                              const std::vector<std::string>& args) {
     if (!L_) {
         error_message_ = "Lua state not initialized";
         return false;
@@ -139,7 +140,7 @@ bool LuaEngine::is_available() {
     return true;
 }
 
-#else // HAVE_LUAJIT が定義されていない場合（スタブ実装）
+#else  // HAVE_LUAJIT が定義されていない場合（スタブ実装）
 
 LuaEngine::LuaEngine() : L_(nullptr) {
     error_message_ = "LuaJIT is not available (not compiled with LuaJIT support)";
@@ -159,7 +160,7 @@ bool LuaEngine::execute_string(const std::string& script) {
 }
 
 bool LuaEngine::call_function(const std::string& function_name,
-                               const std::vector<std::string>& args) {
+                              const std::vector<std::string>& args) {
     (void)function_name;
     (void)args;
     return false;
@@ -173,7 +174,7 @@ bool LuaEngine::is_available() {
     return false;
 }
 
-#endif // HAVE_LUAJIT
+#endif  // HAVE_LUAJIT
 
-} // namespace lua
-} // namespace cclint
+}  // namespace lua
+}  // namespace cclint

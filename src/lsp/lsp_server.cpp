@@ -1,12 +1,13 @@
 #include "lsp_server.hpp"
-#include "utils/logger.hpp"
-#include "utils/file_utils.hpp"
-#include "config/config_loader.hpp"
 
-#include <sstream>
-#include <iostream>
-#include <fstream>
 #include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
+#include "config/config_loader.hpp"
+#include "utils/file_utils.hpp"
+#include "utils/logger.hpp"
 
 namespace cclint {
 namespace lsp {
@@ -137,7 +138,8 @@ LSPResponse LSPServer::handle_message(const LSPMessage& message) {
 }
 
 void LSPServer::send_response(const LSPResponse& response) {
-    if (!output_stream_) return;
+    if (!output_stream_)
+        return;
 
     std::ostringstream json;
     json << "{\"jsonrpc\":\"2.0\",\"id\":" << response.id;
@@ -156,9 +158,9 @@ void LSPServer::send_response(const LSPResponse& response) {
     output_stream_->flush();
 }
 
-void LSPServer::send_notification(const std::string& method,
-                                  const std::string& params) {
-    if (!output_stream_) return;
+void LSPServer::send_notification(const std::string& method, const std::string& params) {
+    if (!output_stream_)
+        return;
 
     std::ostringstream json;
     json << "{\"jsonrpc\":\"2.0\",\"method\":\"" << method << "\"";
@@ -281,7 +283,8 @@ void LSPServer::analyze_document(const std::string& uri) {
     }
 
     // 一時ファイルに内容を書き込む（メモリ上のコンテンツを解析するため）
-    std::string temp_path = "/tmp/cclint_lsp_" + std::to_string(std::hash<std::string>{}(uri)) + ".cpp";
+    std::string temp_path =
+        "/tmp/cclint_lsp_" + std::to_string(std::hash<std::string>{}(uri)) + ".cpp";
     try {
         std::ofstream temp_file(temp_path);
         temp_file << it->second;
@@ -299,11 +302,12 @@ void LSPServer::analyze_document(const std::string& uri) {
 
         bool first = true;
         for (const auto& diag : all_diagnostics) {
-            if (!first) diagnostics_json << ",";
+            if (!first)
+                diagnostics_json << ",";
             first = false;
 
             // Severityを変換
-            int severity = 2; // Warning
+            int severity = 2;  // Warning
             switch (diag.severity) {
                 case diagnostic::Severity::Error:
                     severity = 1;
@@ -322,9 +326,9 @@ void LSPServer::analyze_document(const std::string& uri) {
             diagnostics_json << "{";
             diagnostics_json << "\"range\":{";
             diagnostics_json << "\"start\":{\"line\":" << (diag.location.line - 1)
-                           << ",\"character\":" << diag.location.column << "},";
+                             << ",\"character\":" << diag.location.column << "},";
             diagnostics_json << "\"end\":{\"line\":" << (diag.location.line - 1)
-                           << ",\"character\":" << (diag.location.column + 10) << "}";
+                             << ",\"character\":" << (diag.location.column + 10) << "}";
             diagnostics_json << "},";
             diagnostics_json << "\"severity\":" << severity << ",";
             diagnostics_json << "\"source\":\"cclint\",";
@@ -340,12 +344,12 @@ void LSPServer::analyze_document(const std::string& uri) {
         std::filesystem::remove(temp_path);
 
         utils::Logger::instance().debug("LSP: Analyzed " + uri + " - found " +
-                                       std::to_string(all_diagnostics.size()) + " diagnostics");
+                                        std::to_string(all_diagnostics.size()) + " diagnostics");
 
     } catch (const std::exception& e) {
         utils::Logger::instance().error("LSP: Failed to analyze " + uri + ": " + e.what());
     }
 }
 
-} // namespace lsp
-} // namespace cclint
+}  // namespace lsp
+}  // namespace cclint

@@ -1,23 +1,22 @@
 #include "dependency_tracker.hpp"
-#include "utils/file_utils.hpp"
-#include "utils/logger.hpp"
 
-#include <regex>
 #include <filesystem>
 #include <queue>
+#include <regex>
+
+#include "utils/file_utils.hpp"
+#include "utils/logger.hpp"
 
 namespace cclint {
 namespace engine {
 
-std::vector<std::string> DependencyTracker::analyze_dependencies(
-    const std::string& file_path) {
+std::vector<std::string> DependencyTracker::analyze_dependencies(const std::string& file_path) {
     auto includes = parse_includes(file_path);
     update_dependency(file_path, includes);
     return includes;
 }
 
-std::vector<std::string> DependencyTracker::parse_includes(
-    const std::string& file_path) {
+std::vector<std::string> DependencyTracker::parse_includes(const std::string& file_path) {
     std::vector<std::string> includes;
 
     try {
@@ -35,8 +34,7 @@ std::vector<std::string> DependencyTracker::parse_includes(
             if (std::regex_search(line, match, include_regex)) {
                 if (match.size() > 1) {
                     std::string include_file = match[1].str();
-                    std::string resolved_path =
-                        resolve_include_path(include_file, file_path);
+                    std::string resolved_path = resolve_include_path(include_file, file_path);
                     if (!resolved_path.empty()) {
                         includes.push_back(resolved_path);
                     }
@@ -44,16 +42,15 @@ std::vector<std::string> DependencyTracker::parse_includes(
             }
         }
     } catch (const std::exception& e) {
-        utils::Logger::instance().warning(
-            "Failed to parse includes from: " + file_path + " - " + e.what());
+        utils::Logger::instance().warning("Failed to parse includes from: " + file_path + " - " +
+                                          e.what());
     }
 
     return includes;
 }
 
-std::string DependencyTracker::resolve_include_path(
-    const std::string& include_directive,
-    const std::string& current_file) {
+std::string DependencyTracker::resolve_include_path(const std::string& include_directive,
+                                                    const std::string& current_file) {
     namespace fs = std::filesystem;
 
     // 現在のファイルのディレクトリ
@@ -73,14 +70,12 @@ std::string DependencyTracker::resolve_include_path(
     }
 
     // 標準インクルードパスは解決しない（システムヘッダーは無視）
-    utils::Logger::instance().debug(
-        "Could not resolve include: " + include_directive);
+    utils::Logger::instance().debug("Could not resolve include: " + include_directive);
     return "";
 }
 
-void DependencyTracker::update_dependency(
-    const std::string& file_path,
-    const std::vector<std::string>& dependencies) {
+void DependencyTracker::update_dependency(const std::string& file_path,
+                                          const std::vector<std::string>& dependencies) {
     // 既存の依存関係をクリア
     auto old_deps = dependencies_[file_path];
     dependencies_[file_path].clear();
@@ -93,15 +88,13 @@ void DependencyTracker::update_dependency(
 
     // 逆引きから削除された依存関係を削除
     for (const auto& old_dep : old_deps) {
-        if (dependencies_[file_path].find(old_dep) ==
-            dependencies_[file_path].end()) {
+        if (dependencies_[file_path].find(old_dep) == dependencies_[file_path].end()) {
             reverse_dependencies_[old_dep].erase(file_path);
         }
     }
 }
 
-std::vector<std::string> DependencyTracker::get_affected_files(
-    const std::string& file_path) {
+std::vector<std::string> DependencyTracker::get_affected_files(const std::string& file_path) {
     std::vector<std::string> affected;
     std::set<std::string> visited;
     std::queue<std::string> to_visit;
@@ -155,5 +148,5 @@ void DependencyTracker::dump_dependencies() const {
     }
 }
 
-} // namespace engine
-} // namespace cclint
+}  // namespace engine
+}  // namespace cclint

@@ -1,10 +1,11 @@
 #pragma once
 
-#include "rules/rule_base.hpp"
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
-#include <map>
+
+#include "rules/rule_base.hpp"
 
 namespace cclint {
 namespace rules {
@@ -63,8 +64,7 @@ public:
     /// ロードされたプラグインからルールを作成
     /// @param plugin_name プラグイン名
     /// @return ルールインスタンス（失敗時はnullptr）
-    std::unique_ptr<RuleBase> create_rule_from_plugin(
-        const std::string& plugin_name);
+    std::unique_ptr<RuleBase> create_rule_from_plugin(const std::string& plugin_name);
 
     /// ロードされたプラグインの一覧を取得
     std::vector<std::string> get_loaded_plugins() const;
@@ -88,5 +88,5 @@ private:
     void unload_library(void* handle);
 };
 
-} // namespace rules
-} // namespace cclint
+}  // namespace rules
+}  // namespace cclint

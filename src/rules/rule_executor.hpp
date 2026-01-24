@@ -1,12 +1,12 @@
 #pragma once
 
-#include "rules/rule_base.hpp"
-#include "diagnostic/diagnostic.hpp"
-
 #include <chrono>
 #include <memory>
 #include <string>
 #include <vector>
+
+#include "diagnostic/diagnostic.hpp"
+#include "rules/rule_base.hpp"
 
 namespace clang {
 class ASTUnit;
@@ -43,28 +43,26 @@ public:
     /// @param content ファイル内容
     /// @param diag_engine 診断エンジン
     /// @return 実行統計のリスト
-    std::vector<RuleExecutionStats> execute_text_rules(
-        const std::string& file_path,
-        const std::string& content,
-        diagnostic::DiagnosticEngine& diag_engine);
+    std::vector<RuleExecutionStats> execute_text_rules(const std::string& file_path,
+                                                       const std::string& content,
+                                                       diagnostic::DiagnosticEngine& diag_engine);
 
     /// ASTに対してすべての有効なルールを実行（独自AST）
     /// @param file_path ファイルパス
     /// @param ast AST
     /// @param diag_engine 診断エンジン
     /// @return 実行統計のリスト
-    std::vector<RuleExecutionStats> execute_ast_rules(
-        const std::string& file_path,
-        std::shared_ptr<parser::TranslationUnitNode> ast,
-        diagnostic::DiagnosticEngine& diag_engine);
+    std::vector<RuleExecutionStats>
+    execute_ast_rules(const std::string& file_path,
+                      std::shared_ptr<parser::TranslationUnitNode> ast,
+                      diagnostic::DiagnosticEngine& diag_engine);
 
     /// ASTに対してすべての有効なルールを実行（Clang AST）
     /// @param ast_unit ASTUnit
     /// @param diag_engine 診断エンジン
     /// @return 実行統計のリスト
-    std::vector<RuleExecutionStats> execute_clang_ast_rules(
-        clang::ASTUnit* ast_unit,
-        diagnostic::DiagnosticEngine& diag_engine);
+    std::vector<RuleExecutionStats>
+    execute_clang_ast_rules(clang::ASTUnit* ast_unit, diagnostic::DiagnosticEngine& diag_engine);
 
     /// 特定のルールのみを実行（テキストベース）
     /// @param rule_name ルール名
@@ -72,21 +70,17 @@ public:
     /// @param content ファイル内容
     /// @param diag_engine 診断エンジン
     /// @return 実行統計
-    RuleExecutionStats execute_text_rule(
-        const std::string& rule_name,
-        const std::string& file_path,
-        const std::string& content,
-        diagnostic::DiagnosticEngine& diag_engine);
+    RuleExecutionStats execute_text_rule(const std::string& rule_name, const std::string& file_path,
+                                         const std::string& content,
+                                         diagnostic::DiagnosticEngine& diag_engine);
 
     /// 特定のルールのみを実行（AST）
     /// @param rule_name ルール名
     /// @param ast_unit ASTUnit
     /// @param diag_engine 診断エンジン
     /// @return 実行統計
-    RuleExecutionStats execute_ast_rule(
-        const std::string& rule_name,
-        clang::ASTUnit* ast_unit,
-        diagnostic::DiagnosticEngine& diag_engine);
+    RuleExecutionStats execute_ast_rule(const std::string& rule_name, clang::ASTUnit* ast_unit,
+                                        diagnostic::DiagnosticEngine& diag_engine);
 
     /// タイムアウト時間を設定
     void set_timeout(int timeout_ms) { timeout_ms_ = timeout_ms; }
@@ -97,13 +91,11 @@ public:
 private:
     /// ルールを実行し、統計を収集するヘルパー
     template <typename Func>
-    RuleExecutionStats execute_with_stats(
-        RuleBase* rule,
-        diagnostic::DiagnosticEngine& diag_engine,
-        Func&& func);
+    RuleExecutionStats execute_with_stats(RuleBase* rule, diagnostic::DiagnosticEngine& diag_engine,
+                                          Func&& func);
 
     int timeout_ms_;
 };
 
-} // namespace rules
-} // namespace cclint
+}  // namespace rules
+}  // namespace cclint

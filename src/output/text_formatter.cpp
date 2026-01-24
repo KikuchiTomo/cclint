@@ -4,16 +4,14 @@
 
 namespace output {
 
-void TextFormatter::format(
-    const std::vector<diagnostic::Diagnostic>& diagnostics,
-    std::ostream& out) {
+void TextFormatter::format(const std::vector<diagnostic::Diagnostic>& diagnostics,
+                           std::ostream& out) {
     for (const auto& diag : diagnostics) {
         format_diagnostic(diag, out);
     }
 }
 
-void TextFormatter::format_diagnostic(const diagnostic::Diagnostic& diag,
-                                     std::ostream& out) {
+void TextFormatter::format_diagnostic(const diagnostic::Diagnostic& diag, std::ostream& out) {
     // 位置情報
     if (diag.location.is_valid()) {
         out << diag.location.to_string() << ": ";
@@ -36,11 +34,10 @@ void TextFormatter::format_diagnostic(const diagnostic::Diagnostic& diag,
         const char* reset = "\033[0m";
 
         for (const auto& hint : diag.fix_hints) {
-            out << "  " << green << "fix-it:" << reset << " "
-                << hint.range.to_string() << "\n";
+            out << "  " << green << "fix-it:" << reset << " " << hint.range.to_string() << "\n";
             if (!hint.replacement_text.empty()) {
-                out << "    " << green << "replace with:" << reset
-                    << " '" << hint.replacement_text << "'\n";
+                out << "    " << green << "replace with:" << reset << " '" << hint.replacement_text
+                    << "'\n";
             }
         }
     }
@@ -52,9 +49,8 @@ void TextFormatter::format_diagnostic(const diagnostic::Diagnostic& diag,
     }
 }
 
-void TextFormatter::write_footer(
-    const std::vector<diagnostic::Diagnostic>& diagnostics,
-    std::ostream& out) {
+void TextFormatter::write_footer(const std::vector<diagnostic::Diagnostic>& diagnostics,
+                                 std::ostream& out) {
     auto stats = calculate_statistics(diagnostics);
 
     if (stats.total_count == 0) {
@@ -63,13 +59,11 @@ void TextFormatter::write_footer(
     }
 
     out << "\n";
-    out << stats.error_count << " error(s), "
-        << stats.warning_count << " warning(s), "
+    out << stats.error_count << " error(s), " << stats.warning_count << " warning(s), "
         << stats.info_count << " info message(s) generated.\n";
 }
 
-std::string TextFormatter::colorize_severity(
-    diagnostic::Severity severity) const {
+std::string TextFormatter::colorize_severity(diagnostic::Severity severity) const {
     // ANSI color codes（環境変数でカラー出力を制御可能）
     const char* reset = "\033[0m";
     const char* red = "\033[1;31m";

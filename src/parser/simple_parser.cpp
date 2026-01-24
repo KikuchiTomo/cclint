@@ -3,8 +3,7 @@
 namespace cclint {
 namespace parser {
 
-SimpleParser::SimpleParser(const std::string& source,
-                          const std::string& filename)
+SimpleParser::SimpleParser(const std::string& source, const std::string& filename)
     : filename_(filename) {
     Lexer lexer(source);
     tokens_ = lexer.tokenize();
@@ -219,9 +218,12 @@ std::shared_ptr<ASTNode> SimpleParser::parse_class_or_struct() {
     if (match(TokenType::Less)) {
         int depth = 1;
         while (depth > 0 && !check(TokenType::Eof)) {
-            if (match(TokenType::Less)) depth++;
-            else if (match(TokenType::Greater)) depth--;
-            else advance();
+            if (match(TokenType::Less))
+                depth++;
+            else if (match(TokenType::Greater))
+                depth--;
+            else
+                advance();
         }
     }
 
@@ -358,9 +360,12 @@ std::shared_ptr<ASTNode> SimpleParser::parse_function_or_variable() {
         // パラメータをスキップ
         int depth = 1;
         while (depth > 0 && !check(TokenType::Eof)) {
-            if (match(TokenType::LeftParen)) depth++;
-            else if (match(TokenType::RightParen)) depth--;
-            else advance();
+            if (match(TokenType::LeftParen))
+                depth++;
+            else if (match(TokenType::RightParen))
+                depth--;
+            else
+                advance();
         }
 
         // 修飾子 (const, override, final)
@@ -432,17 +437,13 @@ std::shared_ptr<ASTNode> SimpleParser::parse_using() {
 std::string SimpleParser::parse_type() {
     std::string type;
 
-    while (check(TokenType::Const) || check(TokenType::Static) ||
-           check(TokenType::Unsigned) || check(TokenType::Signed) ||
-           check(TokenType::Long) || check(TokenType::Short) ||
-           check(TokenType::Void) || check(TokenType::Int) ||
-           check(TokenType::Bool) || check(TokenType::Char) ||
-           check(TokenType::Float) || check(TokenType::Double) ||
-           check(TokenType::Auto) || check(TokenType::Identifier) ||
-           check(TokenType::Scope) || check(TokenType::Less) ||
-           check(TokenType::Greater) || check(TokenType::Comma) ||
+    while (check(TokenType::Const) || check(TokenType::Static) || check(TokenType::Unsigned) ||
+           check(TokenType::Signed) || check(TokenType::Long) || check(TokenType::Short) ||
+           check(TokenType::Void) || check(TokenType::Int) || check(TokenType::Bool) ||
+           check(TokenType::Char) || check(TokenType::Float) || check(TokenType::Double) ||
+           check(TokenType::Auto) || check(TokenType::Identifier) || check(TokenType::Scope) ||
+           check(TokenType::Less) || check(TokenType::Greater) || check(TokenType::Comma) ||
            check(TokenType::Asterisk) || check(TokenType::Ampersand)) {
-
         type += current_token().text;
         if (check(TokenType::Less)) {
             type += "<";
@@ -498,7 +499,7 @@ void SimpleParser::skip_braces() {
 void SimpleParser::add_error(const std::string& message) {
     const auto& tok = current_token();
     std::string error = filename_ + ":" + std::to_string(tok.line) + ":" +
-                       std::to_string(tok.column) + ": " + message;
+                        std::to_string(tok.column) + ": " + message;
     errors_.push_back(error);
 }
 
@@ -507,5 +508,5 @@ SourcePosition SimpleParser::get_position() const {
     return SourcePosition(filename_, tok.line, tok.column);
 }
 
-} // namespace parser
-} // namespace cclint
+}  // namespace parser
+}  // namespace cclint

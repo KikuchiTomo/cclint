@@ -11,20 +11,28 @@ bool Token::is_keyword() const {
 }
 
 std::string Token::get_type_name() const {
-    static const char* names[] = {
-        "Identifier", "IntLiteral", "StringLiteral", "CharLiteral",
-        "class", "struct", "enum", "namespace", "using", "typedef",
-        "public", "protected", "private",
-        "virtual", "override", "final", "static", "const", "constexpr", "mutable",
-        "void", "int", "bool", "char", "float", "double", "auto",
-        "if", "else", "for", "while", "do", "switch", "case", "default",
-        "return", "break", "continue",
-        "template", "typename",
-        "(", ")", "{", "}", "[", "]",
-        ";", ",", ":", "::", "->", ".", "*", "&", "<", ">", "=",
-        "+", "-", "/", "%",
-        "Comment", "Preprocessor", "EOF", "Unknown"
-    };
+    static const char* names[] = {"Identifier",  "IntLiteral", "StringLiteral",
+                                  "CharLiteral", "class",      "struct",
+                                  "enum",        "namespace",  "using",
+                                  "typedef",     "public",     "protected",
+                                  "private",     "virtual",    "override",
+                                  "final",       "static",     "const",
+                                  "constexpr",   "mutable",    "void",
+                                  "int",         "bool",       "char",
+                                  "float",       "double",     "auto",
+                                  "if",          "else",       "for",
+                                  "while",       "do",         "switch",
+                                  "case",        "default",    "return",
+                                  "break",       "continue",   "template",
+                                  "typename",    "(",          ")",
+                                  "{",           "}",          "[",
+                                  "]",           ";",          ",",
+                                  ":",           "::",         "->",
+                                  ".",           "*",          "&",
+                                  "<",           ">",          "=",
+                                  "+",           "-",          "/",
+                                  "%",           "Comment",    "Preprocessor",
+                                  "EOF",         "Unknown"};
     int index = static_cast<int>(type);
     if (index >= 0 && index < static_cast<int>(sizeof(names) / sizeof(names[0]))) {
         return names[index];
@@ -101,26 +109,66 @@ Token Lexer::next_token() {
     // 1文字トークン
     TokenType type = TokenType::Unknown;
     switch (c) {
-        case '(': type = TokenType::LeftParen; break;
-        case ')': type = TokenType::RightParen; break;
-        case '{': type = TokenType::LeftBrace; break;
-        case '}': type = TokenType::RightBrace; break;
-        case '[': type = TokenType::LeftBracket; break;
-        case ']': type = TokenType::RightBracket; break;
-        case ';': type = TokenType::Semicolon; break;
-        case ',': type = TokenType::Comma; break;
-        case ':': type = TokenType::Colon; break;
-        case '.': type = TokenType::Dot; break;
-        case '*': type = TokenType::Asterisk; break;
-        case '&': type = TokenType::Ampersand; break;
-        case '<': type = TokenType::Less; break;
-        case '>': type = TokenType::Greater; break;
-        case '=': type = TokenType::Equal; break;
-        case '+': type = TokenType::Plus; break;
-        case '-': type = TokenType::Minus; break;
-        case '/': type = TokenType::Slash; break;
-        case '%': type = TokenType::Percent; break;
-        default: type = TokenType::Unknown; break;
+        case '(':
+            type = TokenType::LeftParen;
+            break;
+        case ')':
+            type = TokenType::RightParen;
+            break;
+        case '{':
+            type = TokenType::LeftBrace;
+            break;
+        case '}':
+            type = TokenType::RightBrace;
+            break;
+        case '[':
+            type = TokenType::LeftBracket;
+            break;
+        case ']':
+            type = TokenType::RightBracket;
+            break;
+        case ';':
+            type = TokenType::Semicolon;
+            break;
+        case ',':
+            type = TokenType::Comma;
+            break;
+        case ':':
+            type = TokenType::Colon;
+            break;
+        case '.':
+            type = TokenType::Dot;
+            break;
+        case '*':
+            type = TokenType::Asterisk;
+            break;
+        case '&':
+            type = TokenType::Ampersand;
+            break;
+        case '<':
+            type = TokenType::Less;
+            break;
+        case '>':
+            type = TokenType::Greater;
+            break;
+        case '=':
+            type = TokenType::Equal;
+            break;
+        case '+':
+            type = TokenType::Plus;
+            break;
+        case '-':
+            type = TokenType::Minus;
+            break;
+        case '/':
+            type = TokenType::Slash;
+            break;
+        case '%':
+            type = TokenType::Percent;
+            break;
+        default:
+            type = TokenType::Unknown;
+            break;
     }
 
     std::string text(1, c);
@@ -278,46 +326,26 @@ Token Lexer::read_preprocessor() {
 
 TokenType Lexer::get_keyword_type(const std::string& word) const {
     static const std::unordered_map<std::string, TokenType> keywords = {
-        {"class", TokenType::Class},
-        {"struct", TokenType::Struct},
-        {"enum", TokenType::Enum},
-        {"namespace", TokenType::Namespace},
-        {"using", TokenType::Using},
-        {"typedef", TokenType::Typedef},
-        {"public", TokenType::Public},
-        {"protected", TokenType::Protected},
-        {"private", TokenType::Private},
-        {"virtual", TokenType::Virtual},
-        {"override", TokenType::Override},
-        {"final", TokenType::Final},
-        {"static", TokenType::Static},
-        {"const", TokenType::Const},
-        {"constexpr", TokenType::Constexpr},
-        {"mutable", TokenType::Mutable},
-        {"void", TokenType::Void},
-        {"int", TokenType::Int},
-        {"bool", TokenType::Bool},
-        {"char", TokenType::Char},
-        {"float", TokenType::Float},
-        {"double", TokenType::Double},
-        {"auto", TokenType::Auto},
-        {"unsigned", TokenType::Unsigned},
-        {"signed", TokenType::Signed},
-        {"long", TokenType::Long},
-        {"short", TokenType::Short},
-        {"if", TokenType::If},
-        {"else", TokenType::Else},
-        {"for", TokenType::For},
-        {"while", TokenType::While},
-        {"do", TokenType::Do},
-        {"switch", TokenType::Switch},
-        {"case", TokenType::Case},
-        {"default", TokenType::Default},
-        {"return", TokenType::Return},
-        {"break", TokenType::Break},
-        {"continue", TokenType::Continue},
-        {"template", TokenType::Template},
-        {"typename", TokenType::Typename},
+        {"class", TokenType::Class},         {"struct", TokenType::Struct},
+        {"enum", TokenType::Enum},           {"namespace", TokenType::Namespace},
+        {"using", TokenType::Using},         {"typedef", TokenType::Typedef},
+        {"public", TokenType::Public},       {"protected", TokenType::Protected},
+        {"private", TokenType::Private},     {"virtual", TokenType::Virtual},
+        {"override", TokenType::Override},   {"final", TokenType::Final},
+        {"static", TokenType::Static},       {"const", TokenType::Const},
+        {"constexpr", TokenType::Constexpr}, {"mutable", TokenType::Mutable},
+        {"void", TokenType::Void},           {"int", TokenType::Int},
+        {"bool", TokenType::Bool},           {"char", TokenType::Char},
+        {"float", TokenType::Float},         {"double", TokenType::Double},
+        {"auto", TokenType::Auto},           {"unsigned", TokenType::Unsigned},
+        {"signed", TokenType::Signed},       {"long", TokenType::Long},
+        {"short", TokenType::Short},         {"if", TokenType::If},
+        {"else", TokenType::Else},           {"for", TokenType::For},
+        {"while", TokenType::While},         {"do", TokenType::Do},
+        {"switch", TokenType::Switch},       {"case", TokenType::Case},
+        {"default", TokenType::Default},     {"return", TokenType::Return},
+        {"break", TokenType::Break},         {"continue", TokenType::Continue},
+        {"template", TokenType::Template},   {"typename", TokenType::Typename},
     };
 
     auto it = keywords.find(word);
@@ -340,5 +368,5 @@ bool Lexer::is_alnum(char c) const {
     return is_alpha(c) || is_digit(c);
 }
 
-} // namespace parser
-} // namespace cclint
+}  // namespace parser
+}  // namespace cclint

@@ -1,7 +1,8 @@
 #include "rules/builtin/header_guard.hpp"
-#include "utils/string_utils.hpp"
 
 #include <regex>
+
+#include "utils/string_utils.hpp"
 
 namespace cclint {
 namespace rules {
@@ -18,11 +19,8 @@ void HeaderGuardRule::initialize(const RuleParameters& params) {
     }
 }
 
-void HeaderGuardRule::check_file(
-    const std::string& file_path,
-    const std::string& content,
-    diagnostic::DiagnosticEngine& diag_engine) {
-
+void HeaderGuardRule::check_file(const std::string& file_path, const std::string& content,
+                                 diagnostic::DiagnosticEngine& diag_engine) {
     // ヘッダーファイルのみチェック
     if (!is_header_file(file_path)) {
         return;
@@ -33,26 +31,22 @@ void HeaderGuardRule::check_file(
 
     if (require_pragma_once_) {
         if (!has_pragma) {
-            report_diagnostic(diag_engine, file_path, 1, 1,
-                              "Header file should use #pragma once");
+            report_diagnostic(diag_engine, file_path, 1, 1, "Header file should use #pragma once");
         }
     } else {
         if (!has_pragma && !has_guard) {
-            report_diagnostic(
-                diag_engine, file_path, 1, 1,
-                "Header file missing header guard or #pragma once");
+            report_diagnostic(diag_engine, file_path, 1, 1,
+                              "Header file missing header guard or #pragma once");
         }
     }
 }
 
 bool HeaderGuardRule::is_header_file(const std::string& file_path) const {
     // C++20の ends_with の代わりに、手動でサフィックスチェック
-    auto has_suffix = [](const std::string& str,
-                         const std::string& suffix) {
+    auto has_suffix = [](const std::string& str, const std::string& suffix) {
         if (str.length() < suffix.length())
             return false;
-        return str.compare(str.length() - suffix.length(), suffix.length(),
-                           suffix) == 0;
+        return str.compare(str.length() - suffix.length(), suffix.length(), suffix) == 0;
     };
 
     return has_suffix(file_path, ".h") || has_suffix(file_path, ".hpp") ||
@@ -76,6 +70,6 @@ bool HeaderGuardRule::has_header_guard(const std::string& content) const {
     return has_ifndef && has_define && has_endif;
 }
 
-} // namespace builtin
-} // namespace rules
-} // namespace cclint
+}  // namespace builtin
+}  // namespace rules
+}  // namespace cclint

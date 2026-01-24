@@ -1,11 +1,12 @@
 #include "cache/file_cache.hpp"
-#include "utils/file_utils.hpp"
-#include "utils/string_utils.hpp"
 
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
-#include <filesystem>
+
+#include "utils/file_utils.hpp"
+#include "utils/string_utils.hpp"
 
 // SHA256計算用（簡易版 - 本来は専用ライブラリを使うべき）
 #include <cstring>
@@ -28,8 +29,7 @@ std::string FileCache::calculate_file_hash(const std::string& file_path) const {
 
         // Convert file_time_type to system_clock time_point for consistent hashing
         auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
-            last_write - fs::file_time_type::clock::now() +
-            std::chrono::system_clock::now());
+            last_write - fs::file_time_type::clock::now() + std::chrono::system_clock::now());
         auto time_count = sctp.time_since_epoch().count();
 
         std::ostringstream oss;
@@ -41,9 +41,8 @@ std::string FileCache::calculate_file_hash(const std::string& file_path) const {
     }
 }
 
-std::optional<CacheEntry> FileCache::get(
-    const std::string& file_path, const std::string& current_hash) const {
-
+std::optional<CacheEntry> FileCache::get(const std::string& file_path,
+                                         const std::string& current_hash) const {
     std::string cache_file = get_cache_file_path(file_path);
 
     if (!utils::FileUtils::file_exists(cache_file)) {
@@ -84,8 +83,7 @@ std::optional<CacheEntry> FileCache::get(
     }
 }
 
-void FileCache::put(const std::string& file_path,
-                    const std::string& file_hash,
+void FileCache::put(const std::string& file_path, const std::string& file_hash,
                     const std::vector<diagnostic::Diagnostic>& diagnostics) {
     std::string cache_file = get_cache_file_path(file_path);
 
@@ -135,9 +133,7 @@ void FileCache::cleanup(int max_age_days) {
             return;
         }
 
-        auto cutoff_time =
-            std::chrono::system_clock::now() -
-            std::chrono::hours(24 * max_age_days);
+        auto cutoff_time = std::chrono::system_clock::now() - std::chrono::hours(24 * max_age_days);
 
         for (const auto& entry : fs::directory_iterator(cache_dir_)) {
             if (!entry.is_regular_file()) {
@@ -145,10 +141,8 @@ void FileCache::cleanup(int max_age_days) {
             }
 
             auto last_write = entry.last_write_time();
-            auto sctp = std::chrono::time_point_cast<
-                std::chrono::system_clock::duration>(
-                last_write - fs::file_time_type::clock::now() +
-                std::chrono::system_clock::now());
+            auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
+                last_write - fs::file_time_type::clock::now() + std::chrono::system_clock::now());
 
             if (sctp < cutoff_time) {
                 fs::remove(entry.path());
@@ -159,8 +153,7 @@ void FileCache::cleanup(int max_age_days) {
     }
 }
 
-std::string FileCache::get_cache_file_path(
-    const std::string& file_path) const {
+std::string FileCache::get_cache_file_path(const std::string& file_path) const {
     // ファイルパスをサニタイズしてキャッシュファイル名を生成
     std::string sanitized = file_path;
 
@@ -184,5 +177,5 @@ void FileCache::ensure_cache_dir_exists() const {
     }
 }
 
-} // namespace cache
-} // namespace cclint
+}  // namespace cache
+}  // namespace cclint

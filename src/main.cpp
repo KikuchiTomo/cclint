@@ -1,3 +1,8 @@
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
+
 #include "cli/argument_parser.hpp"
 #include "cli/help_formatter.hpp"
 #include "compiler/detector.hpp"
@@ -5,13 +10,9 @@
 #include "config/config_loader.hpp"
 #include "diagnostic/diagnostic.hpp"
 #include "diagnostic/fixer.hpp"
+#include "engine/analysis_engine.hpp"
 #include "output/formatter_factory.hpp"
 #include "utils/logger.hpp"
-#include "engine/analysis_engine.hpp"
-
-#include <iostream>
-#include <string>
-#include <vector>
 
 int main(int argc, char** argv) {
     try {
@@ -130,12 +131,10 @@ int main(int argc, char** argv) {
 
         // ソースファイルの解析
         if (!result.source_files.empty()) {
-            logger.info("Analyzing " +
-                        std::to_string(result.source_files.size()) +
+            logger.info("Analyzing " + std::to_string(result.source_files.size()) +
                         " source file(s)...");
 
-            auto analysis_results =
-                analysis_engine.analyze_files(result.source_files);
+            auto analysis_results = analysis_engine.analyze_files(result.source_files);
 
             // 解析結果のサマリーをログ出力
             size_t success_count = 0;
@@ -145,16 +144,13 @@ int main(int argc, char** argv) {
                     success_count++;
                 } else {
                     failed_count++;
-                    logger.error("Failed to analyze: " + res.file_path +
-                                 " - " + res.error_message);
+                    logger.error("Failed to analyze: " + res.file_path + " - " + res.error_message);
                 }
             }
 
-            logger.info("Successfully analyzed " +
-                        std::to_string(success_count) + " file(s)");
+            logger.info("Successfully analyzed " + std::to_string(success_count) + " file(s)");
             if (failed_count > 0) {
-                logger.warning("Failed to analyze " +
-                               std::to_string(failed_count) + " file(s)");
+                logger.warning("Failed to analyze " + std::to_string(failed_count) + " file(s)");
             }
 
         } else {
@@ -165,8 +161,7 @@ int main(int argc, char** argv) {
         auto all_diagnostics = analysis_engine.get_all_diagnostics();
 
         // 出力フォーマッタの作成
-        auto formatter =
-            output::FormatterFactory::create(config.output_format);
+        auto formatter = output::FormatterFactory::create(config.output_format);
 
         // 診断結果の出力
         formatter->format(all_diagnostics, std::cout);
@@ -200,8 +195,7 @@ int main(int argc, char** argv) {
                 } else {
                     // 実際にファイルに書き込む
                     size_t written = fixer.write_fixes();
-                    logger.info("Wrote fixes to " + std::to_string(written) +
-                                " file(s)");
+                    logger.info("Wrote fixes to " + std::to_string(written) + " file(s)");
                 }
             } else {
                 logger.info("No fixes to apply");
@@ -213,54 +207,44 @@ int main(int argc, char** argv) {
             logger.info("Analysis complete");
 
             auto stats = analysis_engine.get_stats();
-            logger.info("Files analyzed: " +
-                        std::to_string(stats.analyzed_files) + "/" +
+            logger.info("Files analyzed: " + std::to_string(stats.analyzed_files) + "/" +
                         std::to_string(stats.total_files));
 
             if (stats.skipped_files > 0) {
-                logger.info("Files skipped: " +
-                            std::to_string(stats.skipped_files));
+                logger.info("Files skipped: " + std::to_string(stats.skipped_files));
             }
 
             if (stats.failed_files > 0) {
-                logger.warning("Files failed: " +
-                               std::to_string(stats.failed_files));
+                logger.warning("Files failed: " + std::to_string(stats.failed_files));
             }
 
             if (stats.stopped_early) {
                 logger.warning("Analysis stopped early (max_errors reached)");
             }
 
-            logger.info(
-                "Errors: " + std::to_string(analysis_engine.get_error_count()));
-            logger.info("Warnings: " +
-                        std::to_string(analysis_engine.get_warning_count()));
+            logger.info("Errors: " + std::to_string(analysis_engine.get_error_count()));
+            logger.info("Warnings: " + std::to_string(analysis_engine.get_warning_count()));
 
             if (args.verbosity > 1 || args.enable_profile) {
-                logger.info("Total time: " +
-                            std::to_string(stats.total_time.count()) + "ms");
+                logger.info("Total time: " + std::to_string(stats.total_time.count()) + "ms");
             }
 
             // プロファイリングモード: 詳細な統計を表示
             if (args.enable_profile) {
                 logger.info("=== Profiling Information ===");
-                logger.info("Cached files: " +
-                            std::to_string(stats.cached_files));
+                logger.info("Cached files: " + std::to_string(stats.cached_files));
                 logger.info("Cache hit rate: " +
                             std::to_string(stats.total_files > 0
-                                               ? (stats.cached_files * 100.0 /
-                                                  stats.total_files)
+                                               ? (stats.cached_files * 100.0 / stats.total_files)
                                                : 0.0) +
                             "%");
                 logger.info("Average time per file: " +
                             std::to_string(stats.analyzed_files > 0
-                                               ? (stats.total_time.count() /
-                                                  stats.analyzed_files)
+                                               ? (stats.total_time.count() / stats.analyzed_files)
                                                : 0) +
                             "ms");
                 logger.info("Memory usage (estimated): " +
-                            std::to_string(stats.memory_usage / (1024 * 1024)) +
-                            " MB");
+                            std::to_string(stats.memory_usage_bytes / (1024 * 1024)) + " MB");
             }
         }
 

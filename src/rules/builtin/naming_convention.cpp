@@ -1,8 +1,9 @@
 #include "rules/builtin/naming_convention.hpp"
-#include "parser/ast.hpp"
-#include "utils/string_utils.hpp"
 
 #include <sstream>
+
+#include "parser/ast.hpp"
+#include "utils/string_utils.hpp"
 
 namespace cclint {
 namespace rules {
@@ -66,11 +67,8 @@ void NamingConventionRule::initialize(const RuleParameters& params) {
     }
 }
 
-void NamingConventionRule::check_file(
-    const std::string& file_path,
-    const std::string& content,
-    diagnostic::DiagnosticEngine& diag_engine) {
-
+void NamingConventionRule::check_file(const std::string& file_path, const std::string& content,
+                                      diagnostic::DiagnosticEngine& diag_engine) {
     if (check_functions_) {
         check_function_names(file_path, content, diag_engine);
     }
@@ -88,11 +86,9 @@ void NamingConventionRule::check_file(
     }
 }
 
-void NamingConventionRule::check_function_names(
-    const std::string& file_path,
-    const std::string& content,
-    diagnostic::DiagnosticEngine& diag_engine) {
-
+void NamingConventionRule::check_function_names(const std::string& file_path,
+                                                const std::string& content,
+                                                diagnostic::DiagnosticEngine& diag_engine) {
     // 簡易的な関数名検出（正規表現ベース）
     // より正確にはAST解析が必要
     std::regex func_decl_pattern(
@@ -117,20 +113,16 @@ void NamingConventionRule::check_function_names(
             // snake_case チェック
             if (!std::regex_match(func_name, function_pattern_)) {
                 std::string message =
-                    "Function name '" + func_name +
-                    "' does not follow snake_case convention";
-                report_diagnostic(diag_engine, file_path, line_num, 1,
-                                  message);
+                    "Function name '" + func_name + "' does not follow snake_case convention";
+                report_diagnostic(diag_engine, file_path, line_num, 1, message);
             }
         }
     }
 }
 
-void NamingConventionRule::check_class_names(
-    const std::string& file_path,
-    const std::string& content,
-    diagnostic::DiagnosticEngine& diag_engine) {
-
+void NamingConventionRule::check_class_names(const std::string& file_path,
+                                             const std::string& content,
+                                             diagnostic::DiagnosticEngine& diag_engine) {
     // 簡易的なクラス名検出
     std::regex class_decl_pattern(R"(\b(class|struct)\s+([A-Za-z_][A-Za-z0-9_]*))");
 
@@ -148,20 +140,16 @@ void NamingConventionRule::check_class_names(
             // PascalCase チェック
             if (!std::regex_match(class_name, class_pattern_)) {
                 std::string message =
-                    "Class name '" + class_name +
-                    "' does not follow PascalCase convention";
-                report_diagnostic(diag_engine, file_path, line_num, 1,
-                                  message);
+                    "Class name '" + class_name + "' does not follow PascalCase convention";
+                report_diagnostic(diag_engine, file_path, line_num, 1, message);
             }
         }
     }
 }
 
-void NamingConventionRule::check_variable_names(
-    const std::string& file_path,
-    const std::string& content,
-    diagnostic::DiagnosticEngine& diag_engine) {
-
+void NamingConventionRule::check_variable_names(const std::string& file_path,
+                                                const std::string& content,
+                                                diagnostic::DiagnosticEngine& diag_engine) {
     // 簡易的な変数名検出
     // 変数宣言のパターン: 型 変数名; または 型 変数名 = ...;
     std::regex var_decl_pattern(
@@ -181,36 +169,31 @@ void NamingConventionRule::check_variable_names(
 
         std::smatch match;
         std::string line_str(line);
-        auto it = std::sregex_iterator(line_str.begin(), line_str.end(),
-                                        var_decl_pattern);
+        auto it = std::sregex_iterator(line_str.begin(), line_str.end(), var_decl_pattern);
         auto end = std::sregex_iterator();
 
         for (; it != end; ++it) {
             std::string var_name = (*it)[2].str();
 
             // 特殊なキーワードは除外
-            if (var_name == "if" || var_name == "for" ||
-                var_name == "while" || var_name == "return") {
+            if (var_name == "if" || var_name == "for" || var_name == "while" ||
+                var_name == "return") {
                 continue;
             }
 
             // snake_case チェック
             if (!std::regex_match(var_name, variable_pattern_)) {
                 std::string message =
-                    "Variable name '" + var_name +
-                    "' does not follow snake_case convention";
-                report_diagnostic(diag_engine, file_path, line_num, 1,
-                                  message);
+                    "Variable name '" + var_name + "' does not follow snake_case convention";
+                report_diagnostic(diag_engine, file_path, line_num, 1, message);
             }
         }
     }
 }
 
-void NamingConventionRule::check_constant_names(
-    const std::string& file_path,
-    const std::string& content,
-    diagnostic::DiagnosticEngine& diag_engine) {
-
+void NamingConventionRule::check_constant_names(const std::string& file_path,
+                                                const std::string& content,
+                                                diagnostic::DiagnosticEngine& diag_engine) {
     // 簡易的な定数名検出
     // const/constexpr 定数のパターン
     std::regex const_decl_pattern(
@@ -235,21 +218,17 @@ void NamingConventionRule::check_constant_names(
             // UPPER_CASE チェック
             if (!std::regex_match(const_name, constant_pattern_)) {
                 std::string message =
-                    "Constant name '" + const_name +
-                    "' does not follow UPPER_CASE convention";
-                report_diagnostic(diag_engine, file_path, line_num, 1,
-                                  message);
+                    "Constant name '" + const_name + "' does not follow UPPER_CASE convention";
+                report_diagnostic(diag_engine, file_path, line_num, 1, message);
             }
         }
     }
 }
 
 // ASTベースのチェック（アクセス指定子対応）
-void NamingConventionRule::check_ast(
-    const std::string& file_path,
-    std::shared_ptr<parser::TranslationUnitNode> ast,
-    diagnostic::DiagnosticEngine& diag_engine) {
-
+void NamingConventionRule::check_ast(const std::string& file_path,
+                                     std::shared_ptr<parser::TranslationUnitNode> ast,
+                                     diagnostic::DiagnosticEngine& diag_engine) {
     if (!check_method_access_) {
         return;  // アクセス指定子チェックが無効な場合はスキップ
     }
@@ -257,11 +236,9 @@ void NamingConventionRule::check_ast(
     check_ast_recursive(file_path, ast, diag_engine);
 }
 
-void NamingConventionRule::check_ast_recursive(
-    const std::string& file_path,
-    std::shared_ptr<parser::ASTNode> node,
-    diagnostic::DiagnosticEngine& diag_engine) {
-
+void NamingConventionRule::check_ast_recursive(const std::string& file_path,
+                                               std::shared_ptr<parser::ASTNode> node,
+                                               diagnostic::DiagnosticEngine& diag_engine) {
     if (!node) {
         return;
     }
@@ -280,16 +257,13 @@ void NamingConventionRule::check_ast_recursive(
     }
 }
 
-void NamingConventionRule::check_class_methods(
-    const std::string& file_path,
-    std::shared_ptr<parser::ClassNode> class_node,
-    diagnostic::DiagnosticEngine& diag_engine) {
-
+void NamingConventionRule::check_class_methods(const std::string& file_path,
+                                               std::shared_ptr<parser::ClassNode> class_node,
+                                               diagnostic::DiagnosticEngine& diag_engine) {
     for (const auto& child : class_node->children) {
         // メソッドノードの場合
         if (child->type == parser::ASTNodeType::Function ||
             child->type == parser::ASTNodeType::Method) {
-
             auto func_node = std::dynamic_pointer_cast<parser::FunctionNode>(child);
             if (!func_node) {
                 continue;
@@ -298,8 +272,7 @@ void NamingConventionRule::check_class_methods(
             std::string method_name = func_node->name;
 
             // コンストラクタ・デストラクタは除外
-            if (method_name == class_node->name ||
-                method_name[0] == '~') {
+            if (method_name == class_node->name || method_name[0] == '~') {
                 continue;
             }
 
@@ -331,18 +304,16 @@ void NamingConventionRule::check_class_methods(
 
             if (pattern && !std::regex_match(method_name, *pattern)) {
                 std::ostringstream msg;
-                msg << access_name << " method '" << method_name
-                    << "' in class '" << class_node->name
-                    << "' does not follow the configured naming pattern";
+                msg << access_name << " method '" << method_name << "' in class '"
+                    << class_node->name << "' does not follow the configured naming pattern";
 
-                report_diagnostic(diag_engine, file_path,
-                                func_node->position.line,
-                                func_node->position.column, msg.str());
+                report_diagnostic(diag_engine, file_path, func_node->position.line,
+                                  func_node->position.column, msg.str());
             }
         }
     }
 }
 
-} // namespace builtin
-} // namespace rules
-} // namespace cclint
+}  // namespace builtin
+}  // namespace rules
+}  // namespace cclint
