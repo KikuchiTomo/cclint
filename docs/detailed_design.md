@@ -714,17 +714,33 @@ private:
 
 ### 7.1 Luaエンジン
 
+**設計原則**:
+- LuaJIT 2.1を使用して高速な実行を実現
+- 100以上のAPI関数を提供し、ユーザーが自由にチェックロジックを実装可能
+- カテゴリ別にAPI登録関数を分割して保守性を向上
+- サンドボックス化により安全性を確保
+
 ```cpp
 // lua/lua_engine.hpp
 #pragma once
 #include "../diagnostic/diagnostic.hpp"
-#include <lua.hpp>
+#include <lua.hpp>  // LuaJIT
 #include <clang/AST/ASTContext.h>
+#include <clang/AST/RecursiveASTVisitor.h>
 #include <string>
 #include <vector>
 #include <memory>
+#include <unordered_map>
 
 namespace lua {
+
+// Luaに渡すノード情報
+struct LuaNodeInfo {
+    const clang::Decl* decl;
+    const clang::Stmt* stmt;
+    std::string type;
+    clang::ASTContext* context;
+};
 
 class LuaEngine {
 public:
@@ -734,24 +750,50 @@ public:
     // Luaスクリプトをロード
     void load_script(const std::string& script_path);
 
-    // C++ APIをLuaに登録
-    void register_api();
+    // すべてのC++ APIをLuaに登録
+    void register_all_apis();
 
     // Luaルールを実行
     std::vector<diagnostic::Diagnostic> execute_checks(
         clang::ASTContext& ast_context);
 
     // エラーハンドリング
-    void handle_error(const std::string& error_message);
+    void handle_lua_error(const std::string& error_message);
+
+    // 診断を追加（Lua APIから呼ばれる）
+    void add_diagnostic(diagnostic::Diagnostic diag);
 
 private:
     lua_State* L_;
     std::vector<diagnostic::Diagnostic> diagnostics_;
-    clang::ASTContext* current_context_;
+    clang::ASTContext* current_ast_;
 
+    // API登録関数群（カテゴリ別）
     void setup_sandbox();
-    void register_functions();
-    void register_node_api();
+    void register_diagnostic_apis();         // 診断報告API（4個）
+    void register_ast_node_apis();          // ASTノード操作API（8個）
+    void register_function_apis();          // 関数・メソッドAPI（10個）
+    void register_variable_apis();          // 変数・フィールドAPI（8個）
+    void register_class_apis();             // クラスAPI（8個）
+    void register_control_flow_apis();      // 制御フローAPI（12個）
+    void register_macro_apis();             // マクロAPI（5個）
+    void register_file_apis();              // ファイル・位置情報API（10個）
+    void register_style_apis();             // スタイル・フォーマットAPI（7個）
+    void register_context_apis();           // 宣言コンテキストAPI（5個）
+    void register_type_apis();              // 型情報API（8個）
+    void register_comment_apis();           // コメントAPI（7個）
+    void register_spacing_apis();           // 空行・スペーシングAPI（7個）
+    void register_search_apis();            // 検索・走査API（10個）
+    void register_utility_apis();           // ユーティリティAPI（5個）
+
+    // ヘルパー関数
+    LuaNodeInfo* check_node(lua_State* L, int index);
+    void push_node(lua_State* L, const clang::Decl* decl);
+    void push_node(lua_State* L, const clang::Stmt* stmt);
+    void push_location(lua_State* L, const clang::SourceLocation& loc);
+
+    // ノードキャッシュ（userdata管理用）
+    std::unordered_map<const void*, int> node_refs_;
 };
 
 } // namespace lua
@@ -759,57 +801,469 @@ private:
 
 ### 7.2 Lua API実装
 
+**実装パターン**:
+すべてのLua API関数は以下のパターンに従います：
+1. 引数の検証とC++オブジェクトへの変換
+2. Clang ASTを使った情報取得
+3. 結果をLuaにプッシュ
+4. エラーハンドリング
+
+#### 7.2.1 診断報告API
+
 ```cpp
-// lua/lua_api.cpp
+// lua/lua_api_diagnostic.cpp
 #include "lua_engine.hpp"
-#include "lua_bridge.hpp"
 
 namespace lua {
+namespace api {
 
-// Lua関数: report_error(location, message)
-static int lua_report_error(lua_State* L) {
+// report_error(location, message)
+static int report_error(lua_State* L) {
     auto* engine = static_cast<LuaEngine*>(
         lua_touserdata(L, lua_upvalueindex(1)));
 
-    // 引数取得
-    const char* file = lua_tostring(L, 1);
-    int line = lua_tointeger(L, 2);
-    int column = lua_tointeger(L, 3);
-    const char* message = lua_tostring(L, 4);
+    // 引数検証
+    luaL_checktype(L, 1, LUA_TTABLE);  // location table
+    const char* message = luaL_checkstring(L, 2);
+
+    // location table から情報取得
+    lua_getfield(L, 1, "file");
+    lua_getfield(L, 1, "line");
+    lua_getfield(L, 1, "column");
+
+    const char* file = lua_tostring(L, -3);
+    int line = lua_tointeger(L, -2);
+    int column = lua_tointeger(L, -1);
+    lua_pop(L, 3);
 
     // 診断を作成
     diagnostic::Diagnostic diag;
     diag.severity = diagnostic::Severity::Error;
     diag.location = {file, line, column};
     diag.message = message;
+    diag.rule_name = "lua_custom_rule";  // TODO: 現在のルール名を取得
 
     engine->add_diagnostic(diag);
 
     return 0;
 }
 
-// Lua関数: report_warning(location, message)
-static int lua_report_warning(lua_State* L) {
-    // 同様の実装（severityをWarningに）
+// report_warning(location, message)
+static int report_warning(lua_State* L) {
+    // report_error と同様、severity を Warning に設定
+    auto* engine = static_cast<LuaEngine*>(
+        lua_touserdata(L, lua_upvalueindex(1)));
+
+    luaL_checktype(L, 1, LUA_TTABLE);
+    const char* message = luaL_checkstring(L, 2);
+
+    lua_getfield(L, 1, "file");
+    lua_getfield(L, 1, "line");
+    lua_getfield(L, 1, "column");
+
+    const char* file = lua_tostring(L, -3);
+    int line = lua_tointeger(L, -2);
+    int column = lua_tointeger(L, -1);
+    lua_pop(L, 3);
+
+    diagnostic::Diagnostic diag;
+    diag.severity = diagnostic::Severity::Warning;
+    diag.location = {file, line, column};
+    diag.message = message;
+    diag.rule_name = "lua_custom_rule";
+
+    engine->add_diagnostic(diag);
+
     return 0;
 }
 
-// Lua関数: get_node_name(node)
-static int lua_get_node_name(lua_State* L) {
-    // ASTノードから名前を取得
+// report_info(location, message)
+static int report_info(lua_State* L) {
+    // 同様の実装、severity を Info に設定
+    // ... 省略 ...
+    return 0;
+}
+
+// report_with_fix(severity, location, message, fix_text)
+static int report_with_fix(lua_State* L) {
+    auto* engine = static_cast<LuaEngine*>(
+        lua_touserdata(L, lua_upvalueindex(1)));
+
+    const char* severity_str = luaL_checkstring(L, 1);
+    luaL_checktype(L, 2, LUA_TTABLE);
+    const char* message = luaL_checkstring(L, 3);
+    const char* fix_text = luaL_checkstring(L, 4);
+
+    // severity 文字列を enum に変換
+    diagnostic::Severity severity;
+    if (std::string(severity_str) == "error") {
+        severity = diagnostic::Severity::Error;
+    } else if (std::string(severity_str) == "warning") {
+        severity = diagnostic::Severity::Warning;
+    } else {
+        severity = diagnostic::Severity::Info;
+    }
+
+    // location 取得
+    lua_getfield(L, 2, "file");
+    lua_getfield(L, 2, "line");
+    lua_getfield(L, 2, "column");
+    const char* file = lua_tostring(L, -3);
+    int line = lua_tointeger(L, -2);
+    int column = lua_tointeger(L, -1);
+    lua_pop(L, 3);
+
+    diagnostic::Diagnostic diag;
+    diag.severity = severity;
+    diag.location = {file, line, column};
+    diag.message = message;
+    diag.fix_suggestion = fix_text;
+    diag.rule_name = "lua_custom_rule";
+
+    engine->add_diagnostic(diag);
+
+    return 0;
+}
+
+} // namespace api
+} // namespace lua
+```
+
+#### 7.2.2 ASTノード操作API
+
+```cpp
+// lua/lua_api_ast.cpp
+#include "lua_engine.hpp"
+#include <clang/AST/Decl.h>
+
+namespace lua {
+namespace api {
+
+// get_node_type(node)  -> string
+static int get_node_type(lua_State* L) {
+    auto* node_info = check_node(L, 1);
+
+    std::string type_name;
+    if (node_info->decl) {
+        type_name = node_info->decl->getDeclKindName();
+    } else if (node_info->stmt) {
+        type_name = node_info->stmt->getStmtClassName();
+    } else {
+        return luaL_error(L, "Invalid node");
+    }
+
+    lua_pushstring(L, type_name.c_str());
     return 1;
 }
 
-// Lua関数: match_pattern(text, pattern)
-static int lua_match_pattern(lua_State* L) {
-    const char* text = lua_tostring(L, 1);
-    const char* pattern = lua_tostring(L, 2);
+// get_node_name(node)  -> string
+static int get_node_name(lua_State* L) {
+    auto* node_info = check_node(L, 1);
 
-    std::regex re(pattern);
-    bool matches = std::regex_match(text, re);
+    if (auto* named_decl = llvm::dyn_cast_or_null<clang::NamedDecl>(node_info->decl)) {
+        std::string name = named_decl->getNameAsString();
+        lua_pushstring(L, name.c_str());
+        return 1;
+    }
 
-    lua_pushboolean(L, matches);
+    lua_pushnil(L);
     return 1;
+}
+
+// get_node_location(node)  -> {file, line, column}
+static int get_node_location(lua_State* L) {
+    auto* node_info = check_node(L, 1);
+    auto* context = node_info->context;
+
+    clang::SourceLocation loc;
+    if (node_info->decl) {
+        loc = node_info->decl->getLocation();
+    } else if (node_info->stmt) {
+        loc = node_info->stmt->getBeginLoc();
+    } else {
+        return luaL_error(L, "Invalid node");
+    }
+
+    // location table を作成
+    lua_newtable(L);
+
+    auto& source_manager = context->getSourceManager();
+    std::string filename = source_manager.getFilename(loc).str();
+    unsigned line = source_manager.getSpellingLineNumber(loc);
+    unsigned column = source_manager.getSpellingColumnNumber(loc);
+
+    lua_pushstring(L, filename.c_str());
+    lua_setfield(L, -2, "file");
+
+    lua_pushinteger(L, line);
+    lua_setfield(L, -2, "line");
+
+    lua_pushinteger(L, column);
+    lua_setfield(L, -2, "column");
+
+    return 1;
+}
+
+// get_children(node)  -> array of nodes
+static int get_children(lua_State* L) {
+    auto* node_info = check_node(L, 1);
+
+    lua_newtable(L);  // 結果テーブル
+    int index = 1;
+
+    if (node_info->decl) {
+        if (auto* dc = llvm::dyn_cast<clang::DeclContext>(node_info->decl)) {
+            for (auto* child : dc->decls()) {
+                push_node(L, child);
+                lua_rawseti(L, -2, index++);
+            }
+        }
+    } else if (node_info->stmt) {
+        for (auto* child : node_info->stmt->children()) {
+            push_node(L, child);
+            lua_rawseti(L, -2, index++);
+        }
+    }
+
+    return 1;
+}
+
+// get_parent(node)  -> node
+static int get_parent(lua_State* L) {
+    auto* node_info = check_node(L, 1);
+    auto* context = node_info->context;
+
+    if (node_info->decl) {
+        auto parents = context->getParents(*node_info->decl);
+        if (!parents.empty()) {
+            auto& parent = parents[0];
+            if (auto* decl = parent.get<clang::Decl>()) {
+                push_node(L, decl);
+                return 1;
+            }
+        }
+    }
+
+    lua_pushnil(L);
+    return 1;
+}
+
+// 以降、get_next_sibling, get_prev_sibling, is_implicit なども同様のパターン
+// ... 省略 ...
+
+} // namespace api
+} // namespace lua
+```
+
+#### 7.2.3 関数・メソッド関連API
+
+```cpp
+// lua/lua_api_function.cpp
+#include "lua_engine.hpp"
+#include <clang/AST/Decl.h>
+
+namespace lua {
+namespace api {
+
+// has_body(node)  -> boolean
+static int has_body(lua_State* L) {
+    auto* node_info = check_node(L, 1);
+
+    if (auto* func_decl = llvm::dyn_cast_or_null<clang::FunctionDecl>(node_info->decl)) {
+        lua_pushboolean(L, func_decl->hasBody());
+        return 1;
+    }
+
+    lua_pushboolean(L, false);
+    return 1;
+}
+
+// get_access_specifier(node)  -> "public" | "private" | "protected"
+static int get_access_specifier(lua_State* L) {
+    auto* node_info = check_node(L, 1);
+
+    if (auto* method = llvm::dyn_cast_or_null<clang::CXXMethodDecl>(node_info->decl)) {
+        switch (method->getAccess()) {
+        case clang::AS_public:
+            lua_pushstring(L, "public");
+            break;
+        case clang::AS_protected:
+            lua_pushstring(L, "protected");
+            break;
+        case clang::AS_private:
+            lua_pushstring(L, "private");
+            break;
+        default:
+            lua_pushstring(L, "none");
+            break;
+        }
+        return 1;
+    }
+
+    lua_pushnil(L);
+    return 1;
+}
+
+// is_static_method(node)  -> boolean
+static int is_static_method(lua_State* L) {
+    auto* node_info = check_node(L, 1);
+
+    if (auto* method = llvm::dyn_cast_or_null<clang::CXXMethodDecl>(node_info->decl)) {
+        lua_pushboolean(L, method->isStatic());
+        return 1;
+    }
+
+    lua_pushboolean(L, false);
+    return 1;
+}
+
+// 以降、get_parameters, get_return_type, is_virtual_method なども同様
+// ... 省略 ...
+
+} // namespace api
+} // namespace lua
+```
+
+#### 7.2.4 空行・スペーシング関連API（重要）
+
+```cpp
+// lua/lua_api_spacing.cpp
+#include "lua_engine.hpp"
+
+namespace lua {
+namespace api {
+
+// count_blank_lines_between(node1, node2)  -> number
+static int count_blank_lines_between(lua_State* L) {
+    auto* node1_info = check_node(L, 1);
+    auto* node2_info = check_node(L, 2);
+    auto* context = node1_info->context;
+
+    auto& source_manager = context->getSourceManager();
+
+    // 2つのノードの位置を取得
+    clang::SourceLocation loc1 = node1_info->decl ?
+        node1_info->decl->getEndLoc() : node1_info->stmt->getEndLoc();
+    clang::SourceLocation loc2 = node2_info->decl ?
+        node2_info->decl->getBeginLoc() : node2_info->stmt->getBeginLoc();
+
+    unsigned line1 = source_manager.getSpellingLineNumber(loc1);
+    unsigned line2 = source_manager.getSpellingLineNumber(loc2);
+
+    // 空行数を計算（間の行数 - 1）
+    int blank_lines = (line2 - line1) - 1;
+    if (blank_lines < 0) blank_lines = 0;
+
+    lua_pushinteger(L, blank_lines);
+    return 1;
+}
+
+// count_blank_lines_before(location)  -> number
+static int count_blank_lines_before(lua_State* L) {
+    luaL_checktype(L, 1, LUA_TTABLE);
+
+    lua_getfield(L, 1, "line");
+    int line = lua_tointeger(L, -1);
+    lua_pop(L, 1);
+
+    // TODO: ソースファイルを読み込んで前の空行をカウント
+    // この実装にはファイルキャッシュが必要
+
+    lua_pushinteger(L, 0);  // 仮実装
+    return 1;
+}
+
+// is_blank_line(location)  -> boolean
+static int is_blank_line(lua_State* L) {
+    luaL_checktype(L, 1, LUA_TTABLE);
+
+    lua_getfield(L, 1, "file");
+    lua_getfield(L, 1, "line");
+    const char* file = lua_tostring(L, -2);
+    int line = lua_tointeger(L, -1);
+    lua_pop(L, 2);
+
+    // TODO: 指定された行が空行かチェック
+    // ファイルキャッシュから取得
+
+    lua_pushboolean(L, false);  // 仮実装
+    return 1;
+}
+
+} // namespace api
+} // namespace lua
+```
+
+#### 7.2.5 API登録
+
+```cpp
+// lua/lua_engine.cpp
+#include "lua_engine.hpp"
+
+namespace lua {
+
+void LuaEngine::register_all_apis() {
+    // 各カテゴリのAPIを登録
+    register_diagnostic_apis();
+    register_ast_node_apis();
+    register_function_apis();
+    register_variable_apis();
+    register_class_apis();
+    register_control_flow_apis();
+    register_macro_apis();
+    register_file_apis();
+    register_style_apis();
+    register_context_apis();
+    register_type_apis();
+    register_comment_apis();
+    register_spacing_apis();
+    register_search_apis();
+    register_utility_apis();
+}
+
+void LuaEngine::register_diagnostic_apis() {
+    // upvalueとして自分自身を渡す
+    lua_pushlightuserdata(L_, this);
+    lua_pushcclosure(L_, api::report_error, 1);
+    lua_setglobal(L_, "report_error");
+
+    lua_pushlightuserdata(L_, this);
+    lua_pushcclosure(L_, api::report_warning, 1);
+    lua_setglobal(L_, "report_warning");
+
+    lua_pushlightuserdata(L_, this);
+    lua_pushcclosure(L_, api::report_info, 1);
+    lua_setglobal(L_, "report_info");
+
+    lua_pushlightuserdata(L_, this);
+    lua_pushcclosure(L_, api::report_with_fix, 1);
+    lua_setglobal(L_, "report_with_fix");
+}
+
+void LuaEngine::register_ast_node_apis() {
+    lua_pushcfunction(L_, api::get_node_type);
+    lua_setglobal(L_, "get_node_type");
+
+    lua_pushcfunction(L_, api::get_node_name);
+    lua_setglobal(L_, "get_node_name");
+
+    lua_pushcfunction(L_, api::get_node_location);
+    lua_setglobal(L_, "get_node_location");
+
+    lua_pushcfunction(L_, api::get_children);
+    lua_setglobal(L_, "get_children");
+
+    lua_pushcfunction(L_, api::get_parent);
+    lua_setglobal(L_, "get_parent");
+
+    // 以降、他の関数も同様に登録
+    // ...
+}
+
+// 他のカテゴリも同様のパターンで実装
+// ...
+
+} // namespace lua
 }
 
 void LuaEngine::register_functions() {
