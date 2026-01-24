@@ -44,6 +44,9 @@ std::string HelpFormatter::format_options() {
            "text)\n";
     oss << "  -v, --verbose       Verbose output\n";
     oss << "  -q, --quiet         Quiet mode (errors only)\n";
+    oss << "  --max-errors=N      Stop after N errors (default: unlimited)\n";
+    oss << "  -j, --jobs=N        Number of parallel jobs (default: auto)\n";
+    oss << "  --no-cache          Disable caching\n";
     return oss.str();
 }
 

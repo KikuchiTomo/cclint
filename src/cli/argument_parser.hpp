@@ -13,6 +13,9 @@ struct ParsedArguments {
     int verbosity = 1;  // 0: quiet, 1: normal, 2: verbose
     bool show_help = false;
     bool show_version = false;
+    int max_errors = 0;  // 0 = unlimited
+    int num_threads = 0;  // 0 = auto-detect
+    bool enable_cache = true;
 };
 
 class ArgumentParser {

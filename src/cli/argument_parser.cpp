@@ -56,6 +56,18 @@ void ArgumentParser::parse_cclint_options(std::vector<std::string>& args,
         } else if (*it == "--version") {
             result.show_version = true;
             it = args.erase(it);
+        } else if (it->rfind("--max-errors=", 0) == 0) {
+            result.max_errors = std::stoi(it->substr(13));
+            it = args.erase(it);
+        } else if (it->rfind("--jobs=", 0) == 0) {
+            result.num_threads = std::stoi(it->substr(7));
+            it = args.erase(it);
+        } else if (it->rfind("-j", 0) == 0) {
+            result.num_threads = std::stoi(it->substr(2));
+            it = args.erase(it);
+        } else if (*it == "--no-cache") {
+            result.enable_cache = false;
+            it = args.erase(it);
         } else {
             ++it;
         }

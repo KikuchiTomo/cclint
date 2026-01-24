@@ -64,6 +64,13 @@ int main(int argc, char** argv) {
         if (!args.output_format.empty()) {
             config.output_format = args.output_format;
         }
+        if (args.max_errors > 0) {
+            config.max_errors = args.max_errors;
+        }
+        if (args.num_threads > 0) {
+            config.num_threads = args.num_threads;
+        }
+        config.enable_cache = args.enable_cache;
 
         // コンパイラコマンドが指定されていなければエラー
         if (args.compiler_command.empty()) {
@@ -166,10 +173,35 @@ int main(int argc, char** argv) {
         // 統計情報の表示
         if (args.verbosity > 0) {
             logger.info("Analysis complete");
+
+            auto stats = analysis_engine.get_stats();
+            logger.info("Files analyzed: " +
+                        std::to_string(stats.analyzed_files) + "/" +
+                        std::to_string(stats.total_files));
+
+            if (stats.skipped_files > 0) {
+                logger.info("Files skipped: " +
+                            std::to_string(stats.skipped_files));
+            }
+
+            if (stats.failed_files > 0) {
+                logger.warning("Files failed: " +
+                               std::to_string(stats.failed_files));
+            }
+
+            if (stats.stopped_early) {
+                logger.warning("Analysis stopped early (max_errors reached)");
+            }
+
             logger.info(
                 "Errors: " + std::to_string(analysis_engine.get_error_count()));
             logger.info("Warnings: " +
                         std::to_string(analysis_engine.get_warning_count()));
+
+            if (args.verbosity > 1) {
+                logger.info("Total time: " +
+                            std::to_string(stats.total_time.count()) + "ms");
+            }
         }
 
         // 終了コードの決定

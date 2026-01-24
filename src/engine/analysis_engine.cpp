@@ -65,12 +65,17 @@ FileAnalysisResult AnalysisEngine::analyze_file(
     FileAnalysisResult result;
     result.file_path = file_path;
 
+    auto start_time = std::chrono::steady_clock::now();
+
     // ファイルフィルタリング
     if (!should_analyze_file(file_path)) {
         utils::Logger::instance().debug("Skipping file: " + file_path);
         result.success = true;
+        stats_.skipped_files++;
         return result;
     }
+
+    stats_.total_files++;
 
     utils::Logger::instance().info("Analyzing file: " + file_path);
 
@@ -91,6 +96,8 @@ FileAnalysisResult AnalysisEngine::analyze_file(
         result.success = true;
         result.diagnostics = diag_engine.get_diagnostics();
         result.rule_stats = stats;
+
+        stats_.analyzed_files++;
 
         // 統計情報をログ出力
         if (!stats.empty()) {
@@ -115,9 +122,15 @@ FileAnalysisResult AnalysisEngine::analyze_file(
     } catch (const std::exception& e) {
         result.success = false;
         result.error_message = e.what();
+        stats_.failed_files++;
         utils::Logger::instance().error("Failed to analyze file: " +
                                          file_path + " - " + e.what());
     }
+
+    auto end_time = std::chrono::steady_clock::now();
+    result.analysis_time = std::chrono::duration_cast<std::chrono::milliseconds>(
+        end_time - start_time);
+    stats_.total_time += result.analysis_time;
 
     results_.push_back(result);
     return result;
@@ -130,11 +143,29 @@ std::vector<FileAnalysisResult> AnalysisEngine::analyze_files(
     results.reserve(file_paths.size());
 
     for (const auto& file_path : file_paths) {
+        // 早期終了チェック
+        if (should_stop_early()) {
+            utils::Logger::instance().warning(
+                "Stopping analysis early: max_errors (" +
+                std::to_string(config_.max_errors) + ") reached");
+            stats_.stopped_early = true;
+            break;
+        }
+
         auto result = analyze_file(file_path);
         results.push_back(result);
     }
 
     return results;
+}
+
+bool AnalysisEngine::should_stop_early() const {
+    if (config_.max_errors <= 0) {
+        return false;  // 無制限
+    }
+
+    size_t error_count = get_error_count();
+    return error_count >= static_cast<size_t>(config_.max_errors);
 }
 
 std::vector<diagnostic::Diagnostic> AnalysisEngine::get_all_diagnostics()

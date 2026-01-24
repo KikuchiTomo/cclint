@@ -4,6 +4,7 @@
 #include "diagnostic/diagnostic.hpp"
 #include "rules/rule_executor.hpp"
 
+#include <chrono>
 #include <memory>
 #include <string>
 #include <vector>
@@ -18,6 +19,17 @@ struct FileAnalysisResult {
     std::string error_message;
     std::vector<diagnostic::Diagnostic> diagnostics;
     std::vector<rules::RuleExecutionStats> rule_stats;
+    std::chrono::milliseconds analysis_time{0};
+};
+
+/// 解析エンジンの統計情報
+struct AnalysisEngineStats {
+    size_t total_files = 0;
+    size_t analyzed_files = 0;
+    size_t skipped_files = 0;
+    size_t failed_files = 0;
+    std::chrono::milliseconds total_time{0};
+    bool stopped_early = false;  // max_errorsにより早期終了したかどうか
 };
 
 /// 解析エンジン
@@ -52,10 +64,14 @@ public:
     /// 設定を取得
     const config::Config& get_config() const { return config_; }
 
+    /// 統計情報を取得
+    const AnalysisEngineStats& get_stats() const { return stats_; }
+
 private:
     config::Config config_;
     std::unique_ptr<rules::RuleExecutor> rule_executor_;
     std::vector<FileAnalysisResult> results_;
+    AnalysisEngineStats stats_;
 
     /// ファイルがinclude/excludeパターンにマッチするかをチェック
     bool should_analyze_file(const std::string& file_path) const;
@@ -65,6 +81,9 @@ private:
 
     /// ルールを初期化
     void initialize_rules();
+
+    /// 早期終了すべきかチェック
+    bool should_stop_early() const;
 };
 
 } // namespace engine
