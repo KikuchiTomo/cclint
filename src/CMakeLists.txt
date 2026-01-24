@@ -11,6 +11,7 @@ set(CCLINT_SOURCES
     parser/lexer.cpp
     parser/simple_parser.cpp
     diagnostic/diagnostic.cpp
+    diagnostic/fixer.cpp
     output/formatter.cpp
     output/text_formatter.cpp
     output/json_formatter.cpp
@@ -28,6 +29,7 @@ set(CCLINT_SOURCES
     rules/builtin/function_complexity.cpp
     engine/analysis_engine.cpp
     engine/incremental.cpp
+    engine/dependency_tracker.cpp
     lua/lua_engine.cpp
     lua/lua_bridge.cpp
     lua/lua_rule.cpp

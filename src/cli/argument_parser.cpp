@@ -68,6 +68,15 @@ void ArgumentParser::parse_cclint_options(std::vector<std::string>& args,
         } else if (*it == "--no-cache") {
             result.enable_cache = false;
             it = args.erase(it);
+        } else if (*it == "--profile") {
+            result.enable_profile = true;
+            it = args.erase(it);
+        } else if (*it == "--fix") {
+            result.enable_fix = true;
+            it = args.erase(it);
+        } else if (*it == "--fix-preview") {
+            result.fix_preview = true;
+            it = args.erase(it);
         } else {
             ++it;
         }

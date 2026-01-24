@@ -47,6 +47,9 @@ std::string HelpFormatter::format_options() {
     oss << "  --max-errors=N      Stop after N errors (default: unlimited)\n";
     oss << "  -j, --jobs=N        Number of parallel jobs (default: auto)\n";
     oss << "  --no-cache          Disable caching\n";
+    oss << "  --profile           Enable profiling mode (show detailed performance stats)\n";
+    oss << "  --fix               Enable auto-fix mode (apply automatic fixes)\n";
+    oss << "  --fix-preview       Show fix preview without applying changes\n";
     return oss.str();
 }
 

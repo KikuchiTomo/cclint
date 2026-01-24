@@ -4,6 +4,7 @@
 #include "compiler/wrapper.hpp"
 #include "config/config_loader.hpp"
 #include "diagnostic/diagnostic.hpp"
+#include "diagnostic/fixer.hpp"
 #include "output/formatter_factory.hpp"
 #include "utils/logger.hpp"
 #include "engine/analysis_engine.hpp"
@@ -170,6 +171,43 @@ int main(int argc, char** argv) {
         // 診断結果の出力
         formatter->format(all_diagnostics, std::cout);
 
+        // 自動修正の適用
+        if (args.enable_fix || args.fix_preview) {
+            logger.info("Applying automatic fixes...");
+            diagnostic::Fixer fixer(args.fix_preview);
+            size_t fixed_files = fixer.apply_fixes(all_diagnostics);
+
+            if (fixed_files > 0) {
+                logger.info("Fixed " + std::to_string(fixed_files) + " file(s)");
+
+                if (args.fix_preview) {
+                    logger.info("=== Fix Preview ===");
+                    for (const auto& [filename, content] : fixer.get_preview()) {
+                        logger.info("File: " + filename);
+                        logger.info("Modified content preview:");
+                        // 最初の数行のみ表示
+                        std::istringstream iss(content);
+                        std::string line;
+                        int line_count = 0;
+                        while (std::getline(iss, line) && line_count < 20) {
+                            std::cout << line << "\n";
+                            line_count++;
+                        }
+                        if (line_count >= 20) {
+                            std::cout << "... (more lines)\n";
+                        }
+                    }
+                } else {
+                    // 実際にファイルに書き込む
+                    size_t written = fixer.write_fixes();
+                    logger.info("Wrote fixes to " + std::to_string(written) +
+                                " file(s)");
+                }
+            } else {
+                logger.info("No fixes to apply");
+            }
+        }
+
         // 統計情報の表示
         if (args.verbosity > 0) {
             logger.info("Analysis complete");
@@ -198,9 +236,31 @@ int main(int argc, char** argv) {
             logger.info("Warnings: " +
                         std::to_string(analysis_engine.get_warning_count()));
 
-            if (args.verbosity > 1) {
+            if (args.verbosity > 1 || args.enable_profile) {
                 logger.info("Total time: " +
                             std::to_string(stats.total_time.count()) + "ms");
+            }
+
+            // プロファイリングモード: 詳細な統計を表示
+            if (args.enable_profile) {
+                logger.info("=== Profiling Information ===");
+                logger.info("Cached files: " +
+                            std::to_string(stats.cached_files));
+                logger.info("Cache hit rate: " +
+                            std::to_string(stats.total_files > 0
+                                               ? (stats.cached_files * 100.0 /
+                                                  stats.total_files)
+                                               : 0.0) +
+                            "%");
+                logger.info("Average time per file: " +
+                            std::to_string(stats.analyzed_files > 0
+                                               ? (stats.total_time.count() /
+                                                  stats.analyzed_files)
+                                               : 0) +
+                            "ms");
+                logger.info("Memory usage (estimated): " +
+                            std::to_string(stats.memory_usage / (1024 * 1024)) +
+                            " MB");
             }
         }
 

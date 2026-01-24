@@ -1,6 +1,6 @@
 # cclint TODO リスト
 
-**最終更新**: 2026-01-23
+**最終更新**: 2026-01-24
 
 このドキュメントはプロジェクトの進捗を管理するためのTODOリストです。
 作業を開始する前に必ずこのリストを確認し、作業が完了したら更新してください。
@@ -51,12 +51,12 @@
 
 ---
 
-## Milestone 1: 最小動作版（MVP） - 進捗: 80%
+## Milestone 1: 最小動作版（MVP） - 進捗: 95%
 
-**完了済み**: CLI, Config, Compiler, Diagnostic, Output, Utils, Logger (7モジュール)
+**完了済み**: CLI, Config, Compiler, Diagnostic, Output, Utils, Logger, Main統合 (8モジュール)
 **実装済み**: 102個の標準Luaルールスクリプト（AST解析対応ルール含む）
-**ブロック中**: Parser (LLVM/Clang依存), Rule Engine (LuaJIT依存)
-**統合待ち**: Main.cppへの各モジュール統合
+**実装済み**: 独自SimpleParser（LLVM/Clang不要）
+**統合完了**: Main.cppへの全モジュール統合完了
 
 ### 1. CLI Module (src/cli/)
 
@@ -248,13 +248,13 @@
 
 #### main.cpp
 - [x] main.cpp の作成
-  - [>] 基本的な実行フロー（部分実装）
+  - [x] 基本的な実行フロー（完全実装）
     - [x] 引数解析
-    - [!] 設定読み込み（ConfigLoader実装済、main.cpp統合待ち）
-    - [!] ソースファイル抽出（CompilerWrapper実装済、main.cpp統合待ち）
-    - [!] パース（AST構築）（LLVM/Clang依存、Milestone 2）
-    - [!] コンパイラ実行（オプション）（CompilerWrapper実装済、main.cpp統合待ち）
-    - [!] 結果出力（Formatter実装済、main.cpp統合待ち）
+    - [x] 設定読み込み（ConfigLoader統合済み）
+    - [x] ソースファイル抽出（CompilerWrapper統合済み）
+    - [x] パース（AST構築）（SimpleParser使用）
+    - [x] コンパイラ実行（オプション）（CompilerWrapper統合済み）
+    - [x] 結果出力（Formatter統合済み）
   - [x] エラーハンドリング
     - [x] try-catch
     - [x] 終了コードの決定
@@ -441,16 +441,16 @@
 - [x] get_class_info の実装（クラス情報取得）
 - [x] get_methods の実装（メソッド一覧取得）
 - [x] get_method_info の実装（メソッド情報取得、アクセス指定子対応）
-- [ ] get_node_type の実装（汎用ノードアクセス、将来の拡張）
-- [ ] get_node_name の実装（汎用ノードアクセス、将来の拡張）
-- [ ] get_node_location の実装（汎用ノードアクセス、将来の拡張）
-- [ ] get_children の実装（汎用ノードアクセス、将来の拡張）
-- [ ] get_parent の実装（汎用ノードアクセス、将来の拡張）
+- [x] get_node_type の実装（汎用ノードアクセス）
+- [x] get_node_name の実装（汎用ノードアクセス）
+- [x] get_node_location の実装（汎用ノードアクセス）
+- [x] get_children の実装（汎用ノードアクセス）
+- [x] get_parent の実装（汎用ノードアクセス）
 
 #### ユーティリティAPI
 - [x] match_pattern の実装
 - [x] get_file_content の実装
-- [ ] get_source_range の実装（将来の拡張）
+- [x] get_source_range の実装
 
 ### 3. Lua Sandbox
 
@@ -549,7 +549,11 @@
 - [x] 状態管理（.cclint_state ファイル）
   - [x] ファイル状態の保存/読み込み
   - [x] Config::enable_incremental オプション
-- [~] 依存関係の追跡（#include解析、v2.0以降で実装予定）
+- [x] 依存関係の追跡（#include解析）
+  - [x] DependencyTracker実装（engine/dependency_tracker.hpp/cpp）
+  - [x] #includeディレクティブの解析
+  - [x] インクルードパスの解決
+  - [x] 影響を受けるファイルの検出
 
 ### 4. Performance Monitoring
 
@@ -558,8 +562,8 @@
 - [x] パフォーマンス情報の表示（-vv で表示）
 - [x] メモリ使用量の計測（estimate_memory_usage）
 - [x] キャッシュヒット率の記録（AnalysisEngineStats::cached_files）
-- [~] ボトルネックの分析（より詳細な分析はv2.0）
-- [~] プロファイリングモード（--profile）（v2.0以降で実装予定）
+- [x] ボトルネックの分析（プロファイリングモードで対応）
+- [x] プロファイリングモード（--profile）
 
 ### 5. Optimization
 
@@ -713,10 +717,11 @@
 
 ## 将来的な拡張（v2.0以降）
 
-### 自動修正機能
-- [ ] fixitヒントの実装
-- [ ] 自動修正モード（--fix）
-- [ ] 修正プレビュー
+### 自動修正機能 ✅ 完了
+- [x] fixitヒントの実装（Diagnostic::FixItHint）
+- [x] 自動修正モード（--fix）
+- [x] 修正プレビュー（--fix-preview）
+- [x] Fixer実装（diagnostic/fixer.hpp/cpp）
 
 ### データフロー解析
 - [ ] より詳細なデータフロー解析

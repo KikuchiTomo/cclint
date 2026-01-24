@@ -282,6 +282,129 @@ if info then
 end
 ```
 
+### Generic Node Access API
+
+The following functions provide low-level access to AST nodes, enabling more flexible tree traversal.
+
+#### `cclint.get_node_type(node_ptr)`
+
+Returns the type of an AST node.
+
+**Parameters:**
+- `node_ptr` (lightuserdata): Node pointer
+
+**Returns:**
+- `type` (string): Node type name (e.g., "Class", "Function", "Namespace")
+
+**Example:**
+```lua
+-- Used in combination with get_children()
+local children = cclint.get_children(some_node)
+for i = 1, #children do
+    local child = children[i]
+    local node_type = cclint.get_node_type(child)
+    print("Child node type: " .. node_type)
+end
+```
+
+#### `cclint.get_node_name(node_ptr)`
+
+Returns the name of an AST node.
+
+**Parameters:**
+- `node_ptr` (lightuserdata): Node pointer
+
+**Returns:**
+- `name` (string): Node name
+
+**Example:**
+```lua
+local name = cclint.get_node_name(node)
+print("Node name: " .. name)
+```
+
+#### `cclint.get_node_location(node_ptr)`
+
+Returns the source location of an AST node.
+
+**Parameters:**
+- `node_ptr` (lightuserdata): Node pointer
+
+**Returns:**
+- `location` (table): Location information with fields:
+  - `file` (string): File path
+  - `line` (number): Line number
+  - `column` (number): Column number
+
+**Example:**
+```lua
+local loc = cclint.get_node_location(node)
+if loc then
+    print("Location: " .. loc.file .. ":" .. loc.line .. ":" .. loc.column)
+end
+```
+
+#### `cclint.get_children(node_ptr)`
+
+Returns all child nodes of an AST node.
+
+**Parameters:**
+- `node_ptr` (lightuserdata): Node pointer
+
+**Returns:**
+- `children` (table): Array of child node pointers
+
+**Example:**
+```lua
+local children = cclint.get_children(node)
+for i = 1, #children do
+    local child = children[i]
+    local child_type = cclint.get_node_type(child)
+    local child_name = cclint.get_node_name(child)
+    print("Child " .. i .. ": " .. child_type .. " " .. child_name)
+end
+```
+
+#### `cclint.get_parent(node_ptr)`
+
+Returns the parent node of an AST node.
+
+**Parameters:**
+- `node_ptr` (lightuserdata): Node pointer
+
+**Returns:**
+- `parent` (lightuserdata or nil): Parent node pointer, or nil if no parent
+
+**Example:**
+```lua
+local parent = cclint.get_parent(node)
+if parent then
+    local parent_type = cclint.get_node_type(parent)
+    print("Parent type: " .. parent_type)
+end
+```
+
+#### `cclint.get_source_range(node_ptr)`
+
+Returns the source range of an AST node.
+
+**Parameters:**
+- `node_ptr` (lightuserdata): Node pointer
+
+**Returns:**
+- `range` (table): Source range with fields:
+  - `start` (table): Start location with `line` and `column`
+  - `end` (table): End location with `line` and `column`
+
+**Example:**
+```lua
+local range = cclint.get_source_range(node)
+if range then
+    print("Range: " .. range.start.line .. ":" .. range.start.column ..
+          " to " .. range["end"].line .. ":" .. range["end"].column)
+end
+```
+
 **Access Specifier Based Checking Example:**
 ```lua
 function check_ast(file_path)

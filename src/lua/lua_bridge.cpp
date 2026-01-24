@@ -70,6 +70,25 @@ void LuaBridge::register_api() {
     lua_pushcfunction(L, lua_get_method_info);
     lua_setfield(L, -2, "get_method_info");
 
+    // 汎用ノードアクセス API
+    lua_pushcfunction(L, lua_get_node_type);
+    lua_setfield(L, -2, "get_node_type");
+
+    lua_pushcfunction(L, lua_get_node_name);
+    lua_setfield(L, -2, "get_node_name");
+
+    lua_pushcfunction(L, lua_get_node_location);
+    lua_setfield(L, -2, "get_node_location");
+
+    lua_pushcfunction(L, lua_get_children);
+    lua_setfield(L, -2, "get_children");
+
+    lua_pushcfunction(L, lua_get_parent);
+    lua_setfield(L, -2, "get_parent");
+
+    lua_pushcfunction(L, lua_get_source_range);
+    lua_setfield(L, -2, "get_source_range");
+
     // グローバルに設定
     lua_setglobal(L, "cclint");
 
@@ -433,6 +452,188 @@ int LuaBridge::lua_get_method_info(lua_State* L) {
     return 1;
 }
 
+// 汎用ノードアクセス API の実装
+
+int LuaBridge::lua_get_node_type(lua_State* L) {
+    // ノードポインタをlight userdataとして受け取る
+    if (!lua_islightuserdata(L, 1)) {
+        luaL_error(L, "Expected node pointer as light userdata");
+        return 0;
+    }
+
+    auto* node = static_cast<parser::ASTNode*>(lua_touserdata(L, 1));
+    if (!node) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    // ノードの型を文字列で返す
+    std::string type_name = node->get_type_name();
+    lua_pushstring(L, type_name.c_str());
+    return 1;
+}
+
+int LuaBridge::lua_get_node_name(lua_State* L) {
+    if (!lua_islightuserdata(L, 1)) {
+        luaL_error(L, "Expected node pointer as light userdata");
+        return 0;
+    }
+
+    auto* node = static_cast<parser::ASTNode*>(lua_touserdata(L, 1));
+    if (!node) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    lua_pushstring(L, node->name.c_str());
+    return 1;
+}
+
+int LuaBridge::lua_get_node_location(lua_State* L) {
+    if (!lua_islightuserdata(L, 1)) {
+        luaL_error(L, "Expected node pointer as light userdata");
+        return 0;
+    }
+
+    auto* node = static_cast<parser::ASTNode*>(lua_touserdata(L, 1));
+    if (!node) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    // 位置情報をテーブルで返す
+    lua_newtable(L);
+
+    lua_pushstring(L, "file");
+    lua_pushstring(L, node->position.filename.c_str());
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "line");
+    lua_pushinteger(L, node->position.line);
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "column");
+    lua_pushinteger(L, node->position.column);
+    lua_settable(L, -3);
+
+    return 1;
+}
+
+int LuaBridge::lua_get_children(lua_State* L) {
+    if (!lua_islightuserdata(L, 1)) {
+        luaL_error(L, "Expected node pointer as light userdata");
+        return 0;
+    }
+
+    auto* node = static_cast<parser::ASTNode*>(lua_touserdata(L, 1));
+    if (!node) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    // 子ノードをテーブルで返す
+    lua_newtable(L);
+    int index = 1;
+
+    for (const auto& child : node->children) {
+        lua_pushinteger(L, index++);
+        // 子ノードをlight userdataとして返す
+        lua_pushlightuserdata(L, child.get());
+        lua_settable(L, -3);
+    }
+
+    return 1;
+}
+
+int LuaBridge::lua_get_parent(lua_State* L) {
+    if (!lua_islightuserdata(L, 1)) {
+        luaL_error(L, "Expected node pointer as light userdata");
+        return 0;
+    }
+
+    auto* node = static_cast<parser::ASTNode*>(lua_touserdata(L, 1));
+    if (!node || !g_bridge || !g_bridge->current_ast_) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    // 親ノードを見つけるために、ASTを走査する
+    // （注意: これはO(n)の操作なので、パフォーマンスが重要な場合は親マップを事前構築すべき）
+    std::shared_ptr<parser::ASTNode> parent_node;
+    std::function<bool(std::shared_ptr<parser::ASTNode>, std::shared_ptr<parser::ASTNode>)>
+        find_parent;
+
+    find_parent = [&](std::shared_ptr<parser::ASTNode> current,
+                      std::shared_ptr<parser::ASTNode> parent) -> bool {
+        if (current.get() == node) {
+            parent_node = parent;
+            return true;
+        }
+        for (const auto& child : current->children) {
+            if (find_parent(child, current)) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    // ルートから検索
+    for (const auto& child : g_bridge->current_ast_->children) {
+        if (find_parent(child, g_bridge->current_ast_)) {
+            break;
+        }
+    }
+
+    if (parent_node) {
+        lua_pushlightuserdata(L, parent_node.get());
+    } else {
+        lua_pushnil(L);
+    }
+
+    return 1;
+}
+
+int LuaBridge::lua_get_source_range(lua_State* L) {
+    if (!lua_islightuserdata(L, 1)) {
+        luaL_error(L, "Expected node pointer as light userdata");
+        return 0;
+    }
+
+    auto* node = static_cast<parser::ASTNode*>(lua_touserdata(L, 1));
+    if (!node) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    // ソース範囲をテーブルで返す
+    // 現在のASTには終了位置がないため、開始位置のみを返す
+    // 将来的には、終了位置も追加すべき
+    lua_newtable(L);
+
+    lua_pushstring(L, "start");
+    lua_newtable(L);
+    lua_pushstring(L, "line");
+    lua_pushinteger(L, node->position.line);
+    lua_settable(L, -3);
+    lua_pushstring(L, "column");
+    lua_pushinteger(L, node->position.column);
+    lua_settable(L, -3);
+    lua_settable(L, -3);
+
+    // 終了位置は未実装（将来の拡張）
+    lua_pushstring(L, "end");
+    lua_newtable(L);
+    lua_pushstring(L, "line");
+    lua_pushinteger(L, node->position.line);  // 仮に開始位置と同じにする
+    lua_settable(L, -3);
+    lua_pushstring(L, "column");
+    lua_pushinteger(L, node->position.column);
+    lua_settable(L, -3);
+    lua_settable(L, -3);
+
+    return 1;
+}
+
 #else // HAVE_LUAJIT が定義されていない場合（スタブ実装）
 
 LuaBridge::LuaBridge(std::shared_ptr<LuaEngine> lua_engine)
@@ -502,6 +703,30 @@ int LuaBridge::lua_get_methods(lua_State* L) {
     return 0;
 }
 int LuaBridge::lua_get_method_info(lua_State* L) {
+    (void)L;
+    return 0;
+}
+int LuaBridge::lua_get_node_type(lua_State* L) {
+    (void)L;
+    return 0;
+}
+int LuaBridge::lua_get_node_name(lua_State* L) {
+    (void)L;
+    return 0;
+}
+int LuaBridge::lua_get_node_location(lua_State* L) {
+    (void)L;
+    return 0;
+}
+int LuaBridge::lua_get_children(lua_State* L) {
+    (void)L;
+    return 0;
+}
+int LuaBridge::lua_get_parent(lua_State* L) {
+    (void)L;
+    return 0;
+}
+int LuaBridge::lua_get_source_range(lua_State* L) {
     (void)L;
     return 0;
 }

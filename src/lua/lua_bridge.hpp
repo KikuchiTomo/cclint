@@ -68,6 +68,14 @@ private:
     static int lua_get_methods(lua_State* L);
     static int lua_get_method_info(lua_State* L);
 
+    // 汎用ノードアクセス API
+    static int lua_get_node_type(lua_State* L);
+    static int lua_get_node_name(lua_State* L);
+    static int lua_get_node_location(lua_State* L);
+    static int lua_get_children(lua_State* L);
+    static int lua_get_parent(lua_State* L);
+    static int lua_get_source_range(lua_State* L);
+
     // ヘルパー関数
     void report_diagnostic(const std::string& file_path, int line, int column,
                            const std::string& message,

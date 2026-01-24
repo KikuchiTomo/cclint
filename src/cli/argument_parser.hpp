@@ -16,6 +16,9 @@ struct ParsedArguments {
     int max_errors = 0;  // 0 = unlimited
     int num_threads = 0;  // 0 = auto-detect
     bool enable_cache = true;
+    bool enable_profile = false;  // プロファイリングモード
+    bool enable_fix = false;  // 自動修正モード
+    bool fix_preview = false;  // 修正プレビューモード
 };
 
 class ArgumentParser {
