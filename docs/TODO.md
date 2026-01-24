@@ -305,10 +305,10 @@
 - [x] ビルド手順のドキュメント（docs/build.md）
 - [x] 基本的な使い方（docs/usage.md）
 - [x] トラブルシューティング（docs/troubleshooting.md）
-- [ ] FAQ（docs/FAQ.md）
-- [ ] 貢献ガイド（CONTRIBUTING.md）
+- [x] FAQ（docs/FAQ.md）
+- [x] 貢献ガイド（CONTRIBUTING.md）
+- [>] 行動規範（CODE_OF_CONDUCT.md）
 - [ ] 変更履歴（CHANGELOG.md）
-- [ ] 行動規範（CODE_OF_CONDUCT.md）
 
 ---
 
