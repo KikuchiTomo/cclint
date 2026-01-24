@@ -337,7 +337,7 @@
 - [x] rule_executor.cpp の実装
   - [x] ルール実行ループ
   - [x] エラーハンドリング
-  - [~] タイムアウト処理（将来実装）
+  - [x] タイムアウト処理
 - [ ] 単体テスト（tests/rules/test_rule_executor.cpp）
 
 ### 2. Builtin Rules (src/rules/builtin/)
@@ -346,9 +346,9 @@
 - [x] naming_convention.hpp の作成
 - [x] naming_convention.cpp の実装
   - [x] 関数名チェック（snake_case）
-  - [~] 変数名チェック（将来実装）
+  - [x] 変数名チェック（snake_case）
   - [x] クラス名チェック（PascalCase）
-  - [~] 定数名チェック（将来実装）
+  - [x] 定数名チェック（UPPER_CASE）
 - [ ] 単体テスト（tests/rules/builtin/test_naming_convention.cpp）
 
 #### ヘッダーガードルール
@@ -456,9 +456,9 @@
   - [x] os.exit の無効化
 
 #### リソース制限
-- [~] メモリ使用量制限（v2.0以降で実装予定）
-- [~] 実行時間制限（タイムアウト）（v2.0以降で実装予定）
-- [~] スタック深度制限（v2.0以降で実装予定）
+- [x] メモリ使用量制限（lua_setallocf で実装）
+- [x] 実行時間制限（タイムアウト）（ルール実行後チェックで実装）
+- [x] スタック深度制限（lua_checkstack で実装）
 
 ### 4. Lua Rule System
 
@@ -481,8 +481,8 @@
 ### 6. Documentation
 
 - [x] サンプルルールREADME（examples/rules/README.md）
-- [~] Lua API リファレンス（docs/lua_api.md）（後で作成）
-- [~] Luaルール作成ガイド（examples/rules/README.mdに統合済み）
+- [x] Lua API リファレンス（docs/lua_api.md）
+- [x] Luaルール作成ガイド（examples/rules/README.mdに統合済み）
 
 ### 7. Testing
 
@@ -493,36 +493,36 @@
 
 ---
 
-## Milestone 4: パフォーマンス最適化（部分完了）
+## Milestone 4: パフォーマンス最適化 ✅ 完了
 
 ### 1. Parallel Processing
 
 #### マルチスレッド解析
-- [~] スレッドプール実装（v2.0以降で実装予定）
-- [~] ファイル並列処理（v2.0以降で実装予定）
-- [~] CPU コア数自動検出（v2.0以降で実装予定）
-- [x] スレッド数の設定オプション（--jobs/-j）
+- [x] スレッドプール実装（parallel/thread_pool.hpp/cpp）
+- [x] ファイル並列処理（AnalysisEngine::analyze_filesで実装）
+- [x] CPU コア数自動検出（ThreadPool::detect_cpu_cores）
+- [x] スレッド数の設定オプション（Config::num_threads）
 
 #### スレッドセーフ対策
-- [~] DiagnosticReporterのロック（並列処理実装時に対応）
-- [~] RuleRegistryのロック（並列処理実装時に対応）
-- [~] 共有リソースの保護（並列処理実装時に対応）
+- [x] AnalysisEngineのロック（results_mutex_で保護）
+- [x] RuleRegistryのロック（mutex_で全メソッド保護）
+- [x] 共有リソースの保護（完了）
 
 ### 2. Caching System
 
 #### パース結果キャッシュ
-- [~] ファイルハッシュの計算（SHA256）（v2.0以降で実装予定）
-- [~] キャッシュの保存（v2.0以降で実装予定）
-- [~] キャッシュの読み込み（v2.0以降で実装予定）
-- [~] キャッシュの無効化（v2.0以降で実装予定）
+- [x] ファイルハッシュの計算（SHA256ライク）（FileCache::calculate_file_hash）
+- [x] キャッシュの保存（FileCache::put）
+- [x] キャッシュの読み込み（FileCache::get）
+- [x] キャッシュの無効化（FileCache::clear）
 
 #### キャッシュストレージ
-- [~] ディスクベースキャッシュ（v2.0以降で実装予定）
-- [~] キャッシュディレクトリ管理（.cclint_cache/）（v2.0以降で実装予定）
-- [~] キャッシュのクリーンアップ（v2.0以降で実装予定）
+- [x] ディスクベースキャッシュ（ファイルシステムベース）
+- [x] キャッシュディレクトリ管理（.cclint_cache/）
+- [x] キャッシュのクリーンアップ（FileCache::cleanup）
 
 #### 設定オプション
-- [x] --no-cache オプション（将来の実装のための準備）
+- [x] Config::enable_cache オプション（AnalysisEngineで使用）
 
 ### 3. Incremental Analysis
 
@@ -537,8 +537,9 @@
 - [x] 解析時間の計測（ファイルごと、全体）
 - [x] 統計情報の収集（AnalysisEngineStats）
 - [x] パフォーマンス情報の表示（-vv で表示）
-- [~] メモリ使用量の計測（v2.0以降で実装予定）
-- [~] ボトルネックの分析（v2.0以降で実装予定）
+- [x] メモリ使用量の計測（estimate_memory_usage）
+- [x] キャッシュヒット率の記録（AnalysisEngineStats::cached_files）
+- [~] ボトルネックの分析（より詳細な分析はv2.0）
 - [~] プロファイリングモード（--profile）（v2.0以降で実装予定）
 
 ### 5. Optimization
@@ -582,7 +583,7 @@
 - [x] カラー出力（ANSIエスケープシーケンス）
 - [x] ソースコンテキスト表示
 - [x] 統計情報サマリー
-- [~] 修正提案の表示（v2.0以降で実装予定）
+- [x] 修正提案の表示（fix-itヒントの色付き表示）
 
 ### 4. CI/CD Integration
 
