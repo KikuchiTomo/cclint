@@ -63,7 +63,47 @@ target_include_directories(cclint-lsp
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-# TODO: 依存関係の追加（Milestone 2以降）
-# - LLVM/Clang (libtooling)
-# - yaml-cpp
-# - LuaJIT 2.1
+# 依存関係のリンク
+
+# LuaJIT
+if(USE_LUAJIT AND LUAJIT_FOUND)
+    target_link_libraries(cclint ${LUAJIT_LIBRARIES})
+    target_include_directories(cclint PRIVATE ${LUAJIT_INCLUDE_DIRS})
+endif()
+
+# yaml-cpp
+if(USE_YAML_CPP AND yaml-cpp_FOUND)
+    target_link_libraries(cclint yaml-cpp)
+endif()
+
+# LLVM/Clang
+if(USE_LLVM_CLANG AND LLVM_FOUND)
+    llvm_map_components_to_libnames(llvm_libs support core irreader)
+    target_link_libraries(cclint ${llvm_libs})
+
+    # Clang libraries
+    target_link_libraries(cclint
+        clangTooling
+        clangFrontend
+        clangDriver
+        clangSerialization
+        clangParse
+        clangSema
+        clangAnalysis
+        clangEdit
+        clangAST
+        clangLex
+        clangBasic
+    )
+endif()
+
+# Platform-specific libraries
+if(UNIX AND NOT APPLE)
+    target_link_libraries(cclint dl pthread)
+    target_link_libraries(cclint-lsp dl pthread)
+elseif(APPLE)
+    target_link_libraries(cclint dl pthread)
+    target_link_libraries(cclint-lsp dl pthread)
+elseif(WIN32)
+    # Windows doesn't need dl, but might need other libraries
+endif()

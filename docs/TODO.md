@@ -38,11 +38,13 @@
 ### ビルドシステム（Milestone 1に移動）
 - [x] CMakeLists.txt（ルート）の作成
 - [x] CMakeLists.txt（src/）の作成
-- [ ] CMakeLists.txt（tests/）の作成
-- [>] 依存関係の設定（外部ライブラリ統合は後続マイルストーン）
-  - [!] LLVM/Clangの検出（Milestone 2）
-  - [!] yaml-cppの検出（Milestone 2）
-  - [!] LuaJIT 2.1の組み込み（Milestone 3）
+- [x] CMakeLists.txt（tests/）の作成
+- [x] 依存関係の設定
+  - [x] LLVM/Clangの検出（オプション、USE_LLVM_CLANG）
+  - [x] yaml-cppの検出（オプション、USE_YAML_CPP）
+  - [x] LuaJIT 2.1の組み込み（オプション、USE_LUAJIT）
+  - [x] FindLuaJIT.cmake モジュール作成
+  - [x] 依存関係インストールスクリプト（scripts/install_dependencies.sh）
 
 ### 環境確認（Milestone 1に移動）
 - [ ] Ubuntu環境でのビルド確認

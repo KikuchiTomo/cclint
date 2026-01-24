@@ -12,13 +12,41 @@ This guide explains how to build cclint from source on Ubuntu and macOS.
   - Clang 10+ on macOS/Linux
   - Apple Clang (Xcode 10+) on macOS
 
-### Runtime Dependencies (Future Milestones)
+### Optional Dependencies
 
-The following dependencies are required for full functionality but are not yet integrated:
+The following dependencies are optional but enable additional features:
 
-- **LLVM/Clang** 14.0 or later (for C++ parsing) - *Milestone 2*
-- **yaml-cpp** 0.7.0 or later (for YAML parsing) - *Milestone 2*
-- **LuaJIT** 2.1 or later (for Lua rule execution) - *Milestone 3*
+- **LuaJIT** 2.1 or later (for Lua scripting support) - **Recommended**
+- **yaml-cpp** 0.7.0 or later (for enhanced YAML parsing) - Optional
+- **LLVM/Clang** 14.0 or later (for advanced AST parsing) - Optional
+
+### Installing Dependencies
+
+Use the provided script to install dependencies automatically:
+
+```bash
+# Install all dependencies interactively
+./scripts/install_dependencies.sh
+```
+
+Or install manually:
+
+**Ubuntu/Debian:**
+```bash
+sudo apt update
+sudo apt install build-essential cmake git
+sudo apt install libluajit-5.1-dev        # For Lua scripting
+sudo apt install libyaml-cpp-dev          # For YAML support
+sudo apt install llvm-14-dev libclang-14-dev  # For LLVM/Clang support
+```
+
+**macOS:**
+```bash
+brew install cmake git
+brew install luajit           # For Lua scripting
+brew install yaml-cpp         # For YAML support
+brew install llvm             # For LLVM/Clang support
+```
 
 ## Quick Start
 
@@ -97,6 +125,75 @@ Includes debug symbols and disables optimizations:
 # or
 cmake -DCMAKE_BUILD_TYPE=Debug ..
 make -j$(nproc)
+```
+
+## CMake Options
+
+cclint supports several CMake options to enable or disable features:
+
+### Feature Flags
+
+Enable optional features with CMake options:
+
+```bash
+cmake -DUSE_LUAJIT=ON \
+      -DUSE_YAML_CPP=ON \
+      -DUSE_LLVM_CLANG=ON \
+      -DBUILD_TESTS=ON \
+      ..
+```
+
+Available options:
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `USE_LUAJIT` | `ON` | Enable LuaJIT support for Lua scripting |
+| `USE_YAML_CPP` | `OFF` | Use yaml-cpp for YAML parsing (vs simple parser) |
+| `USE_LLVM_CLANG` | `OFF` | Use LLVM/Clang for advanced AST parsing |
+| `BUILD_TESTS` | `OFF` | Build unit and integration tests |
+| `CMAKE_BUILD_TYPE` | `Release` | Build type: `Release`, `Debug`, `RelWithDebInfo` |
+| `CMAKE_INSTALL_PREFIX` | `/usr/local` | Installation directory |
+
+### Examples
+
+**Minimal build** (no optional dependencies):
+```bash
+cmake -DUSE_LUAJIT=OFF -DUSE_YAML_CPP=OFF ..
+make
+```
+
+**Full-featured build** (all optional features):
+```bash
+cmake -DUSE_LUAJIT=ON \
+      -DUSE_YAML_CPP=ON \
+      -DUSE_LLVM_CLANG=ON \
+      -DBUILD_TESTS=ON \
+      ..
+make
+```
+
+**Build with tests**:
+```bash
+cmake -DBUILD_TESTS=ON ..
+make
+make check  # or: ctest
+```
+
+### Specifying Library Paths
+
+If libraries are installed in non-standard locations:
+
+```bash
+# Specify LuaJIT location
+cmake -DLUAJIT_INCLUDE_DIR=/opt/luajit/include \
+      -DLUAJIT_LIBRARY=/opt/luajit/lib/libluajit.so \
+      ..
+
+# Specify LLVM location
+cmake -DLLVM_DIR=/opt/llvm/lib/cmake/llvm ..
+
+# Specify yaml-cpp location
+cmake -Dyaml-cpp_DIR=/opt/yaml-cpp/lib/cmake/yaml-cpp ..
 ```
 
 ## Installation

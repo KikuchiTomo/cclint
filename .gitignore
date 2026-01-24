@@ -53,6 +53,7 @@ cmake_install.cmake
 Makefile
 *.cmake
 !CMakeLists.txt
+!cmake/*.cmake
 
 # Cache
 .cclint_cache/
