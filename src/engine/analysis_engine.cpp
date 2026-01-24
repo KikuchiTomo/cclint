@@ -7,13 +7,22 @@
 #include "utils/logger.hpp"
 
 #include <fstream>
+#include <future>
 #include <sstream>
 
 namespace cclint {
 namespace engine {
 
 AnalysisEngine::AnalysisEngine(const config::Config& config)
-    : config_(config), rule_executor_(std::make_unique<rules::RuleExecutor>()) {
+    : config_(config),
+      rule_executor_(std::make_unique<rules::RuleExecutor>()),
+      cache_(config.enable_cache
+                 ? std::make_unique<cache::FileCache>(config.cache_directory)
+                 : nullptr),
+      thread_pool_(config.num_threads > 1
+                       ? std::make_unique<parallel::ThreadPool>(
+                             config.num_threads)
+                       : nullptr) {
     initialize_rules();
 }
 
@@ -71,15 +80,45 @@ FileAnalysisResult AnalysisEngine::analyze_file(
     if (!should_analyze_file(file_path)) {
         utils::Logger::instance().debug("Skipping file: " + file_path);
         result.success = true;
+        std::lock_guard<std::mutex> lock(results_mutex_);
         stats_.skipped_files++;
         return result;
     }
 
-    stats_.total_files++;
+    {
+        std::lock_guard<std::mutex> lock(results_mutex_);
+        stats_.total_files++;
+    }
 
     utils::Logger::instance().info("Analyzing file: " + file_path);
 
     try {
+        // キャッシュチェック
+        if (cache_) {
+            std::string file_hash = cache_->calculate_file_hash(file_path);
+            auto cached_entry = cache_->get(file_path, file_hash);
+
+            if (cached_entry) {
+                utils::Logger::instance().debug(
+                    "Using cached result for: " + file_path);
+                result.success = true;
+                result.diagnostics = cached_entry->diagnostics;
+
+                std::lock_guard<std::mutex> lock(results_mutex_);
+                stats_.cached_files++;
+                stats_.analyzed_files++;
+
+                auto end_time = std::chrono::steady_clock::now();
+                result.analysis_time =
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                        end_time - start_time);
+                stats_.total_time += result.analysis_time;
+
+                results_.push_back(result);
+                return result;
+            }
+        }
+
         // ファイル読み込み
         std::string content = read_file(file_path);
 
@@ -97,7 +136,16 @@ FileAnalysisResult AnalysisEngine::analyze_file(
         result.diagnostics = diag_engine.get_diagnostics();
         result.rule_stats = stats;
 
-        stats_.analyzed_files++;
+        // キャッシュに保存
+        if (cache_) {
+            std::string file_hash = cache_->calculate_file_hash(file_path);
+            cache_->put(file_path, file_hash, result.diagnostics);
+        }
+
+        {
+            std::lock_guard<std::mutex> lock(results_mutex_);
+            stats_.analyzed_files++;
+        }
 
         // 統計情報をログ出力
         if (!stats.empty()) {
@@ -122,7 +170,10 @@ FileAnalysisResult AnalysisEngine::analyze_file(
     } catch (const std::exception& e) {
         result.success = false;
         result.error_message = e.what();
-        stats_.failed_files++;
+        {
+            std::lock_guard<std::mutex> lock(results_mutex_);
+            stats_.failed_files++;
+        }
         utils::Logger::instance().error("Failed to analyze file: " +
                                          file_path + " - " + e.what());
     }
@@ -130,9 +181,13 @@ FileAnalysisResult AnalysisEngine::analyze_file(
     auto end_time = std::chrono::steady_clock::now();
     result.analysis_time = std::chrono::duration_cast<std::chrono::milliseconds>(
         end_time - start_time);
-    stats_.total_time += result.analysis_time;
 
-    results_.push_back(result);
+    {
+        std::lock_guard<std::mutex> lock(results_mutex_);
+        stats_.total_time += result.analysis_time;
+        results_.push_back(result);
+    }
+
     return result;
 }
 
@@ -142,19 +197,62 @@ std::vector<FileAnalysisResult> AnalysisEngine::analyze_files(
     std::vector<FileAnalysisResult> results;
     results.reserve(file_paths.size());
 
-    for (const auto& file_path : file_paths) {
-        // 早期終了チェック
-        if (should_stop_early()) {
-            utils::Logger::instance().warning(
-                "Stopping analysis early: max_errors (" +
-                std::to_string(config_.max_errors) + ") reached");
-            stats_.stopped_early = true;
-            break;
+    // 並列処理が有効な場合
+    if (thread_pool_ && file_paths.size() > 1) {
+        utils::Logger::instance().info(
+            "Analyzing " + std::to_string(file_paths.size()) +
+            " files in parallel with " + std::to_string(thread_pool_->size()) +
+            " threads");
+
+        std::vector<std::future<FileAnalysisResult>> futures;
+        futures.reserve(file_paths.size());
+
+        // すべてのタスクをキューに追加
+        for (const auto& file_path : file_paths) {
+            futures.push_back(thread_pool_->enqueue(
+                [this, file_path]() { return this->analyze_file(file_path); }));
         }
 
-        auto result = analyze_file(file_path);
-        results.push_back(result);
+        // 結果を収集
+        for (auto& future : futures) {
+            try {
+                // 早期終了チェック
+                if (should_stop_early()) {
+                    utils::Logger::instance().warning(
+                        "Stopping analysis early: max_errors (" +
+                        std::to_string(config_.max_errors) + ") reached");
+                    stats_.stopped_early = true;
+                    break;
+                }
+
+                auto result = future.get();
+                results.push_back(result);
+
+            } catch (const std::exception& e) {
+                utils::Logger::instance().error(
+                    "Failed to get analysis result: " + std::string(e.what()));
+            }
+        }
+
+    } else {
+        // シーケンシャル処理
+        for (const auto& file_path : file_paths) {
+            // 早期終了チェック
+            if (should_stop_early()) {
+                utils::Logger::instance().warning(
+                    "Stopping analysis early: max_errors (" +
+                    std::to_string(config_.max_errors) + ") reached");
+                stats_.stopped_early = true;
+                break;
+            }
+
+            auto result = analyze_file(file_path);
+            results.push_back(result);
+        }
     }
+
+    // メモリ使用量を概算
+    estimate_memory_usage();
 
     return results;
 }
@@ -239,6 +337,32 @@ std::string AnalysisEngine::read_file(const std::string& file_path) const {
     std::stringstream buffer;
     buffer << file.rdbuf();
     return buffer.str();
+}
+
+void AnalysisEngine::estimate_memory_usage() {
+    // 簡易的なメモリ使用量の概算
+    // 診断メッセージとファイルパスの文字列長から推定
+    size_t total_bytes = 0;
+
+    for (const auto& result : results_) {
+        total_bytes += result.file_path.size();
+        total_bytes += result.error_message.size();
+
+        for (const auto& diag : result.diagnostics) {
+            total_bytes += diag.message.size();
+            total_bytes += diag.rule_name.size();
+            total_bytes += diag.location.filename.size();
+            total_bytes += sizeof(diag);  // 構造体のサイズ
+        }
+
+        total_bytes += sizeof(result);
+    }
+
+    stats_.memory_usage_bytes = total_bytes;
+
+    utils::Logger::instance().debug(
+        "Estimated memory usage: " +
+        std::to_string(total_bytes / 1024) + " KB");
 }
 
 } // namespace engine

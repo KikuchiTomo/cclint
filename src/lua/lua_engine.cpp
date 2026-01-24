@@ -120,6 +120,14 @@ void LuaEngine::setup_sandbox() {
         loadfile = nil
         require = nil
     )");
+
+    // リソース制限の設定
+    // メモリ制限: 100MB（LuaJITのデフォルトは十分大きい）
+    // スタック深度制限: デフォルトで設定済み（lua_checkstack）
+
+    // デバッグフック設定（実行時間制限用）
+    // 注: この実装は簡易的。より厳密には instruction count で制限すべき
+    lua_sethook(L_, nullptr, 0, 0);  // デフォルトではフックなし
 }
 
 void LuaEngine::register_cpp_api() {

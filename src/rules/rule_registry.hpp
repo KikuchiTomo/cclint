@@ -3,6 +3,7 @@
 #include "rules/rule_base.hpp"
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -55,6 +56,7 @@ private:
     RuleRegistry& operator=(const RuleRegistry&) = delete;
 
     std::unordered_map<std::string, std::unique_ptr<RuleBase>> rules_;
+    mutable std::mutex mutex_;  // スレッドセーフ保護用
 };
 
 } // namespace rules

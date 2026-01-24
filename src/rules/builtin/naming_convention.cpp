@@ -59,7 +59,13 @@ void NamingConventionRule::check_file(
         check_class_names(file_path, content, diag_engine);
     }
 
-    // TODO: 変数名、定数名のチェックも追加
+    if (check_variables_) {
+        check_variable_names(file_path, content, diag_engine);
+    }
+
+    if (check_constants_) {
+        check_constant_names(file_path, content, diag_engine);
+    }
 }
 
 void NamingConventionRule::check_function_names(
@@ -124,6 +130,93 @@ void NamingConventionRule::check_class_names(
                 std::string message =
                     "Class name '" + class_name +
                     "' does not follow PascalCase convention";
+                report_diagnostic(diag_engine, file_path, line_num, 1,
+                                  message);
+            }
+        }
+    }
+}
+
+void NamingConventionRule::check_variable_names(
+    const std::string& file_path,
+    const std::string& content,
+    diagnostic::DiagnosticEngine& diag_engine) {
+
+    // 簡易的な変数名検出
+    // 変数宣言のパターン: 型 変数名; または 型 変数名 = ...;
+    std::regex var_decl_pattern(
+        R"(\b(int|bool|char|float|double|auto|std::\w+|[A-Za-z_][A-Za-z0-9_:<>]*)\s+([a-z_][A-Za-z0-9_]*)\s*[;=])");
+
+    auto lines = utils::StringUtils::split(content, '\n');
+    int line_num = 0;
+
+    for (const auto& line : lines) {
+        line_num++;
+
+        // コメント行はスキップ
+        std::string trimmed = utils::StringUtils::trim(line);
+        if (trimmed.rfind("//", 0) == 0 || trimmed.rfind("/*", 0) == 0) {
+            continue;
+        }
+
+        std::smatch match;
+        std::string line_str(line);
+        auto it = std::sregex_iterator(line_str.begin(), line_str.end(),
+                                        var_decl_pattern);
+        auto end = std::sregex_iterator();
+
+        for (; it != end; ++it) {
+            std::string var_name = (*it)[2].str();
+
+            // 特殊なキーワードは除外
+            if (var_name == "if" || var_name == "for" ||
+                var_name == "while" || var_name == "return") {
+                continue;
+            }
+
+            // snake_case チェック
+            if (!std::regex_match(var_name, variable_pattern_)) {
+                std::string message =
+                    "Variable name '" + var_name +
+                    "' does not follow snake_case convention";
+                report_diagnostic(diag_engine, file_path, line_num, 1,
+                                  message);
+            }
+        }
+    }
+}
+
+void NamingConventionRule::check_constant_names(
+    const std::string& file_path,
+    const std::string& content,
+    diagnostic::DiagnosticEngine& diag_engine) {
+
+    // 簡易的な定数名検出
+    // const/constexpr 定数のパターン
+    std::regex const_decl_pattern(
+        R"(\b(const|constexpr|#define)\s+(?:[A-Za-z_][A-Za-z0-9_:<>]*\s+)?([A-Z_][A-Z0-9_]*))");
+
+    auto lines = utils::StringUtils::split(content, '\n');
+    int line_num = 0;
+
+    for (const auto& line : lines) {
+        line_num++;
+
+        std::smatch match;
+        std::string line_str(line);
+        if (std::regex_search(line_str, match, const_decl_pattern)) {
+            std::string const_name = match[2].str();
+
+            // 除外する名前（型名等）
+            if (const_name.length() < 2) {
+                continue;
+            }
+
+            // UPPER_CASE チェック
+            if (!std::regex_match(const_name, constant_pattern_)) {
+                std::string message =
+                    "Constant name '" + const_name +
+                    "' does not follow UPPER_CASE convention";
                 report_diagnostic(diag_engine, file_path, line_num, 1,
                                   message);
             }

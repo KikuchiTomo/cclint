@@ -26,6 +26,8 @@ set(CCLINT_SOURCES
     lua/lua_engine.cpp
     lua/lua_bridge.cpp
     lua/lua_rule.cpp
+    cache/file_cache.cpp
+    parallel/thread_pool.cpp
 )
 
 # 実行ファイルを作成

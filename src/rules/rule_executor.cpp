@@ -117,12 +117,21 @@ RuleExecutionStats RuleExecutor::execute_with_stats(
     auto start_time = std::chrono::steady_clock::now();
 
     try {
-        // TODO: タイムアウト機能の実装（複雑なため、後回し）
         func();
 
         auto end_time = std::chrono::steady_clock::now();
         stats.execution_time = std::chrono::duration_cast<
             std::chrono::milliseconds>(end_time - start_time);
+
+        // タイムアウトチェック（実行後）
+        if (timeout_ms_ > 0 &&
+            stats.execution_time.count() > timeout_ms_) {
+            stats.timed_out = true;
+            utils::Logger::instance().warning(
+                "Rule execution exceeded timeout: " + rule->name() + " (" +
+                std::to_string(stats.execution_time.count()) + "ms > " +
+                std::to_string(timeout_ms_) + "ms)");
+        }
 
         stats.diagnostics_count =
             diag_engine.get_diagnostics().size() - initial_diagnostic_count;

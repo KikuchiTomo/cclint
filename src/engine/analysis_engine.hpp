@@ -1,11 +1,14 @@
 #pragma once
 
+#include "cache/file_cache.hpp"
 #include "config/config_types.hpp"
 #include "diagnostic/diagnostic.hpp"
+#include "parallel/thread_pool.hpp"
 #include "rules/rule_executor.hpp"
 
 #include <chrono>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -28,7 +31,9 @@ struct AnalysisEngineStats {
     size_t analyzed_files = 0;
     size_t skipped_files = 0;
     size_t failed_files = 0;
+    size_t cached_files = 0;  // キャッシュから取得したファイル数
     std::chrono::milliseconds total_time{0};
+    size_t memory_usage_bytes = 0;  // メモリ使用量（概算）
     bool stopped_early = false;  // max_errorsにより早期終了したかどうか
 };
 
@@ -72,6 +77,9 @@ private:
     std::unique_ptr<rules::RuleExecutor> rule_executor_;
     std::vector<FileAnalysisResult> results_;
     AnalysisEngineStats stats_;
+    std::unique_ptr<cache::FileCache> cache_;
+    std::unique_ptr<parallel::ThreadPool> thread_pool_;
+    mutable std::mutex results_mutex_;  // results_とstats_の保護用
 
     /// ファイルがinclude/excludeパターンにマッチするかをチェック
     bool should_analyze_file(const std::string& file_path) const;
@@ -84,6 +92,9 @@ private:
 
     /// 早期終了すべきかチェック
     bool should_stop_early() const;
+
+    /// メモリ使用量を概算
+    void estimate_memory_usage();
 };
 
 } // namespace engine

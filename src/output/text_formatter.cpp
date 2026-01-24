@@ -30,9 +30,19 @@ void TextFormatter::format_diagnostic(const diagnostic::Diagnostic& diag,
     // メッセージ
     out << ": " << diag.message << "\n";
 
-    // Fix-itヒント
-    for (const auto& hint : diag.fix_hints) {
-        out << "  " << hint.to_string() << "\n";
+    // Fix-itヒント（修正提案を表示）
+    if (!diag.fix_hints.empty()) {
+        const char* green = "\033[1;32m";
+        const char* reset = "\033[0m";
+
+        for (const auto& hint : diag.fix_hints) {
+            out << "  " << green << "fix-it:" << reset << " "
+                << hint.range.to_string() << "\n";
+            if (!hint.replacement_text.empty()) {
+                out << "    " << green << "replace with:" << reset
+                    << " '" << hint.replacement_text << "'\n";
+            }
+        }
     }
 
     // 補足情報（ノート）

@@ -13,11 +13,13 @@ void RuleRegistry::register_rule(std::unique_ptr<RuleBase> rule) {
         return;
     }
 
+    std::lock_guard<std::mutex> lock(mutex_);
     const std::string name = rule->name();
     rules_[name] = std::move(rule);
 }
 
 RuleBase* RuleRegistry::get_rule(const std::string& name) const {
+    std::lock_guard<std::mutex> lock(mutex_);
     auto it = rules_.find(name);
     if (it != rules_.end()) {
         return it->second.get();
@@ -26,6 +28,7 @@ RuleBase* RuleRegistry::get_rule(const std::string& name) const {
 }
 
 std::vector<std::string> RuleRegistry::get_all_rule_names() const {
+    std::lock_guard<std::mutex> lock(mutex_);
     std::vector<std::string> names;
     names.reserve(rules_.size());
 
@@ -37,6 +40,7 @@ std::vector<std::string> RuleRegistry::get_all_rule_names() const {
 }
 
 std::vector<RuleBase*> RuleRegistry::get_enabled_rules() const {
+    std::lock_guard<std::mutex> lock(mutex_);
     std::vector<RuleBase*> enabled_rules;
 
     for (const auto& pair : rules_) {
@@ -50,6 +54,7 @@ std::vector<RuleBase*> RuleRegistry::get_enabled_rules() const {
 
 std::vector<RuleBase*> RuleRegistry::get_rules_by_category(
     const std::string& category) const {
+    std::lock_guard<std::mutex> lock(mutex_);
     std::vector<RuleBase*> filtered_rules;
 
     for (const auto& pair : rules_) {
@@ -62,6 +67,7 @@ std::vector<RuleBase*> RuleRegistry::get_rules_by_category(
 }
 
 void RuleRegistry::clear() {
+    std::lock_guard<std::mutex> lock(mutex_);
     rules_.clear();
 }
 

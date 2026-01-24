@@ -45,6 +45,14 @@ private:
     void check_class_names(const std::string& file_path,
                            const std::string& content,
                            diagnostic::DiagnosticEngine& diag_engine);
+
+    void check_variable_names(const std::string& file_path,
+                              const std::string& content,
+                              diagnostic::DiagnosticEngine& diag_engine);
+
+    void check_constant_names(const std::string& file_path,
+                              const std::string& content,
+                              diagnostic::DiagnosticEngine& diag_engine);
 };
 
 } // namespace builtin
