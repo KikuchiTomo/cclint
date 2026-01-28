@@ -4,7 +4,3 @@ public:
     void method2();
     void method3();
 };
-
-int main() {
-    return 0;
-}

@@ -110,6 +110,9 @@ void LuaBridge::register_api() {
     lua_pushcfunction(L, lua_get_enums);
     lua_setfield(L, -2, "get_enums");
 
+    lua_pushcfunction(L, lua_get_namespaces);
+    lua_setfield(L, -2, "get_namespaces");
+
     // グローバルに設定
     lua_setglobal(L, "cclint");
 
@@ -1043,6 +1046,53 @@ int LuaBridge::lua_get_enums(lua_State* L) {
     return 1;
 }
 
+int LuaBridge::lua_get_namespaces(lua_State* L) {
+    if (!g_bridge || !g_bridge->current_ast_) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    // namespaceを収集
+    std::vector<std::shared_ptr<parser::NamespaceNode>> namespaces;
+    std::function<void(std::shared_ptr<parser::ASTNode>)> collect;
+    collect = [&](std::shared_ptr<parser::ASTNode> node) {
+        if (!node)
+            return;
+
+        if (node->type == parser::ASTNodeType::Namespace) {
+            namespaces.push_back(std::static_pointer_cast<parser::NamespaceNode>(node));
+        }
+
+        for (auto& child : node->children) {
+            collect(child);
+        }
+    };
+
+    collect(g_bridge->current_ast_);
+
+    // Luaテーブルを作成
+    lua_newtable(L);
+
+    for (size_t i = 0; i < namespaces.size(); i++) {
+        lua_pushnumber(L, i + 1);
+        lua_newtable(L);
+
+        auto ns_node = namespaces[i];
+
+        lua_pushstring(L, "name");
+        lua_pushstring(L, ns_node->name.c_str());
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "line");
+        lua_pushnumber(L, ns_node->position.line);
+        lua_settable(L, -3);
+
+        lua_settable(L, -3);
+    }
+
+    return 1;
+}
+
 #else  // HAVE_LUAJIT が定義されていない場合（スタブ実装）
 
 LuaBridge::LuaBridge(std::shared_ptr<LuaEngine> lua_engine) : lua_engine_(lua_engine) {}
@@ -1157,6 +1207,11 @@ int LuaBridge::lua_get_functions(lua_State* L) {
 }
 
 int LuaBridge::lua_get_enums(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_namespaces(lua_State* L) {
     (void)L;
     return 0;
 }

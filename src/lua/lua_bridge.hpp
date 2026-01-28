@@ -84,6 +84,7 @@ private:
     static int lua_get_files(lua_State* L);
     static int lua_get_functions(lua_State* L);
     static int lua_get_enums(lua_State* L);
+    static int lua_get_namespaces(lua_State* L);
 
     // ヘルパー関数
     void report_diagnostic(const std::string& file_path, int line, int column,
