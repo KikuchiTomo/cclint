@@ -10,13 +10,16 @@
 namespace cclint {
 namespace parser {
 
-/// 簡易C++パーサー
-class SimpleParser {
+/// 組み込みC++パーサー
+/// レキサーベースの独自実装パーサー。LLVM/Clangに依存せず、
+/// 基本的なC++構文（class, function, constructor, destructor, lambda,
+/// template, friend, operator overloadなど）を解析できる。
+class BuiltinParser {
 public:
     /// コンストラクタ
     /// @param source ソースコード
     /// @param filename ファイル名
-    explicit SimpleParser(const std::string& source, const std::string& filename = "");
+    explicit BuiltinParser(const std::string& source, const std::string& filename = "");
 
     /// ASTを構築
     /// @return 翻訳単位（ファイル全体）のAST

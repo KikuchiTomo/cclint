@@ -4,7 +4,7 @@
 #include <future>
 #include <sstream>
 
-#include "parser/simple_parser.hpp"
+#include "parser/builtin_parser.hpp"
 #include "rules/rule_registry.hpp"
 #include "utils/file_utils.hpp"
 #include "utils/logger.hpp"
@@ -170,7 +170,7 @@ FileAnalysisResult AnalysisEngine::analyze_file(const std::string& file_path) {
             file_path.find(".h") != std::string::npos) {
             try {
                 utils::Logger::instance().debug("Starting AST parsing for " + file_path);
-                parser::SimpleParser parser(content, file_path);
+                parser::BuiltinParser parser(content, file_path);
                 auto ast = parser.parse();
 
                 if (parser.has_errors()) {

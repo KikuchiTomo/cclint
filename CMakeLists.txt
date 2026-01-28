@@ -65,10 +65,17 @@ endif()
 # 2. yaml-cpp (Optional - for YAML configuration)
 if(USE_YAML_CPP)
     message(STATUS "Searching for yaml-cpp...")
-    find_package(yaml-cpp QUIET)
+    find_package(yaml-cpp QUIET CONFIG)
 
     if(yaml-cpp_FOUND)
         message(STATUS "Found yaml-cpp ${yaml-cpp_VERSION}")
+
+        # Add yaml-cpp include directory and library path
+        if(APPLE)
+            include_directories(/opt/homebrew/opt/yaml-cpp/include)
+            link_directories(/opt/homebrew/opt/yaml-cpp/lib)
+        endif()
+
         add_definitions(-DHAVE_YAML_CPP)
         message(STATUS "yaml-cpp support enabled")
     else()
