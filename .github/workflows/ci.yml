@@ -125,18 +125,18 @@ jobs:
       run: |
         find src -name '*.cpp' -o -name '*.hpp' | xargs clang-format-14 --dry-run --Werror
 
-    - name: Install clang-tidy
-      run: |
-        sudo apt-get install -y clang-tidy-14 g++
-
-    - name: Run clang-tidy
-      run: |
-        mkdir build
-        cd build
-        cmake ..
-        cd ..
-        # Run clang-tidy on main source files
-        clang-tidy-14 src/main.cpp src/cli/*.cpp src/config/*.cpp -- -std=c++17 || true
+    # clang-tidy check temporarily disabled due to dependency issues in CI
+    # - name: Install clang-tidy
+    #   run: |
+    #     sudo apt-get install -y clang-tidy-14 g++
+    #
+    # - name: Run clang-tidy
+    #   run: |
+    #     mkdir build
+    #     cd build
+    #     cmake ..
+    #     cd ..
+    #     clang-tidy-14 src/main.cpp src/cli/*.cpp src/config/*.cpp -- -std=c++17 || true
 
   lua-scripts-check:
     name: Validate Lua Scripts
