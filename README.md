@@ -1,422 +1,305 @@
-# cclint - Customizable C++ Linter
+# cclint - Lua-First C++ Linter
 
-A highly customizable C++ linter that allows you to define custom lint rules without recompilation.
+A highly customizable C++ linter with **100% Lua-based rules**. No hardcoded rules - complete flexibility.
 
 ## Overview
 
-**cclint** is a modern C++ static analysis tool designed with flexibility and ease of use in mind. Unlike traditional linters with fixed rule sets, cclint allows you to:
+**cclint** is a Lua-first static analysis tool for C++. Define all your lint rules in Lua scripts with full AST access.
 
-- Define custom lint rules using YAML configuration files
-- Write complex rules using LuaJIT scripts for maximum performance
-- Wrap your existing compiler commands (gcc, clang) seamlessly
-- Integrate easily into CI/CD pipelines
-- Support all C++ standards from C++98 to C++26
+### Key Features
 
-## Features
-
-- **Zero Default Rules**: Start with a clean slate and add only the rules you need
-- **Dual Configuration System**:
-  - YAML for simple pattern-matching rules
-  - LuaJIT for complex logic and deep AST analysis
-- **Compiler Wrapper**: Simply prefix your build commands with `cclint`
-- **Multiple Output Formats**: Text (human-readable), JSON (CI/CD), XML (IDE integration)
-- **High Performance**:
-  - Multi-threaded file processing
-  - LuaJIT for blazing-fast script execution
-  - Smart caching for incremental analysis
-- **Cross-Platform**: Ubuntu and macOS support
+- **🎯 Zero Built-in Rules**: Start with a clean slate
+- **🔥 100% Lua-Based**: All rules written in Lua for maximum customizability
+- **⚡ LuaJIT Powered**: Blazing-fast rule execution
+- **🔍 Full AST Access**: Access to complete C++ Abstract Syntax Tree
+- **🎨 Fine-Grained Rules**: 1 rule per file, mix and match as needed
+- **⚙️ Compiler Wrapper**: Works with gcc, clang, msvc
+- **📊 Multiple Outputs**: Text, JSON, XML formats
+- **🚀 High Performance**: Multi-threaded, cached analysis
 
 ## Quick Start
 
-### Installation
-
-#### From Source
+### Build & Install
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/cclint.git
+git clone https://github.com/KikuchiTomo/cclint.git
 cd cclint
-
-# Build
 mkdir build && cd build
-cmake ..
+cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j$(nproc)
-
-# Install
-sudo make install
-```
-
-#### Ubuntu
-
-```bash
-# Coming soon
-sudo apt install cclint
-```
-
-#### macOS
-
-```bash
-# Coming soon
-brew install cclint
+sudo make install  # Optional
 ```
 
 ### Basic Usage
 
 ```bash
-# Wrap your compiler command
-cclint g++ -std=c++17 main.cpp
+# Run with default config
+./build/src/cclint g++ -std=c++17 main.cpp
 
 # With custom config
-cclint --config=.cclint.yaml g++ -std=c++17 main.cpp
+./build/src/cclint --config=.cclint.yaml g++ main.cpp
 
-# Specify output format
-cclint --format=json g++ -std=c++17 main.cpp
+# JSON output
+./build/src/cclint --format=json g++ main.cpp
 ```
 
 ## Configuration
 
-### YAML Configuration
-
-Create a `cclint.yaml` file in your project root:
+Create `.cclint.yaml`:
 
 ```yaml
-version: 1.0
-cpp_standard: cpp17
+version: "1.0"
 
-# Enable built-in rules
-rules:
-  - naming_conventions
-  - header_guards
-  - max_line_length
+# Select rules you want
+lua_scripts:
+  # Naming rules
+  - path: scripts/rules/naming/class_name_pascal_case.lua
+    enabled: true
+    severity: warning
 
-# File patterns
+  - path: scripts/rules/naming/public_method_snake_case.lua
+    enabled: true
+    severity: warning
+
+  # Restrictions
+  - path: scripts/rules/restrictions/no_new_in_class.lua
+    enabled: true
+    severity: error
+
+  # Style
+  - path: scripts/rules/style/max_line_length.lua
+    enabled: true
+    severity: warning
+    parameters:
+      max_length: 100
+
 include_patterns:
+  - "*.cpp"
+  - "*.hpp"
   - "src/**/*.cpp"
-  - "include/**/*.hpp"
-exclude_patterns:
-  - "third_party/**"
-  - "build/**"
 
-# Output settings
-output: text
-max_errors: 100
+exclude_patterns:
+  - "build/**"
+  - "third_party/**"
+
+output_format: "text"
+num_threads: 0  # Auto-detect
+enable_cache: true
 ```
 
-### LuaJIT Scripts
+## Available Rules
 
-For complex rules, create Lua scripts:
+**30+ fine-grained rules** across 5 categories:
+
+### Naming Rules (11 rules)
+- `class_name_pascal_case.lua` - Class names: PascalCase
+- `public_method_snake_case.lua` - Public methods: snake_case
+- `private_method_underscore_prefix.lua` - Private methods: _snake_case
+- `protected_method_snake_case.lua` - Protected methods: snake_case
+- `function_name_snake_case.lua` - Functions: snake_case
+- `private_member_trailing_underscore.lua` - Private members: name_
+- `static_const_member_uppercase.lua` - Static const: UPPER_CASE
+- `enum_name_pascal_case.lua` - Enum names: PascalCase
+- `enum_value_uppercase.lua` - Enum values: UPPER_CASE
+- `namespace_lowercase.lua` - Namespaces: lowercase
+- `bool_variable_prefix.lua` - Booleans: is_, has_, can_
+
+### Restriction Rules (7 rules)
+- `no_cout_in_class.lua` - Prohibit std::cout (use logger)
+- `no_printf_in_class.lua` - Prohibit printf (use logger)
+- `no_new_in_class.lua` - Prohibit new (use smart pointers)
+- `no_delete_in_class.lua` - Prohibit delete (use RAII)
+- `no_malloc_in_class.lua` - Prohibit malloc/calloc/realloc
+- `no_global_using_namespace.lua` - No global using namespace
+- `no_throw_in_destructor.lua` - No exceptions in destructors
+
+### Structure Rules (3 rules)
+- `header_guard_required.lua` - Require header guards
+- `one_class_per_file.lua` - One class per file
+- `include_order.lua` - Standard include order
+
+### Style Rules (4 rules)
+- `max_line_length.lua` - Line length limit (configurable)
+- `indent_spaces_only.lua` - No tabs, spaces only
+- `no_trailing_whitespace.lua` - No trailing whitespace
+- `max_consecutive_empty_lines.lua` - Limit empty lines
+
+### Readability Rules (5 rules)
+- `max_function_length.lua` - Function length limit
+- `no_magic_numbers.lua` - Use named constants
+- `no_c_style_cast.lua` - Use C++ casts
+- `prefer_constexpr.lua` - Prefer constexpr over const
+- `switch_must_have_default.lua` - Require default case
+
+See [scripts/rules/README.md](scripts/rules/README.md) for detailed documentation.
+
+## Writing Custom Rules
+
+Create a Lua file (1 rule per file):
 
 ```lua
--- custom_rules.lua
+-- my_rule.lua
+rule_description = "My custom rule"
+rule_category = "custom"
 
--- Check cyclomatic complexity
-function check_complexity(node)
-  if node.type == "FunctionDecl" then
-    local complexity = calculate_complexity(node)
-    if complexity > 10 then
-      report_warning(
-        node.location,
-        string.format("Function complexity %d exceeds limit 10", complexity)
-      )
+function check_file()
+    -- Text-based checking
+    for line_num, line in ipairs(file_lines) do
+        if line:match("bad_pattern") then
+            cclint.report_warning(line_num, 1, "Found bad pattern")
+        end
     end
-  end
 end
 
--- Register the rule
-register_rule("cyclomatic_complexity", check_complexity)
+function check_ast()
+    -- AST-based checking
+    local classes = cclint.get_classes()
+    for _, class_name in ipairs(classes) do
+        local methods = cclint.get_methods(class_name)
+        -- Check methods...
+    end
+end
 ```
 
-Reference your Lua scripts in `cclint.yaml`:
+Add to `.cclint.yaml`:
 
 ```yaml
 lua_scripts:
-  - ".cclint/custom_rules.lua"
+  - path: my_rule.lua
+    enabled: true
+    severity: warning
 ```
+
+## Lua API
+
+### Available Functions
+
+**File Context:**
+- `file_path` - Current file path
+- `file_lines` - Array of file lines
+
+**AST Access:**
+- `cclint.get_classes()` - Get all classes
+- `cclint.get_class_info(name)` - Get class info
+- `cclint.get_methods(class_name)` - Get class methods
+- `cclint.get_method_info(class, method)` - Get method info
+- `cclint.get_functions()` - Get all functions
+- `cclint.get_enums()` - Get all enums
+
+**Reporting:**
+- `cclint.report_error(line, col, msg)` - Report error
+- `cclint.report_warning(line, col, msg)` - Report warning
+- `cclint.report_info(line, col, msg)` - Report info
+
+**Access Specifier Values:**
+- `0` = public
+- `1` = protected
+- `2` = private
 
 ## Architecture
 
-cclint is built on top of industry-standard tools:
-
-- **Clang/LLVM**: For C++ parsing and AST construction
-- **yaml-cpp**: For YAML configuration parsing
-- **LuaJIT**: For high-performance custom rule execution
-
-### System Architecture
-
 ```
-User Command → CLI Parser → Config Loader → Compiler Wrapper
-                                ↓
-                         Rule Registry
-                    (YAML Rules + Lua Rules)
-                                ↓
-                         Analysis Engine
-                    (Clang Parser + AST)
-                                ↓
-                         Rule Execution
-                                ↓
-                      Diagnostic Reporter
-                                ↓
-                      Output Formatter
-                        (Text/JSON/XML)
+cclint (Lua-First Linter)
+├── CLI Parser
+├── Config Loader (YAML)
+├── Compiler Wrapper (gcc/clang/msvc)
+├── Parser (SimpleParser + future Clang AST)
+├── Lua Engine (LuaJIT)
+│   ├── Lua Bridge (C++ ↔ Lua)
+│   └── Rule Executor
+├── Diagnostic Engine
+└── Output Formatter (Text/JSON/XML)
 ```
-
-## Use Cases
-
-### CI/CD Integration
-
-```yaml
-# .github/workflows/lint.yml
-name: Lint
-
-on: [push, pull_request]
-
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install cclint
-        run: |
-          # Installation steps
-      - name: Run cclint
-        run: cclint --format=json g++ -std=c++17 src/*.cpp
-```
-
-### Project-Specific Rules
-
-```lua
--- Enforce that all API functions check for errors
-function check_api_error_handling(node)
-  if node.type == "CallExpr" and node.name:match("^api_") then
-    local next_stmt = get_next_statement(node)
-    if not is_error_check(next_stmt) then
-      report_error(node.location, "API call must be followed by error check")
-    end
-  end
-end
-
-register_rule("api_error_handling", check_api_error_handling)
-```
-
-### Team Coding Standards
-
-```yaml
-# Team-wide naming conventions
-rules:
-  - name: function_naming
-    pattern: "^[a-z][a-zA-Z0-9]*$"
-    target: function_name
-    message: "Functions must use camelCase"
-
-  - name: class_naming
-    pattern: "^[A-Z][a-zA-Z0-9]*$"
-    target: class_name
-    message: "Classes must use PascalCase"
-
-  - name: constant_naming
-    pattern: "^[A-Z][A-Z0-9_]*$"
-    target: constant_name
-    message: "Constants must use UPPER_CASE"
-```
-
-## Command-Line Options
-
-```
-cclint [OPTIONS] <compiler-command>
-
-Options:
-  --config=FILE         Specify configuration file
-  --format=FORMAT       Output format: text, json, xml (default: text)
-  -v, --verbose         Verbose output
-  -q, --quiet           Quiet mode (errors only)
-  --help                Show help message
-  --version             Show version information
-  --threads=N           Number of threads for parallel processing
-  --enable-cache        Enable parse result caching
-  --incremental         Only analyze changed files
-```
-
-## Output Formats
-
-### Text (Human-Readable)
-
-```
-src/main.cpp:42:5: warning: Function name should be camelCase [naming_convention]
-    void DoSomething() {
-    ^
-src/utils.hpp:15:1: error: Missing header guard [header_guard]
-
-Summary: 1 error, 1 warning
-```
-
-### JSON (CI/CD Integration)
-
-```json
-{
-  "diagnostics": [
-    {
-      "severity": "warning",
-      "rule": "naming_convention",
-      "location": {
-        "file": "src/main.cpp",
-        "line": 42,
-        "column": 5
-      },
-      "message": "Function name should be camelCase"
-    }
-  ],
-  "summary": {
-    "errors": 1,
-    "warnings": 1
-  }
-}
-```
-
-### XML (IDE Integration)
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<checkstyle version="1.0">
-  <file name="src/main.cpp">
-    <error line="42" column="5" severity="warning"
-           message="Function name should be camelCase"
-           source="naming_convention"/>
-  </file>
-</checkstyle>
-```
-
-## Performance
-
-cclint is designed for high performance:
-
-- **Multi-threaded**: Parallel file processing utilizing all CPU cores
-- **LuaJIT**: JIT-compiled Lua scripts for near-native performance
-- **Smart Caching**: Parse results are cached based on file hashes
-- **Incremental Analysis**: Only analyze changed files
-
-Benchmarks (on a typical project with 10,000 lines of C++ code):
-- Initial analysis: ~10 seconds
-- Incremental analysis: ~2 seconds (only changed files)
-- Memory usage: < 500 MB
 
 ## Requirements
 
-### Runtime Requirements
+**Runtime:**
+- Ubuntu 20.04+ or macOS 11+
+- LuaJIT 2.1+
+- yaml-cpp 0.7+
+- LLVM/Clang 14+ (optional, for advanced parsing)
 
-- Ubuntu 20.04 LTS or later / macOS 11 (Big Sur) or later
-- LLVM/Clang 14.0 or later
-- yaml-cpp 0.7.0 or later
-- LuaJIT 2.1 or later
-
-### Build Requirements
-
-- CMake 3.16 or later
-- C++17 compatible compiler (GCC 7+, Clang 10+)
-- Development headers for LLVM/Clang, yaml-cpp
-
-## Documentation
-
-- [Requirements](docs/requirements.md) - Detailed requirements specification
-- [Architecture Design](docs/design.md) - System architecture and design
-- [Detailed Design](docs/detailed_design.md) - Component-level design
-- [Milestones](docs/milestones.md) - Development roadmap
-- [TODO List](docs/TODO.md) - Current development tasks
-- [Build Guide](docs/build.md) - Building from source (coming soon)
-- [User Guide](docs/usage.md) - Comprehensive usage guide (coming soon)
-- [Lua API Reference](docs/lua_api.md) - Lua API documentation (coming soon)
-- [Contributing](CONTRIBUTING.md) - Contribution guidelines (coming soon)
+**Build:**
+- CMake 3.16+
+- C++17 compiler (GCC 7+, Clang 10+)
 
 ## Development Status
 
-**Current Version**: 0.1.0-alpha (under active development)
+**Current Version**: 0.3.0-alpha
 
-This project is in early development. See [TODO.md](docs/TODO.md) for current progress and [CLAUDE.md](CLAUDE.md) for development guidelines.
+✅ **Complete:**
+- Lua-first architecture
+- Text-based rules (check_file)
+- AST-based rules (check_ast)
+- SimpleParser (finds all methods, functions, enums)
+- 30 fine-grained rules
+- Multi-threaded analysis
+- Caching system
+- Multiple output formats
 
-### ✅ Implemented (Milestone 1 Progress)
+🚧 **In Progress:**
+- Additional AST features (call graphs, complexity)
+- Clang AST integration (optional)
+- More built-in rules
 
-**Core Infrastructure**:
-- ✅ CLI argument parser with full option support
-- ✅ Configuration loader with YAML structure (yaml-cpp integration pending)
-- ✅ Compiler wrapper for command execution and detection (GCC/Clang/MSVC/AppleClang)
-- ✅ Diagnostic engine with multi-severity support
-- ✅ Output formatters (Text with ANSI colors, JSON, XML)
-- ✅ File and string utility libraries
-- ✅ Logger with timestamp and log levels
-- ✅ Build system (CMake) with C++17
+See [docs/TODO.md](docs/TODO.md) for detailed progress.
 
-**Lua Rule Library**:
-- ✅ **100 standard Lua rule scripts** across 9 categories:
-  - Naming (9 rules): Class names, function names, constants, enums, namespaces, members, typedefs, globals, booleans
-  - Style (8 rules): Braces, indentation, line length, control statement spacing, pointer declarations, consistent bracing, closing comments, function definition style
-  - Structure (4 rules): One class per file, header guards, include order, forward declarations
-  - Spacing (5 rules): Empty lines, trailing whitespace, operator spacing, tab characters, blank lines after declarations
-  - Documentation (4 rules): Function comments, file headers, TODO comments, copyright headers
-  - Modernize (18 rules): nullptr, auto, override, using, noexcept, nodiscard, emplace, equals default/delete, constexpr, raw strings, final, designated initializers, enum class, transparent comparators, lambda, avoid bind, range-for, structured bindings
-  - Performance (15 rules): Const references, unnecessary copies, move, reserve, static strings, value params, inline, make_shared, loop invariants, prefix increment, string concatenation, redundant init, temporaries, algorithms, virtual default args
-  - Readability (19 rules): Function length, magic numbers, boolean expressions, switch defaults, unused parameters, nesting, identifiers, complexity, nullptr comparison, bool conversion, C-casts, redundant declarations, confusing else, fallthrough, misleading indentation, one var per line, comparison order, multiline comments
-  - Security (11 rules): Unsafe functions, system calls, rand(), array bounds, memset, hardcoded credentials, integer overflow, signed/unsigned comparison, uninitialized variables, buffer overflow, null dereference, TOCTOU
+## Examples
 
-**Documentation**:
-- ✅ Comprehensive design documents (requirements, architecture, detailed design)
-- ✅ 6-milestone development plan
-- ✅ Example configuration file (.cclint.example.yaml)
-- ✅ Lua scripts README with usage examples
-- ✅ Code formatting standards (.clang-format, .clang-tidy)
+### Example 1: Basic Naming Check
 
-### 🚧 In Progress (Pending External Dependencies)
+```cpp
+// main.cpp
+class my_class {  // ❌ Should be PascalCase
+public:
+    void GetValue() {}  // ❌ Should be snake_case
+};
+```
 
-**Parser Module** (requires LLVM/Clang - Milestone 2):
-- ⏳ AST node definitions
-- ⏳ Clang libtooling integration
-- ⏳ AST visitor framework
+```bash
+$ cclint --config=naming.yaml g++ main.cpp
+main.cpp:1:7: warning: Class name 'my_class' should use PascalCase
+main.cpp:3:10: warning: Public method 'GetValue' should use snake_case
+```
 
-**Rule Engine** (requires LuaJIT - Milestone 3):
-- ⏳ Lua state management
-- ⏳ 100+ Lua API bindings
-- ⏳ Rule registration and execution
-- ⏳ Lua script loader
+### Example 2: Restriction Check
 
-**Integration**:
-- ⏳ YAML parsing (yaml-cpp integration)
-- ⏳ Main application flow
-- ⏳ End-to-end testing
+```cpp
+// bad.cpp
+class MyClass {
+public:
+    void print() {
+        std::cout << "Hello";  // ❌ No cout in classes
+        int* p = new int(5);   // ❌ No new in classes
+    }
+};
+```
 
-### Roadmap
+```bash
+$ cclint --config=restrictions.yaml g++ bad.cpp
+bad.cpp:4:9: warning: Do not use std::cout in class 'MyClass'
+bad.cpp:5:18: warning: Do not use 'new' in class 'MyClass'
+```
 
-- **v0.1.0** (Milestone 1): MVP - Basic compiler wrapping and parsing
-- **v0.2.0** (Milestone 2): Rule system foundation with built-in rules
-- **v0.3.0** (Milestone 3): LuaJIT integration for custom rules
-- **v0.4.0** (Milestone 4): Performance optimization (parallel processing, caching)
-- **v0.5.0** (Milestone 5): Multiple output formats and tool integration
-- **v1.0.0** (Milestone 6): First stable release
+## Documentation
 
-## Contributing
-
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-### Development with Claude Code
-
-This project is developed with assistance from Claude Code. See [CLAUDE.md](CLAUDE.md) for:
-- Development workflow
-- TODO list management
-- Code style guidelines
-- Testing requirements
+- [Rules Documentation](scripts/rules/README.md) - All available rules
+- [Lua Migration Status](docs/LUA_MIGRATION_STATUS.md) - Current implementation status
+- [Development Guide](CLAUDE.md) - Development guidelines
 
 ## License
 
-[To be determined]
+[MIT License](LICENSE) (to be added)
 
-## Acknowledgments
+## Contributing
 
-- LLVM/Clang team for the excellent C++ parsing infrastructure
-- LuaJIT team for the high-performance Lua implementation
-- yaml-cpp contributors for the YAML parsing library
+Contributions welcome! This project uses:
+- C++17 for core engine
+- LuaJIT for rules
+- CMake for building
 
-## Contact
-
-- GitHub Issues: [Report bugs or request features](https://github.com/yourusername/cclint/issues)
-- Discussions: [Ask questions or share ideas](https://github.com/yourusername/cclint/discussions)
+See [CLAUDE.md](CLAUDE.md) for development guidelines.
 
 ---
 
-**Note**: This is a work in progress. Star the repository to follow development!
+**Note**: cclint is a Lua-first linter. All rules are in Lua. No hardcoded C++ rules.
