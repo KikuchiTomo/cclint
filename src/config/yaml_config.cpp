@@ -3,39 +3,38 @@
 #include <sstream>
 #include <stdexcept>
 
-// TODO: yaml-cppの依存関係追加後に有効化
-// #include <yaml-cpp/yaml.h>
+#ifdef HAVE_YAML_CPP
+#include <yaml-cpp/yaml.h>
+#endif
 
 namespace config {
 
 Config YamlConfig::parse(std::istream& input) {
-    std::string content((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
+    std::string content((std::istreambuf_iterator<char>(input)),
+                        std::istreambuf_iterator<char>());
     return parse_string(content);
 }
 
 Config YamlConfig::parse_string(const std::string& yaml_content) {
-    // TODO: yaml-cpp依存関係追加後に実装
-    // 現在はプレースホルダー実装
-    throw std::runtime_error(
-        "YAML parsing not yet implemented. "
-        "yaml-cpp dependency will be added in Milestone 2.");
-
-    // 将来の実装:
-    /*
+#ifdef HAVE_YAML_CPP
     try {
         YAML::Node root = YAML::Load(yaml_content);
         return parse_impl(&root);
     } catch (const YAML::Exception& e) {
-        throw std::runtime_error(std::string("YAML parse error: ") + e.what());
+        throw std::runtime_error(std::string("YAML parse error: ") +
+                                 e.what());
     }
-    */
+#else
+    throw std::runtime_error(
+        "YAML parsing not available. "
+        "Please build with yaml-cpp support (cmake -DUSE_YAML_CPP=ON)");
+#endif
 }
 
 Config YamlConfig::parse_impl(const void* yaml_node) {
     Config config = Config();  // デフォルト値で初期化
 
-    // TODO: yaml-cpp依存関係追加後に実装
-    /*
+#ifdef HAVE_YAML_CPP
     const YAML::Node& root = *static_cast<const YAML::Node*>(yaml_node);
 
     // バージョン
@@ -73,14 +72,13 @@ Config YamlConfig::parse_impl(const void* yaml_node) {
 
     // ルール実行設定
     parse_rule_execution_settings(yaml_node, config);
-    */
+#endif
 
     return config;
 }
 
 void YamlConfig::parse_rules(const void* yaml_node, Config& config) {
-    // TODO: yaml-cpp依存関係追加後に実装
-    /*
+#ifdef HAVE_YAML_CPP
     const YAML::Node& root = *static_cast<const YAML::Node*>(yaml_node);
 
     if (!root["rules"]) {
@@ -101,7 +99,8 @@ void YamlConfig::parse_rules(const void* yaml_node, Config& config) {
             rule.priority = rule_node["priority"].as<int>();
         }
         if (rule_node["severity"]) {
-            rule.severity = parse_severity(rule_node["severity"].as<std::string>());
+            rule.severity =
+                parse_severity(rule_node["severity"].as<std::string>());
         }
         if (rule_node["parameters"]) {
             for (const auto& param : rule_node["parameters"]) {
@@ -109,18 +108,15 @@ void YamlConfig::parse_rules(const void* yaml_node, Config& config) {
                 const YAML::Node& value_node = param.second;
 
                 if (value_node.IsScalar()) {
-                    if (value_node.Tag() == "!") {
-                        // 明示的な型タグがある場合
-                    } else {
-                        // 型を推測
+                    // 型を推測
+                    try {
+                        rule.parameters[key] = value_node.as<int>();
+                    } catch (...) {
                         try {
-                            rule.parameters[key] = value_node.as<int>();
+                            rule.parameters[key] = value_node.as<bool>();
                         } catch (...) {
-                            try {
-                                rule.parameters[key] = value_node.as<bool>();
-                            } catch (...) {
-                                rule.parameters[key] = value_node.as<std::string>();
-                            }
+                            rule.parameters[key] =
+                                value_node.as<std::string>();
                         }
                     }
                 }
@@ -129,12 +125,11 @@ void YamlConfig::parse_rules(const void* yaml_node, Config& config) {
 
         config.rules.push_back(rule);
     }
-    */
+#endif
 }
 
 void YamlConfig::parse_lua_scripts(const void* yaml_node, Config& config) {
-    // TODO: yaml-cpp依存関係追加後に実装
-    /*
+#ifdef HAVE_YAML_CPP
     const YAML::Node& root = *static_cast<const YAML::Node*>(yaml_node);
 
     if (!root["lua_scripts"]) {
@@ -156,7 +151,7 @@ void YamlConfig::parse_lua_scripts(const void* yaml_node, Config& config) {
                 std::string key = param.first.as<std::string>();
                 const YAML::Node& value_node = param.second;
 
-                // ルールと同様にパラメータをパース
+                // パラメータをパース
                 if (value_node.IsScalar()) {
                     try {
                         script.parameters[key] = value_node.as<int>();
@@ -164,7 +159,8 @@ void YamlConfig::parse_lua_scripts(const void* yaml_node, Config& config) {
                         try {
                             script.parameters[key] = value_node.as<bool>();
                         } catch (...) {
-                            script.parameters[key] = value_node.as<std::string>();
+                            script.parameters[key] =
+                                value_node.as<std::string>();
                         }
                     }
                 }
@@ -173,12 +169,12 @@ void YamlConfig::parse_lua_scripts(const void* yaml_node, Config& config) {
 
         config.lua_scripts.push_back(script);
     }
-    */
+#endif
 }
 
-void YamlConfig::parse_include_exclude_patterns(const void* yaml_node, Config& config) {
-    // TODO: yaml-cpp依存関係追加後に実装
-    /*
+void YamlConfig::parse_include_exclude_patterns(const void* yaml_node,
+                                                 Config& config) {
+#ifdef HAVE_YAML_CPP
     const YAML::Node& root = *static_cast<const YAML::Node*>(yaml_node);
 
     if (root["include_patterns"]) {
@@ -192,12 +188,12 @@ void YamlConfig::parse_include_exclude_patterns(const void* yaml_node, Config& c
             config.exclude_patterns.push_back(pattern.as<std::string>());
         }
     }
-    */
+#endif
 }
 
-void YamlConfig::parse_performance_settings(const void* yaml_node, Config& config) {
-    // TODO: yaml-cpp依存関係追加後に実装
-    /*
+void YamlConfig::parse_performance_settings(const void* yaml_node,
+                                             Config& config) {
+#ifdef HAVE_YAML_CPP
     const YAML::Node& root = *static_cast<const YAML::Node*>(yaml_node);
 
     if (root["num_threads"]) {
@@ -209,12 +205,12 @@ void YamlConfig::parse_performance_settings(const void* yaml_node, Config& confi
     if (root["cache_directory"]) {
         config.cache_directory = root["cache_directory"].as<std::string>();
     }
-    */
+#endif
 }
 
-void YamlConfig::parse_rule_execution_settings(const void* yaml_node, Config& config) {
-    // TODO: yaml-cpp依存関係追加後に実装
-    /*
+void YamlConfig::parse_rule_execution_settings(const void* yaml_node,
+                                                Config& config) {
+#ifdef HAVE_YAML_CPP
     const YAML::Node& root = *static_cast<const YAML::Node*>(yaml_node);
 
     if (root["parallel_rules"]) {
@@ -223,7 +219,7 @@ void YamlConfig::parse_rule_execution_settings(const void* yaml_node, Config& co
     if (root["fail_fast"]) {
         config.fail_fast = root["fail_fast"].as<bool>();
     }
-    */
+#endif
 }
 
 Severity YamlConfig::parse_severity(const std::string& severity_str) {

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(cclint VERSION 0.1.0 LANGUAGES CXX)
+project(cclint VERSION 0.1.0 LANGUAGES C CXX)
 
 # CMake モジュールパスの設定
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -24,8 +24,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 endif()
 
 # オプション設定
-option(USE_LLVM_CLANG "Use LLVM/Clang for advanced AST parsing" OFF)
-option(USE_YAML_CPP "Use yaml-cpp for YAML configuration" OFF)
+option(USE_LLVM_CLANG "Use LLVM/Clang for advanced AST parsing" ON)
+option(USE_YAML_CPP "Use yaml-cpp for YAML configuration" ON)
 option(USE_LUAJIT "Use LuaJIT for Lua scripting support" ON)
 option(BUILD_TESTS "Build tests" OFF)
 
@@ -106,11 +106,6 @@ if(USE_LUAJIT)
     endif()
 else()
     message(STATUS "LuaJIT support disabled. Lua scripting unavailable.")
-endif()
-
-# Export found packages for subdirectories
-if(LUAJIT_FOUND)
-    set(LUAJIT_LIBRARIES ${LUAJIT_LIBRARIES} PARENT_SCOPE)
 endif()
 
 # サブディレクトリを追加

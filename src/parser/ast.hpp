@@ -12,6 +12,8 @@ struct SourcePosition {
     std::string filename;
     int line = 0;
     int column = 0;
+    int indent_count = 0;  // インデント文字数
+    bool uses_tabs = false;  // タブを使っているか
 
     SourcePosition() = default;
     SourcePosition(const std::string& file, int ln, int col)
@@ -34,6 +36,12 @@ enum class ASTNodeType {
     Using,            // using
     Template,         // template
     Comment,          // コメント
+    IfStatement,      // if文
+    SwitchStatement,  // switch文
+    LoopStatement,    // for/while/do-while文
+    TryStatement,     // try-catch文
+    Macro,            // マクロ定義
+    CallExpression,   // 関数呼び出し
     Unknown
 };
 
@@ -163,6 +171,63 @@ public:
     bool is_line_comment = true;  // true: //, false: /* */
 
     CommentNode() : ASTNode(ASTNodeType::Comment) {}
+};
+
+/// If文
+class IfStatementNode : public ASTNode {
+public:
+    bool has_braces = false;
+    bool has_else = false;
+
+    IfStatementNode() : ASTNode(ASTNodeType::IfStatement) {}
+};
+
+/// Switch文
+class SwitchStatementNode : public ASTNode {
+public:
+    bool has_default = false;
+    int case_count = 0;
+
+    SwitchStatementNode() : ASTNode(ASTNodeType::SwitchStatement) {}
+};
+
+/// ループ文（for/while/do-while）
+class LoopStatementNode : public ASTNode {
+public:
+    enum class LoopType { For, While, DoWhile };
+    LoopType loop_type;
+    bool has_braces = false;
+
+    LoopStatementNode(LoopType type = LoopType::For)
+        : ASTNode(ASTNodeType::LoopStatement), loop_type(type) {}
+};
+
+/// Try-Catch文
+class TryStatementNode : public ASTNode {
+public:
+    int catch_count = 0;
+    bool has_finally = false;
+
+    TryStatementNode() : ASTNode(ASTNodeType::TryStatement) {}
+};
+
+/// マクロ定義
+class MacroNode : public ASTNode {
+public:
+    bool is_function = false;
+    std::vector<std::string> parameters;
+    std::string definition;
+
+    MacroNode() : ASTNode(ASTNodeType::Macro) {}
+};
+
+/// 関数呼び出し
+class CallExpressionNode : public ASTNode {
+public:
+    std::string function_name;
+    std::vector<std::string> arguments;
+
+    CallExpressionNode() : ASTNode(ASTNodeType::CallExpression) {}
 };
 
 }  // namespace parser
