@@ -17,4 +17,13 @@ lua_scripts:
   - path: "rules/test_friend_detection.lua"
     priority: 100
 
+  - path: "rules/test_operators.lua"
+    priority: 100
+
+  - path: "rules/test_templates.lua"
+    priority: 100
+
+  - path: "rules/test_static_assert.lua"
+    priority: 100
+
 output_format: "text"

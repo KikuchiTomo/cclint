@@ -119,10 +119,72 @@ void SimpleParser::parse_toplevel(TranslationUnitNode& root) {
         return;
     }
 
-    // template (簡易的にスキップ)
+    // template
     if (check(TokenType::Template)) {
-        advance();
-        skip_to_semicolon();
+        auto tmpl = std::make_shared<TemplateNode>();
+        tmpl->position = get_position();
+        advance();  // consume 'template'
+
+        // Parse template parameters <...>
+        if (match(TokenType::Less)) {
+            int depth = 1;
+            while (depth > 0 && !check(TokenType::Eof)) {
+                if (match(TokenType::Less))
+                    depth++;
+                else if (match(TokenType::Greater))
+                    depth--;
+                else {
+                    // Simple parameter extraction
+                    if (check(TokenType::Identifier)) {
+                        TemplateParameter param;
+                        param.kind = TemplateParameter::Kind::Type;
+                        param.name = advance().text;
+                        tmpl->parameters.push_back(param);
+                    } else {
+                        advance();
+                    }
+                }
+            }
+        }
+
+        // Parse the templated entity (class/function)
+        auto entity = parse_function_or_variable();
+        if (!entity && (check(TokenType::Class) || check(TokenType::Struct))) {
+            entity = parse_class_or_struct();
+        }
+        if (entity) {
+            tmpl->children.push_back(entity);
+            root.children.push_back(tmpl);
+        }
+        return;
+    }
+
+    // static_assert
+    if (current_token().text == "static_assert") {
+        auto sa = std::make_shared<StaticAssertNode>();
+        sa->position = get_position();
+        advance();  // consume 'static_assert'
+
+        if (match(TokenType::LeftParen)) {
+            // Parse condition
+            std::string condition;
+            int depth = 1;
+            while (depth > 0 && !check(TokenType::Eof)) {
+                if (match(TokenType::LeftParen))
+                    depth++;
+                else if (match(TokenType::RightParen)) {
+                    depth--;
+                    if (depth == 0)
+                        break;
+                } else {
+                    condition += current_token().text + " ";
+                    advance();
+                }
+            }
+            sa->condition = condition;
+        }
+        match(TokenType::Semicolon);
+        root.children.push_back(sa);
         return;
     }
 
@@ -270,27 +332,80 @@ std::shared_ptr<ASTNode> SimpleParser::parse_class_or_struct() {
             continue;
         }
 
+        // Friend宣言をチェック
+        if (current_token().text == "friend") {
+            advance();  // consume 'friend'
+            auto friend_node = std::make_shared<FriendNode>();
+            friend_node->position = get_position();
+
+            // friend class or friend function
+            if (match(TokenType::Class) || match(TokenType::Struct)) {
+                friend_node->kind = FriendNode::FriendKind::Class;
+                if (check(TokenType::Identifier)) {
+                    friend_node->target_name = advance().text;
+                }
+            } else {
+                friend_node->kind = FriendNode::FriendKind::Function;
+                // Parse function signature
+                std::string target;
+                while (!check(TokenType::Semicolon) && !check(TokenType::Eof)) {
+                    target += current_token().text + " ";
+                    advance();
+                }
+                friend_node->target_name = target;
+            }
+            match(TokenType::Semicolon);
+            node->children.push_back(friend_node);
+            continue;
+        }
+
         // メンバ関数または変数
         auto member = parse_function_or_variable();
         if (member) {
             if (auto func = std::dynamic_pointer_cast<FunctionNode>(member)) {
                 func->access = current_access_;
 
-                // Fix constructors: if name is empty and return_type matches class name,
-                // it's a constructor (parser mistakenly treated class name as return type)
-                if (func->name.empty() && func->return_type == node->name) {
-                    func->name = func->return_type;
-                    func->return_type = "";
+                // コンストラクタの検出と変換
+                if ((func->name.empty() && func->return_type == node->name) ||
+                    func->name == node->name) {
+                    auto ctor = std::make_shared<ConstructorNode>();
+                    ctor->class_name = node->name;
+                    ctor->position = func->position;
+                    ctor->access = current_access_;
+                    ctor->is_explicit = false;  // TODO: detect explicit keyword
+                    ctor->is_default = false;
+                    ctor->is_delete = false;
+                    ctor->is_constexpr = false;
+                    ctor->is_noexcept = false;
+                    node->children.push_back(ctor);
+                    continue;
                 }
-                // Fix destructors: similar check for ~ClassName
-                else if (func->name.empty() && !func->return_type.empty() &&
-                         func->return_type[0] == '~') {
-                    std::string dtor_class = func->return_type.substr(1);
-                    if (dtor_class == node->name) {
-                        func->name = func->return_type;
-                        func->return_type = "";
-                    }
+
+                // デストラクタの検出と変換
+                if (func->name.size() > 0 && func->name[0] == '~') {
+                    auto dtor = std::make_shared<DestructorNode>();
+                    dtor->class_name = node->name;
+                    dtor->position = func->position;
+                    dtor->access = current_access_;
+                    dtor->is_virtual = func->is_virtual;
+                    dtor->is_default = false;
+                    dtor->is_delete = false;
+                    dtor->is_noexcept = false;
+                    node->children.push_back(dtor);
+                    continue;
                 }
+
+                // operator overloadの検出
+                if (func->name.find("operator") == 0) {
+                    auto op = std::make_shared<OperatorNode>();
+                    op->operator_symbol = func->name.substr(8);  // Remove "operator"
+                    op->position = func->position;
+                    op->is_member = true;  // In class, so member operator
+                    op->return_type = func->return_type;
+                    node->children.push_back(op);
+                    continue;
+                }
+
             } else if (auto field = std::dynamic_pointer_cast<VariableNode>(member)) {
                 auto field_node = std::make_shared<FieldNode>();
                 field_node->name = field->name;
@@ -378,6 +493,15 @@ std::shared_ptr<ASTNode> SimpleParser::parse_function_or_variable() {
         if (is_destructor) {
             name = "~" + name;
         }
+
+        // Check for operator overload
+        if (name == "operator") {
+            // Next token should be the operator symbol
+            if (!check(TokenType::LeftParen) && !check(TokenType::Eof)) {
+                name += current_token().text;
+                advance();
+            }
+        }
     }
 
     // 関数かどうか判定
@@ -416,13 +540,202 @@ std::shared_ptr<ASTNode> SimpleParser::parse_function_or_variable() {
 
         // 関数本体またはセミコロン
         if (check(TokenType::LeftBrace)) {
-            skip_braces();
+            // Parse function body to detect lambdas and function calls
+            advance();  // consume '{'
+            int depth = 1;
+
+            std::string current_function = func->name;
+
+            while (depth > 0 && !check(TokenType::Eof)) {
+                // Detect lambda: [...](...)
+                if (check(TokenType::LeftBracket)) {
+                    size_t save_pos = current_;
+                    advance();  // consume '['
+
+                    // Check if this looks like a lambda capture
+                    bool is_lambda = false;
+                    while (!check(TokenType::RightBracket) && !check(TokenType::Eof) &&
+                           (current_ - save_pos) < 50) {
+                        if (check(TokenType::Identifier) || current_token().text == "=" ||
+                            current_token().text == "&" || current_token().text == "," ||
+                            current_token().text == "this") {
+                            advance();
+                        } else if (check(TokenType::RightBracket)) {
+                            break;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    if (check(TokenType::RightBracket)) {
+                        advance();  // consume ']'
+                        // Check for (...) after capture
+                        if (check(TokenType::LeftParen)) {
+                            is_lambda = true;
+                        }
+                    }
+
+                    if (is_lambda) {
+                        auto lambda = std::make_shared<LambdaNode>();
+                        lambda->position = get_position();
+                        // Simplified lambda parsing - just capture that we found one
+                        current_ = save_pos;
+                        advance();  // '['
+
+                        std::string capture;
+                        while (!check(TokenType::RightBracket) && !check(TokenType::Eof)) {
+                            capture += current_token().text;
+                            if (current_token().text == "=") {
+                                lambda->captures_by_value = true;
+                            } else if (current_token().text == "&") {
+                                lambda->captures_by_reference = true;
+                            }
+                            advance();
+                        }
+                        lambda->capture_clause = "[" + capture + "]";
+                        match(TokenType::RightBracket);
+
+                        // Skip parameters
+                        if (match(TokenType::LeftParen)) {
+                            int pdepth = 1;
+                            while (pdepth > 0 && !check(TokenType::Eof)) {
+                                if (match(TokenType::LeftParen))
+                                    pdepth++;
+                                else if (match(TokenType::RightParen))
+                                    pdepth--;
+                                else
+                                    advance();
+                            }
+                        }
+
+                        // Check for mutable/constexpr
+                        if (current_token().text == "mutable") {
+                            lambda->is_mutable = true;
+                            advance();
+                        }
+                        if (current_token().text == "constexpr") {
+                            lambda->is_constexpr = true;
+                            advance();
+                        }
+
+                        // Skip body
+                        if (check(TokenType::LeftBrace)) {
+                            int ldepth = 1;
+                            advance();
+                            while (ldepth > 0 && !check(TokenType::Eof)) {
+                                if (match(TokenType::LeftBrace))
+                                    ldepth++;
+                                else if (match(TokenType::RightBrace))
+                                    ldepth--;
+                                else
+                                    advance();
+                            }
+                        }
+
+                        func->children.push_back(lambda);
+                        continue;
+                    } else {
+                        current_ = save_pos;
+                    }
+                }
+
+                // Detect function calls: identifier(
+                if (check(TokenType::Identifier)) {
+                    std::string callee_name = current_token().text;
+                    advance();
+
+                    if (match(TokenType::LeftParen)) {
+                        // This is a function call
+                        auto call = std::make_shared<CallExpressionNode>();
+                        call->function_name = callee_name;
+                        call->caller_function = current_function;
+                        call->position = get_position();
+
+                        // Skip arguments
+                        int cdepth = 1;
+                        while (cdepth > 0 && !check(TokenType::Eof)) {
+                            if (match(TokenType::LeftParen))
+                                cdepth++;
+                            else if (match(TokenType::RightParen))
+                                cdepth--;
+                            else
+                                advance();
+                        }
+
+                        func->children.push_back(call);
+                        continue;
+                    }
+                }
+
+                if (match(TokenType::LeftBrace)) {
+                    depth++;
+                } else if (match(TokenType::RightBrace)) {
+                    depth--;
+                } else {
+                    advance();
+                }
+            }
         } else {
             match(TokenType::Semicolon);
         }
 
         return func;
     } else {
+        // 変数 - check for lambda initialization
+        if (check(TokenType::LeftBracket)) {
+            // Potential lambda: auto lambda = [...](...){}
+            auto lambda = std::make_shared<LambdaNode>();
+            lambda->position = pos;
+
+            // Parse capture clause [...]
+            advance();  // consume '['
+            std::string capture;
+            while (!check(TokenType::RightBracket) && !check(TokenType::Eof)) {
+                capture += current_token().text;
+                if (current_token().text == "=") {
+                    lambda->captures_by_value = true;
+                } else if (current_token().text == "&") {
+                    lambda->captures_by_reference = true;
+                }
+                advance();
+            }
+            lambda->capture_clause = "[" + capture + "]";
+            match(TokenType::RightBracket);
+
+            // Parse parameters (...)
+            if (match(TokenType::LeftParen)) {
+                int depth = 1;
+                while (depth > 0 && !check(TokenType::Eof)) {
+                    if (match(TokenType::LeftParen))
+                        depth++;
+                    else if (match(TokenType::RightParen))
+                        depth--;
+                    else
+                        advance();
+                }
+            }
+
+            // Check for mutable
+            if (current_token().text == "mutable") {
+                lambda->is_mutable = true;
+                advance();
+            }
+
+            // Check for constexpr
+            if (current_token().text == "constexpr") {
+                lambda->is_constexpr = true;
+                advance();
+            }
+
+            // Skip body {...}
+            if (check(TokenType::LeftBrace)) {
+                skip_braces();
+            }
+
+            match(TokenType::Semicolon);
+            return lambda;
+        }
+
         // 変数
         auto var = std::make_shared<VariableNode>();
         var->name = name;
