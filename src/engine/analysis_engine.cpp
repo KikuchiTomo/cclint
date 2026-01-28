@@ -62,14 +62,18 @@ void AnalysisEngine::initialize_rules() {
             lua_rule->initialize(params);
             registry.register_rule(std::move(lua_rule));
 
-            utils::Logger::instance().info("Loaded Lua rule: " + lua_config.path + " (" + rule_name + ")");
+            utils::Logger::instance().info("Loaded Lua rule: " + lua_config.path + " (" +
+                                           rule_name + ")");
         } catch (const std::exception& e) {
-            utils::Logger::instance().error("Failed to load Lua rule " + lua_config.path + ": " + e.what());
+            utils::Logger::instance().error("Failed to load Lua rule " + lua_config.path + ": " +
+                                            e.what());
         }
     }
 #else
     if (!config_.lua_scripts.empty()) {
-        utils::Logger::instance().warning("LuaJIT not available. " + std::to_string(config_.lua_scripts.size()) + " Lua script(s) will be ignored.");
+        utils::Logger::instance().warning("LuaJIT not available. " +
+                                          std::to_string(config_.lua_scripts.size()) +
+                                          " Lua script(s) will be ignored.");
     }
 #endif
 
@@ -176,7 +180,8 @@ FileAnalysisResult AnalysisEngine::analyze_file(const std::string& file_path) {
                 utils::Logger::instance().debug("AST parsing complete, executing AST rules");
                 // ASTベースのルール実行
                 auto ast_stats = rule_executor_->execute_ast_rules(file_path, ast, diag_engine);
-                utils::Logger::instance().debug("AST rules executed, got " + std::to_string(ast_stats.size()) + " stats");
+                utils::Logger::instance().debug("AST rules executed, got " +
+                                                std::to_string(ast_stats.size()) + " stats");
 
                 // 統計をマージ
                 stats.insert(stats.end(), ast_stats.begin(), ast_stats.end());

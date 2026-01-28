@@ -93,8 +93,8 @@ endif()
 
 # yaml-cpp
 if(USE_YAML_CPP AND yaml-cpp_FOUND)
-    target_link_libraries(cclint yaml-cpp::yaml-cpp)
-    target_link_libraries(cclint-lsp yaml-cpp::yaml-cpp)
+    target_link_libraries(cclint yaml-cpp)
+    target_link_libraries(cclint-lsp yaml-cpp)
 endif()
 
 # LLVM/Clang

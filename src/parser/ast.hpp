@@ -12,7 +12,7 @@ struct SourcePosition {
     std::string filename;
     int line = 0;
     int column = 0;
-    int indent_count = 0;  // インデント文字数
+    int indent_count = 0;    // インデント文字数
     bool uses_tabs = false;  // タブを使っているか
 
     SourcePosition() = default;

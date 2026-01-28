@@ -469,7 +469,8 @@ std::string SimpleParser::parse_type() {
 
     // Helper lambda to check if string ends with suffix (C++17 compatible)
     auto ends_with = [](const std::string& str, const std::string& suffix) {
-        if (str.length() < suffix.length()) return false;
+        if (str.length() < suffix.length())
+            return false;
         return str.compare(str.length() - suffix.length(), suffix.length(), suffix) == 0;
     };
 
@@ -480,7 +481,6 @@ std::string SimpleParser::parse_type() {
            check(TokenType::Auto) || check(TokenType::Identifier) || check(TokenType::Scope) ||
            check(TokenType::Less) || check(TokenType::Greater) || check(TokenType::Comma) ||
            check(TokenType::Asterisk) || check(TokenType::Ampersand)) {
-
         // Add space before token if not empty and not following scope operator
         if (!type.empty() && !ends_with(type, "::") && !ends_with(type, "<") &&
             current_token().text != "::" && current_token().text != "*" &&

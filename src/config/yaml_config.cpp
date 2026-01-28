@@ -10,8 +10,7 @@
 namespace config {
 
 Config YamlConfig::parse(std::istream& input) {
-    std::string content((std::istreambuf_iterator<char>(input)),
-                        std::istreambuf_iterator<char>());
+    std::string content((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
     return parse_string(content);
 }
 
@@ -21,8 +20,7 @@ Config YamlConfig::parse_string(const std::string& yaml_content) {
         YAML::Node root = YAML::Load(yaml_content);
         return parse_impl(&root);
     } catch (const YAML::Exception& e) {
-        throw std::runtime_error(std::string("YAML parse error: ") +
-                                 e.what());
+        throw std::runtime_error(std::string("YAML parse error: ") + e.what());
     }
 #else
     throw std::runtime_error(
@@ -99,8 +97,7 @@ void YamlConfig::parse_rules(const void* yaml_node, Config& config) {
             rule.priority = rule_node["priority"].as<int>();
         }
         if (rule_node["severity"]) {
-            rule.severity =
-                parse_severity(rule_node["severity"].as<std::string>());
+            rule.severity = parse_severity(rule_node["severity"].as<std::string>());
         }
         if (rule_node["parameters"]) {
             for (const auto& param : rule_node["parameters"]) {
@@ -115,8 +112,7 @@ void YamlConfig::parse_rules(const void* yaml_node, Config& config) {
                         try {
                             rule.parameters[key] = value_node.as<bool>();
                         } catch (...) {
-                            rule.parameters[key] =
-                                value_node.as<std::string>();
+                            rule.parameters[key] = value_node.as<std::string>();
                         }
                     }
                 }
@@ -159,8 +155,7 @@ void YamlConfig::parse_lua_scripts(const void* yaml_node, Config& config) {
                         try {
                             script.parameters[key] = value_node.as<bool>();
                         } catch (...) {
-                            script.parameters[key] =
-                                value_node.as<std::string>();
+                            script.parameters[key] = value_node.as<std::string>();
                         }
                     }
                 }
@@ -172,8 +167,7 @@ void YamlConfig::parse_lua_scripts(const void* yaml_node, Config& config) {
 #endif
 }
 
-void YamlConfig::parse_include_exclude_patterns(const void* yaml_node,
-                                                 Config& config) {
+void YamlConfig::parse_include_exclude_patterns(const void* yaml_node, Config& config) {
 #ifdef HAVE_YAML_CPP
     const YAML::Node& root = *static_cast<const YAML::Node*>(yaml_node);
 
@@ -191,8 +185,7 @@ void YamlConfig::parse_include_exclude_patterns(const void* yaml_node,
 #endif
 }
 
-void YamlConfig::parse_performance_settings(const void* yaml_node,
-                                             Config& config) {
+void YamlConfig::parse_performance_settings(const void* yaml_node, Config& config) {
 #ifdef HAVE_YAML_CPP
     const YAML::Node& root = *static_cast<const YAML::Node*>(yaml_node);
 
@@ -208,8 +201,7 @@ void YamlConfig::parse_performance_settings(const void* yaml_node,
 #endif
 }
 
-void YamlConfig::parse_rule_execution_settings(const void* yaml_node,
-                                                Config& config) {
+void YamlConfig::parse_rule_execution_settings(const void* yaml_node, Config& config) {
 #ifdef HAVE_YAML_CPP
     const YAML::Node& root = *static_cast<const YAML::Node*>(yaml_node);
 

@@ -736,7 +736,8 @@ int LuaBridge::lua_get_functions(lua_State* L) {
     std::vector<std::shared_ptr<parser::FunctionNode>> functions;
     std::function<void(std::shared_ptr<parser::ASTNode>)> collect;
     collect = [&](std::shared_ptr<parser::ASTNode> node) {
-        if (!node) return;
+        if (!node)
+            return;
 
         if (node->type == parser::ASTNodeType::Function) {
             functions.push_back(std::static_pointer_cast<parser::FunctionNode>(node));
@@ -802,7 +803,8 @@ int LuaBridge::lua_get_enums(lua_State* L) {
     std::vector<std::shared_ptr<parser::EnumNode>> enums;
     std::function<void(std::shared_ptr<parser::ASTNode>)> collect;
     collect = [&](std::shared_ptr<parser::ASTNode> node) {
-        if (!node) return;
+        if (!node)
+            return;
 
         if (node->type == parser::ASTNodeType::Enum) {
             enums.push_back(std::static_pointer_cast<parser::EnumNode>(node));

@@ -114,7 +114,8 @@ void LuaRule::check_ast(const std::string& file_path,
                                     ", file: " + file_path);
 
     if (!loaded_ || !LuaEngine::is_available()) {
-        utils::Logger::instance().debug("LuaRule::check_ast skipped - not loaded or LuaJIT unavailable");
+        utils::Logger::instance().debug(
+            "LuaRule::check_ast skipped - not loaded or LuaJIT unavailable");
         return;
     }
 
@@ -142,7 +143,8 @@ void LuaRule::check_ast(const std::string& file_path,
             utils::Logger::instance().error("Lua AST rule execution failed: " + rule_name_ + " - " +
                                             error);
         } else {
-            utils::Logger::instance().debug("LuaRule::check_ast - Lua function executed successfully");
+            utils::Logger::instance().debug(
+                "LuaRule::check_ast - Lua function executed successfully");
         }
     } else {
         lua_pop(L, 1);
