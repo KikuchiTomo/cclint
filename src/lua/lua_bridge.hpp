@@ -69,6 +69,8 @@ private:
     static int lua_get_class_info(lua_State* L);
     static int lua_get_methods(lua_State* L);
     static int lua_get_method_info(lua_State* L);
+    static int lua_get_fields(lua_State* L);
+    static int lua_get_field_info(lua_State* L);
 
     // 汎用ノードアクセス API
     static int lua_get_node_type(lua_State* L);
