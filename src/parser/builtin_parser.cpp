@@ -1,15 +1,15 @@
-#include "parser/simple_parser.hpp"
+#include "parser/builtin_parser.hpp"
 
 namespace cclint {
 namespace parser {
 
-SimpleParser::SimpleParser(const std::string& source, const std::string& filename)
+BuiltinParser::BuiltinParser(const std::string& source, const std::string& filename)
     : filename_(filename) {
     Lexer lexer(source);
     tokens_ = lexer.tokenize();
 }
 
-std::shared_ptr<TranslationUnitNode> SimpleParser::parse() {
+std::shared_ptr<TranslationUnitNode> BuiltinParser::parse() {
     auto root = std::make_shared<TranslationUnitNode>();
     root->name = filename_;
 
@@ -20,7 +20,7 @@ std::shared_ptr<TranslationUnitNode> SimpleParser::parse() {
     return root;
 }
 
-const Token& SimpleParser::current_token() const {
+const Token& BuiltinParser::current_token() const {
     if (current_ < tokens_.size()) {
         return tokens_[current_];
     }
@@ -28,7 +28,7 @@ const Token& SimpleParser::current_token() const {
     return eof_token;
 }
 
-const Token& SimpleParser::peek_token(int offset) const {
+const Token& BuiltinParser::peek_token(int offset) const {
     size_t pos = current_ + offset;
     if (pos < tokens_.size()) {
         return tokens_[pos];
@@ -37,7 +37,7 @@ const Token& SimpleParser::peek_token(int offset) const {
     return eof_token;
 }
 
-bool SimpleParser::match(TokenType type) {
+bool BuiltinParser::match(TokenType type) {
     if (check(type)) {
         advance();
         return true;
@@ -45,18 +45,18 @@ bool SimpleParser::match(TokenType type) {
     return false;
 }
 
-bool SimpleParser::check(TokenType type) const {
+bool BuiltinParser::check(TokenType type) const {
     return current_token().type == type;
 }
 
-Token SimpleParser::advance() {
+Token BuiltinParser::advance() {
     if (current_ < tokens_.size()) {
         return tokens_[current_++];
     }
     return Token(TokenType::Eof, "", 0, 0);
 }
 
-Token SimpleParser::expect(TokenType type, const std::string& message) {
+Token BuiltinParser::expect(TokenType type, const std::string& message) {
     if (check(type)) {
         return advance();
     }
@@ -64,7 +64,7 @@ Token SimpleParser::expect(TokenType type, const std::string& message) {
     return current_token();
 }
 
-void SimpleParser::parse_toplevel(TranslationUnitNode& root) {
+void BuiltinParser::parse_toplevel(TranslationUnitNode& root) {
     // コメントとプリプロセッサをスキップ
     while (match(TokenType::Comment) || match(TokenType::Preprocessor)) {
         // スキップ
@@ -195,7 +195,7 @@ void SimpleParser::parse_toplevel(TranslationUnitNode& root) {
     }
 }
 
-std::shared_ptr<ASTNode> SimpleParser::parse_namespace() {
+std::shared_ptr<ASTNode> BuiltinParser::parse_namespace() {
     auto node = std::make_shared<NamespaceNode>();
     node->position = get_position();
 
@@ -253,7 +253,7 @@ std::shared_ptr<ASTNode> SimpleParser::parse_namespace() {
     return node;
 }
 
-std::shared_ptr<ASTNode> SimpleParser::parse_class_or_struct() {
+std::shared_ptr<ASTNode> BuiltinParser::parse_class_or_struct() {
     auto node = std::make_shared<ClassNode>();
     node->position = get_position();
 
@@ -427,7 +427,7 @@ std::shared_ptr<ASTNode> SimpleParser::parse_class_or_struct() {
     return node;
 }
 
-std::shared_ptr<ASTNode> SimpleParser::parse_enum() {
+std::shared_ptr<ASTNode> BuiltinParser::parse_enum() {
     auto node = std::make_shared<EnumNode>();
     node->position = get_position();
 
@@ -450,7 +450,7 @@ std::shared_ptr<ASTNode> SimpleParser::parse_enum() {
     return node;
 }
 
-std::shared_ptr<ASTNode> SimpleParser::parse_function_or_variable() {
+std::shared_ptr<ASTNode> BuiltinParser::parse_function_or_variable() {
     SourcePosition pos = get_position();
 
     bool is_static = false;
@@ -752,7 +752,7 @@ std::shared_ptr<ASTNode> SimpleParser::parse_function_or_variable() {
     }
 }
 
-std::shared_ptr<ASTNode> SimpleParser::parse_typedef() {
+std::shared_ptr<ASTNode> BuiltinParser::parse_typedef() {
     auto node = std::make_shared<TypedefNode>();
     node->position = get_position();
 
@@ -764,7 +764,7 @@ std::shared_ptr<ASTNode> SimpleParser::parse_typedef() {
     return node;
 }
 
-std::shared_ptr<ASTNode> SimpleParser::parse_using() {
+std::shared_ptr<ASTNode> BuiltinParser::parse_using() {
     auto node = std::make_shared<UsingNode>();
     node->position = get_position();
 
@@ -780,7 +780,7 @@ std::shared_ptr<ASTNode> SimpleParser::parse_using() {
     return node;
 }
 
-std::string SimpleParser::parse_type() {
+std::string BuiltinParser::parse_type() {
     std::string type;
     bool has_base_type = false;  // Track if we've seen the main type
 
@@ -846,7 +846,7 @@ std::string SimpleParser::parse_type() {
     return type;
 }
 
-void SimpleParser::skip_to_semicolon() {
+void BuiltinParser::skip_to_semicolon() {
     while (!check(TokenType::Semicolon) && !check(TokenType::Eof)) {
         if (check(TokenType::LeftBrace)) {
             skip_braces();
@@ -856,7 +856,7 @@ void SimpleParser::skip_to_semicolon() {
     }
 }
 
-void SimpleParser::skip_braces() {
+void BuiltinParser::skip_braces() {
     if (!match(TokenType::LeftBrace)) {
         return;
     }
@@ -873,14 +873,14 @@ void SimpleParser::skip_braces() {
     }
 }
 
-void SimpleParser::add_error(const std::string& message) {
+void BuiltinParser::add_error(const std::string& message) {
     const auto& tok = current_token();
     std::string error = filename_ + ":" + std::to_string(tok.line) + ":" +
                         std::to_string(tok.column) + ": " + message;
     errors_.push_back(error);
 }
 
-SourcePosition SimpleParser::get_position() const {
+SourcePosition BuiltinParser::get_position() const {
     const auto& tok = current_token();
     return SourcePosition(filename_, tok.line, tok.column);
 }

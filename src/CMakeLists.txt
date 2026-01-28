@@ -9,7 +9,7 @@ set(CCLINT_SOURCES
     compiler/detector.cpp
     parser/ast.cpp
     parser/lexer.cpp
-    parser/simple_parser.cpp
+    parser/builtin_parser.cpp
     diagnostic/diagnostic.cpp
     diagnostic/fixer.cpp
     output/formatter.cpp
@@ -53,7 +53,7 @@ set(CCLINT_LSP_SOURCES
     cache/file_cache.cpp
     parser/ast.cpp
     parser/lexer.cpp
-    parser/simple_parser.cpp
+    parser/builtin_parser.cpp
     rules/rule_base.cpp
     rules/rule_registry.cpp
     rules/rule_executor.cpp
