@@ -24,10 +24,6 @@ set(CCLINT_SOURCES
     rules/rule_registry.cpp
     rules/rule_executor.cpp
     rules/plugin_loader.cpp
-    rules/builtin/naming_convention.cpp
-    rules/builtin/header_guard.cpp
-    rules/builtin/max_line_length.cpp
-    rules/builtin/function_complexity.cpp
     engine/analysis_engine.cpp
     engine/incremental.cpp
     engine/dependency_tracker.cpp
@@ -62,10 +58,6 @@ set(CCLINT_LSP_SOURCES
     rules/rule_registry.cpp
     rules/rule_executor.cpp
     rules/plugin_loader.cpp
-    rules/builtin/naming_convention.cpp
-    rules/builtin/header_guard.cpp
-    rules/builtin/max_line_length.cpp
-    rules/builtin/function_complexity.cpp
     diagnostic/diagnostic.cpp
     diagnostic/fixer.cpp
     lua/lua_engine.cpp

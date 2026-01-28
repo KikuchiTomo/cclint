@@ -5,10 +5,6 @@
 #include <sstream>
 
 #include "parser/simple_parser.hpp"
-#include "rules/builtin/function_complexity.hpp"
-#include "rules/builtin/header_guard.hpp"
-#include "rules/builtin/max_line_length.hpp"
-#include "rules/builtin/naming_convention.hpp"
 #include "rules/rule_registry.hpp"
 #include "utils/file_utils.hpp"
 #include "utils/logger.hpp"
@@ -33,12 +29,6 @@ AnalysisEngine::AnalysisEngine(const config::Config& config)
 
 void AnalysisEngine::initialize_rules() {
     auto& registry = rules::RuleRegistry::instance();
-
-    // ビルトインルールを登録
-    registry.register_rule(std::make_unique<rules::builtin::NamingConventionRule>());
-    registry.register_rule(std::make_unique<rules::builtin::HeaderGuardRule>());
-    registry.register_rule(std::make_unique<rules::builtin::MaxLineLengthRule>());
-    registry.register_rule(std::make_unique<rules::builtin::FunctionComplexityRule>());
 
     // Luaスクリプトルールを登録
 #ifdef HAVE_LUAJIT
