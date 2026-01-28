@@ -113,6 +113,18 @@ void LuaBridge::register_api() {
     lua_pushcfunction(L, lua_get_namespaces);
     lua_setfield(L, -2, "get_namespaces");
 
+    lua_pushcfunction(L, lua_get_switches);
+    lua_setfield(L, -2, "get_switches");
+
+    lua_pushcfunction(L, lua_get_usings);
+    lua_setfield(L, -2, "get_usings");
+
+    lua_pushcfunction(L, lua_get_includes);
+    lua_setfield(L, -2, "get_includes");
+
+    lua_pushcfunction(L, lua_get_file_info);
+    lua_setfield(L, -2, "get_file_info");
+
     // グローバルに設定
     lua_setglobal(L, "cclint");
 
@@ -1093,6 +1105,237 @@ int LuaBridge::lua_get_namespaces(lua_State* L) {
     return 1;
 }
 
+int LuaBridge::lua_get_switches(lua_State* L) {
+    if (!g_bridge || !g_bridge->current_ast_) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    // switch文を収集
+    std::vector<std::shared_ptr<parser::SwitchStatementNode>> switches;
+    std::function<void(std::shared_ptr<parser::ASTNode>)> collect;
+    collect = [&](std::shared_ptr<parser::ASTNode> node) {
+        if (!node)
+            return;
+
+        if (node->type == parser::ASTNodeType::SwitchStatement) {
+            switches.push_back(std::static_pointer_cast<parser::SwitchStatementNode>(node));
+        }
+
+        for (auto& child : node->children) {
+            collect(child);
+        }
+    };
+
+    collect(g_bridge->current_ast_);
+
+    // Luaテーブルを作成
+    lua_newtable(L);
+
+    for (size_t i = 0; i < switches.size(); i++) {
+        lua_pushnumber(L, i + 1);
+        lua_newtable(L);
+
+        auto switch_node = switches[i];
+
+        lua_pushstring(L, "line");
+        lua_pushnumber(L, switch_node->position.line);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "has_default");
+        lua_pushboolean(L, switch_node->has_default);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "case_count");
+        lua_pushnumber(L, switch_node->case_count);
+        lua_settable(L, -3);
+
+        lua_settable(L, -3);
+    }
+
+    return 1;
+}
+
+int LuaBridge::lua_get_usings(lua_State* L) {
+    if (!g_bridge || !g_bridge->current_ast_) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    // using宣言を収集
+    std::vector<std::shared_ptr<parser::UsingNode>> usings;
+    std::function<void(std::shared_ptr<parser::ASTNode>, bool)> collect;
+    collect = [&](std::shared_ptr<parser::ASTNode> node, bool in_scope) {
+        if (!node)
+            return;
+
+        if (node->type == parser::ASTNodeType::Using) {
+            auto using_node = std::static_pointer_cast<parser::UsingNode>(node);
+            // グローバルスコープのusing namespaceのみを記録
+            if (!in_scope && using_node->target.find("namespace") != std::string::npos) {
+                usings.push_back(using_node);
+            }
+        }
+
+        // namespace, class, functionの中に入ったらスコープ内とマーク
+        bool child_in_scope = in_scope ||
+                              node->type == parser::ASTNodeType::Namespace ||
+                              node->type == parser::ASTNodeType::Class ||
+                              node->type == parser::ASTNodeType::Function;
+
+        for (auto& child : node->children) {
+            collect(child, child_in_scope);
+        }
+    };
+
+    collect(g_bridge->current_ast_, false);
+
+    // Luaテーブルを作成
+    lua_newtable(L);
+
+    for (size_t i = 0; i < usings.size(); i++) {
+        lua_pushnumber(L, i + 1);
+        lua_newtable(L);
+
+        auto using_node = usings[i];
+
+        lua_pushstring(L, "line");
+        lua_pushnumber(L, using_node->position.line);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "target");
+        lua_pushstring(L, using_node->target.c_str());
+        lua_settable(L, -3);
+
+        lua_settable(L, -3);
+    }
+
+    return 1;
+}
+
+int LuaBridge::lua_get_includes(lua_State* L) {
+    if (!g_bridge) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    // 現在のファイルから#includeを抽出（テキストベース）
+    std::ifstream file(g_bridge->current_file_);
+    if (!file.is_open()) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    lua_newtable(L);
+    int index = 1;
+    std::string line;
+    int line_num = 0;
+
+    while (std::getline(file, line)) {
+        line_num++;
+        // #include <...> or #include "..."
+        if (line.find("#include") != std::string::npos) {
+            lua_pushnumber(L, index++);
+            lua_newtable(L);
+
+            lua_pushstring(L, "line");
+            lua_pushnumber(L, line_num);
+            lua_settable(L, -3);
+
+            lua_pushstring(L, "text");
+            lua_pushstring(L, line.c_str());
+            lua_settable(L, -3);
+
+            // system include (<>) か local include ("") か判定
+            bool is_system = line.find("<") != std::string::npos;
+            lua_pushstring(L, "is_system");
+            lua_pushboolean(L, is_system);
+            lua_settable(L, -3);
+
+            lua_settable(L, -3);
+        }
+    }
+
+    return 1;
+}
+
+int LuaBridge::lua_get_file_info(lua_State* L) {
+    if (!g_bridge) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    lua_newtable(L);
+
+    // ファイルパス
+    lua_pushstring(L, "path");
+    lua_pushstring(L, g_bridge->current_file_.c_str());
+    lua_settable(L, -3);
+
+    // 行情報を返す
+    std::ifstream file(g_bridge->current_file_);
+    if (file.is_open()) {
+        lua_pushstring(L, "lines");
+        lua_newtable(L);
+
+        std::string line;
+        int line_num = 0;
+
+        while (std::getline(file, line)) {
+            line_num++;
+            lua_pushnumber(L, line_num);
+            lua_newtable(L);
+
+            lua_pushstring(L, "text");
+            lua_pushstring(L, line.c_str());
+            lua_settable(L, -3);
+
+            lua_pushstring(L, "length");
+            lua_pushnumber(L, line.length());
+            lua_settable(L, -3);
+
+            // 行末の空白チェック
+            bool has_trailing_space = !line.empty() && (line.back() == ' ' || line.back() == '\t');
+            lua_pushstring(L, "has_trailing_space");
+            lua_pushboolean(L, has_trailing_space);
+            lua_settable(L, -3);
+
+            // インデント情報
+            size_t indent_count = 0;
+            bool uses_tabs = false;
+            for (char c : line) {
+                if (c == ' ')
+                    indent_count++;
+                else if (c == '\t') {
+                    uses_tabs = true;
+                    indent_count++;
+                } else
+                    break;
+            }
+
+            lua_pushstring(L, "indent_count");
+            lua_pushnumber(L, indent_count);
+            lua_settable(L, -3);
+
+            lua_pushstring(L, "uses_tabs");
+            lua_pushboolean(L, uses_tabs);
+            lua_settable(L, -3);
+
+            // 空行チェック
+            bool is_empty = line.find_first_not_of(" \t") == std::string::npos;
+            lua_pushstring(L, "is_empty");
+            lua_pushboolean(L, is_empty);
+            lua_settable(L, -3);
+
+            lua_settable(L, -3);
+        }
+
+        lua_settable(L, -3);
+    }
+
+    return 1;
+}
+
 #else  // HAVE_LUAJIT が定義されていない場合（スタブ実装）
 
 LuaBridge::LuaBridge(std::shared_ptr<LuaEngine> lua_engine) : lua_engine_(lua_engine) {}
@@ -1212,6 +1455,26 @@ int LuaBridge::lua_get_enums(lua_State* L) {
 }
 
 int LuaBridge::lua_get_namespaces(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_switches(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_usings(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_includes(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_file_info(lua_State* L) {
     (void)L;
     return 0;
 }

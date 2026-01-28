@@ -2,8 +2,13 @@
 rule_description = "Avoid magic numbers"
 rule_category = "readability"
 
-function check_file()
-    for line_num, line in ipairs(file_lines) do
+function check_ast()
+    local file_info = cclint.get_file_info()
+    if not file_info or not file_info.lines then return end
+
+    for line_num, line_info in pairs(file_info.lines) do
+        local line = line_info.text
+
         -- Skip lines with const declarations
         if line:match("const%s+") or line:match("constexpr%s+") or line:match("#define") then
             goto continue

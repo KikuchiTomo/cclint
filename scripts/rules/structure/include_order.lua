@@ -5,23 +5,22 @@
 rule_description = "Include directives should follow standard order"
 rule_category = "structure"
 
-function check_file()
-    local includes = {}
+function check_ast()
+    local includes = cclint.get_includes()
+    if not includes then return end
+
     local last_type = 0  -- 0=none, 1=system, 2=local
 
-    for line_num, line in ipairs(file_lines) do
-        local system_include = line:match('^%s*#%s*include%s*<([^>]+)>')
-        local local_include = line:match('^%s*#%s*include%s*"([^"]+)"')
-
-        if system_include then
+    for _, include in ipairs(includes) do
+        if include.is_system then
             if last_type == 2 then
                 cclint.report_warning(
-                    line_num, 1,
+                    include.line, 1,
                     "System includes (<...>) should come before local includes (\"...\")"
                 )
             end
             last_type = 1
-        elseif local_include then
+        else
             last_type = 2
         end
     end
