@@ -1,0 +1,92 @@
+# cclint Lua-First Configuration Example
+# This demonstrates the new Lua-only rule system
+version: "1.0"
+
+# C++ Standard
+cpp_standard: "c++17"
+
+# File Patterns
+include_patterns:
+  - "*.cpp"
+  - "*.hpp"
+  - "*.h"
+  - "src/**/*.cpp"
+  - "src/**/*.hpp"
+  - "include/**/*.h"
+
+exclude_patterns:
+  - "build/**"
+  - "third_party/**"
+  - "**/*_test.cpp"
+
+# Output Configuration
+output_format: "text"  # text, json, xml
+max_errors: 0  # 0 = unlimited
+show_compiler_output: false
+
+# Performance Settings
+num_threads: 0  # 0 = auto-detect CPU cores
+enable_cache: true
+cache_directory: ".cclint_cache"
+
+# Lua-Based Rules (No Built-in C++ Rules!)
+# All rules are now defined in Lua for maximum customizability
+
+lua_scripts:
+  # Style: Maximum Line Length
+  - path: scripts/rules/builtin/max_line_length.lua
+    enabled: true
+    severity: warning
+    priority: 50
+    parameters:
+      max_length: 100  # Maximum characters per line
+
+  # Structure: Header Guard Check
+  - path: scripts/rules/builtin/header_guard.lua
+    enabled: true
+    severity: warning
+    priority: 90
+    # No parameters - checks for #pragma once or #ifndef/#define/#endif
+
+  # Naming: Class and Function Naming Conventions
+  # Note: Currently limited by SimpleParser bugs
+  # - Only detects constructors, not all methods
+  # - Use text-based alternatives or fix parser first
+  - path: scripts/rules/builtin/naming_convention.lua
+    enabled: false  # Disabled until parser is fixed
+    severity: warning
+    priority: 70
+
+  # Readability: Function Complexity
+  # Note: Requires working AST parser
+  - path: scripts/rules/builtin/function_complexity.lua
+    enabled: false  # Disabled until parser is fixed
+    severity: warning
+    priority: 60
+    parameters:
+      max_complexity: 10
+
+  # Custom Rules: Add your own Lua scripts here!
+  # Example:
+  # - path: my_custom_rules/no_global_variables.lua
+  #   enabled: true
+  #   severity: error
+  #   priority: 100
+  #   parameters:
+  #     allow_const: true
+
+# Built-in C++ Rules Section (DEPRECATED - Now Empty)
+# All rules have been migrated to Lua!
+rules: []
+
+# Rule Execution Settings
+parallel_rules: true
+fail_fast: false
+
+# Notes:
+# - This is a Lua-first linter - no hardcoded rules
+# - Create custom rules in Lua with full control
+# - Text-based rules (check_file) work perfectly
+# - AST-based rules (check_ast) need parser improvements
+# - See scripts/rules/ for rule examples
+# - See docs/new_plans/ for API documentation

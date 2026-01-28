@@ -1,0 +1,21 @@
+version: "1.0"
+
+lua_scripts:
+  - path: ../scripts/rules/builtin/header_guard.lua
+    enabled: true
+    severity: warning
+
+rules: []
+
+include_patterns:
+  - "*.h"
+  - "*.hpp"
+
+exclude_patterns: []
+
+output_format: "text"
+max_errors: 0
+show_compiler_output: false
+
+num_threads: 1
+enable_cache: false
