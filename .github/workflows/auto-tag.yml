@@ -1,0 +1,77 @@
+name: Auto Tag on Version Change
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.version'
+
+jobs:
+  auto-tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 全履歴を取得（タグ確認のため）
+
+      - name: Read version from .version file
+        id: read_version
+        run: |
+          VERSION=$(cat .version | tr -d '[:space:]')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Version read from .version: $VERSION"
+
+      - name: Validate version format
+        id: validate
+        run: |
+          VERSION="${{ steps.read_version.outputs.version }}"
+
+          # バージョン形式の検証: v0.0.1, v1.2.3-a, v1.2.3-b など
+          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[ab])?$ ]]; then
+            echo "❌ Invalid version format: $VERSION"
+            echo "Expected format: v0.0.1, v1.2.3-a, or v1.2.3-b"
+            exit 1
+          fi
+
+          echo "✅ Version format is valid: $VERSION"
+
+      - name: Check if tag already exists
+        id: check_tag
+        run: |
+          VERSION="${{ steps.read_version.outputs.version }}"
+
+          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+            echo "⚠️  Tag $VERSION already exists"
+            echo "tag_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Tag $VERSION does not exist yet"
+            echo "tag_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create and push tag
+        if: steps.check_tag.outputs.tag_exists == 'false'
+        run: |
+          VERSION="${{ steps.read_version.outputs.version }}"
+
+          # Gitユーザー設定
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # タグを作成
+          git tag -a "$VERSION" -m "Release $VERSION"
+
+          # タグをプッシュ
+          git push origin "$VERSION"
+
+          echo "🎉 Successfully created and pushed tag: $VERSION"
+
+      - name: Skip if tag exists
+        if: steps.check_tag.outputs.tag_exists == 'true'
+        run: |
+          VERSION="${{ steps.read_version.outputs.version }}"
+          echo "⏭️  Skipping tag creation because $VERSION already exists"
