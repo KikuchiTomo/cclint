@@ -354,13 +354,26 @@ std::shared_ptr<ASTNode> SimpleParser::parse_function_or_variable() {
         }
     }
 
+    // Check for destructor (~ClassName)
+    bool is_destructor = false;
+    if (current_token().text == "~") {
+        is_destructor = true;
+        advance();  // consume ~
+    }
+
     // 型
-    std::string type_name = parse_type();
+    std::string type_name;
+    if (!is_destructor) {
+        type_name = parse_type();
+    }
 
     // 名前
     std::string name;
     if (check(TokenType::Identifier)) {
         name = advance().text;
+        if (is_destructor) {
+            name = "~" + name;
+        }
     }
 
     // 関数かどうか判定
@@ -398,7 +411,7 @@ std::shared_ptr<ASTNode> SimpleParser::parse_function_or_variable() {
         }
 
         // 関数本体またはセミコロン
-        if (match(TokenType::LeftBrace)) {
+        if (check(TokenType::LeftBrace)) {
             skip_braces();
         } else {
             match(TokenType::Semicolon);
