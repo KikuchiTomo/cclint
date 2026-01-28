@@ -1,0 +1,42 @@
+version: "1.0"
+
+lua_scripts:
+  # Naming
+  - path: ../scripts/rules/naming/class_name_pascal_case.lua
+    enabled: true
+    severity: warning
+
+  - path: ../scripts/rules/naming/public_method_snake_case.lua
+    enabled: true
+    severity: warning
+
+  - path: ../scripts/rules/naming/function_name_snake_case.lua
+    enabled: true
+    severity: warning
+
+  - path: ../scripts/rules/naming/private_member_trailing_underscore.lua
+    enabled: true
+    severity: warning
+
+  # Restrictions
+  - path: ../scripts/rules/restrictions/no_cout_in_class.lua
+    enabled: true
+    severity: warning
+
+  - path: ../scripts/rules/restrictions/no_new_in_class.lua
+    enabled: true
+    severity: warning
+
+  # Readability
+  - path: ../scripts/rules/readability/no_magic_numbers.lua
+    enabled: true
+    severity: warning
+
+include_patterns:
+  - "*.cpp"
+
+exclude_patterns: []
+
+output_format: "text"
+num_threads: 1
+enable_cache: false

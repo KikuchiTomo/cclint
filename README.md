@@ -131,7 +131,7 @@ enable_cache: true
 - `prefer_constexpr.lua` - Prefer constexpr over const
 - `switch_must_have_default.lua` - Require default case
 
-See [scripts/rules/README.md](scripts/rules/README.md) for detailed documentation.
+📚 **[View detailed rule documentation →](scripts/rules/README.md)**
 
 ## Writing Custom Rules
 
@@ -217,32 +217,10 @@ cclint (Lua-First Linter)
 - Ubuntu 20.04+ or macOS 11+
 - LuaJIT 2.1+
 - yaml-cpp 0.7+
-- LLVM/Clang 14+ (optional, for advanced parsing)
 
 **Build:**
 - CMake 3.16+
 - C++17 compiler (GCC 7+, Clang 10+)
-
-## Development Status
-
-**Current Version**: 0.3.0-alpha
-
-✅ **Complete:**
-- Lua-first architecture
-- Text-based rules (check_file)
-- AST-based rules (check_ast)
-- SimpleParser (finds all methods, functions, enums)
-- 30 fine-grained rules
-- Multi-threaded analysis
-- Caching system
-- Multiple output formats
-
-🚧 **In Progress:**
-- Additional AST features (call graphs, complexity)
-- Clang AST integration (optional)
-- More built-in rules
-
-See [docs/TODO.md](docs/TODO.md) for detailed progress.
 
 ## Examples
 
@@ -281,24 +259,12 @@ bad.cpp:4:9: warning: Do not use std::cout in class 'MyClass'
 bad.cpp:5:18: warning: Do not use 'new' in class 'MyClass'
 ```
 
-## Documentation
-
-- [Rules Documentation](scripts/rules/README.md) - All available rules
-- [Lua Migration Status](docs/LUA_MIGRATION_STATUS.md) - Current implementation status
-- [Development Guide](CLAUDE.md) - Development guidelines
-
-## License
-
-[MIT License](LICENSE) (to be added)
-
 ## Contributing
 
 Contributions welcome! This project uses:
 - C++17 for core engine
 - LuaJIT for rules
 - CMake for building
-
-See [CLAUDE.md](CLAUDE.md) for development guidelines.
 
 ---
 
