@@ -177,13 +177,61 @@ lua_scripts:
 - `file_path` - Current file path
 - `file_lines` - Array of file lines
 
-**AST Access:**
-- `cclint.get_classes()` - Get all classes
-- `cclint.get_class_info(name)` - Get class info
+**AST Access - Classes & Structs:**
+- `cclint.get_classes()` - Get all classes and structs
+- `cclint.get_class_info(name)` - Get class/struct info (includes `is_struct`, `is_union`, `is_template`, `is_abstract`, `is_final`, inheritance details, friend declarations, attributes)
 - `cclint.get_methods(class_name)` - Get class methods
-- `cclint.get_method_info(class, method)` - Get method info
-- `cclint.get_functions()` - Get all functions
-- `cclint.get_enums()` - Get all enums
+- `cclint.get_method_info(class, method)` - Get method details (includes all function modifiers, attributes, template info, call relationships)
+- `cclint.get_fields(class_name)` - Get member variables
+- `cclint.get_field_info(class, field)` - Get field details (includes type info, initializers, attributes)
+- `cclint.get_constructors()` - Get all constructors
+- `cclint.get_constructor_info(class)` - Get constructor details (includes `is_default`, `is_delete`, `is_explicit`, `is_constexpr`, `is_noexcept`, initializer list)
+- `cclint.get_destructors()` - Get all destructors
+- `cclint.get_destructor_info(class)` - Get destructor details (includes `is_virtual`, `is_default`, `is_delete`, `is_noexcept`)
+- `cclint.get_operators()` - Get operator overloads
+- `cclint.get_operator_info(operator)` - Get operator details (includes `is_member`, `is_friend`, parameters, return type)
+
+**AST Access - Functions & Variables:**
+- `cclint.get_functions()` - Get all functions (includes template info, attributes, modifiers)
+- `cclint.get_variables()` - Get global variables (includes detailed type info, initializers, storage class)
+- `cclint.get_variable_info(name)` - Get variable details (includes `is_const`, `is_static`, `is_constexpr`, `is_extern`, `is_thread_local`, `is_volatile`)
+
+**AST Access - Types:**
+- `cclint.get_enums()` - Get all enums (includes `is_class`, underlying type, attributes)
+- `cclint.get_typedefs()` - Get all typedefs (includes detailed type info, attributes)
+- `cclint.get_typedef_info(name)` - Get typedef details
+- `cclint.get_usings()` - Get using declarations (distinguishes type aliases from using namespace)
+- `cclint.get_namespaces()` - Get all namespaces
+- `cclint.get_templates()` - Get template declarations (includes parameters, specialization info, variadic templates)
+- `cclint.get_template_info(name)` - Get template details
+
+**AST Access - Control Flow:**
+- `cclint.get_switches()` - Get switch statements (includes `has_default`, case count)
+- `cclint.get_if_statements()` - Get if statements (includes `has_braces`, `has_else`)
+- `cclint.get_loops()` - Get for/while/do-while loops (includes loop type, `has_braces`)
+- `cclint.get_try_statements()` - Get try-catch blocks (includes catch count)
+- `cclint.get_return_statements()` - Get return statements (includes return value, `has_value`)
+
+**AST Access - Call Relationships:**
+- `cclint.get_call_graph()` - Get complete function call graph (caller → callees mapping)
+- `cclint.get_function_calls()` - Get all function calls (includes caller, scope, line)
+- `cclint.get_callers(function)` - Get functions that call the specified function
+- `cclint.get_callees(function)` - Get functions called by the specified function
+
+**AST Access - Advanced Features:**
+- `cclint.get_lambdas()` - Get lambda expressions (includes capture clause, `is_mutable`, `is_constexpr`, return type)
+- `cclint.get_lambda_info(line)` - Get lambda details at specific line
+- `cclint.get_friends()` - Get friend declarations (includes kind: class/function)
+- `cclint.get_static_asserts()` - Get static_assert declarations (includes condition, message)
+- `cclint.get_inheritance_tree()` - Get class inheritance relationships (class → base classes mapping)
+- `cclint.get_attributes()` - Get C++ attributes ([[nodiscard]], [[deprecated]], etc.)
+
+**AST Access - Preprocessor & Comments:**
+- `cclint.get_macros()` - Get macro definitions (includes `is_function`, parameters, definition)
+- `cclint.get_macro_info(name)` - Get macro details
+- `cclint.get_comments()` - Get all comments (includes `is_line_comment`, content)
+- `cclint.get_includes()` - Get #include directives (includes `is_system` flag)
+- `cclint.get_file_info()` - Get detailed file/line info (includes indentation, tabs, trailing spaces)
 
 **Reporting:**
 - `cclint.report_error(line, col, msg)` - Report error

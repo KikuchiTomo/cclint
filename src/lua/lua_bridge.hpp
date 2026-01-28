@@ -90,6 +90,39 @@ private:
     static int lua_get_includes(lua_State* L);
     static int lua_get_file_info(lua_State* L);
 
+    // Additional C++ entity APIs
+    static int lua_get_typedefs(lua_State* L);
+    static int lua_get_typedef_info(lua_State* L);
+    static int lua_get_variables(lua_State* L);
+    static int lua_get_variable_info(lua_State* L);
+    static int lua_get_macros(lua_State* L);
+    static int lua_get_macro_info(lua_State* L);
+    static int lua_get_if_statements(lua_State* L);
+    static int lua_get_loops(lua_State* L);
+    static int lua_get_try_statements(lua_State* L);
+    static int lua_get_comments(lua_State* L);
+
+    // Advanced C++ entity APIs
+    static int lua_get_constructors(lua_State* L);
+    static int lua_get_constructor_info(lua_State* L);
+    static int lua_get_destructors(lua_State* L);
+    static int lua_get_destructor_info(lua_State* L);
+    static int lua_get_operators(lua_State* L);
+    static int lua_get_operator_info(lua_State* L);
+    static int lua_get_templates(lua_State* L);
+    static int lua_get_template_info(lua_State* L);
+    static int lua_get_lambdas(lua_State* L);
+    static int lua_get_lambda_info(lua_State* L);
+    static int lua_get_friends(lua_State* L);
+    static int lua_get_static_asserts(lua_State* L);
+    static int lua_get_call_graph(lua_State* L);
+    static int lua_get_function_calls(lua_State* L);
+    static int lua_get_callers(lua_State* L);
+    static int lua_get_callees(lua_State* L);
+    static int lua_get_return_statements(lua_State* L);
+    static int lua_get_inheritance_tree(lua_State* L);
+    static int lua_get_attributes(lua_State* L);
+
     // ヘルパー関数
     void report_diagnostic(const std::string& file_path, int line, int column,
                            const std::string& message, diagnostic::Severity severity);

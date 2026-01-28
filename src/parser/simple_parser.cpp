@@ -231,7 +231,11 @@ std::shared_ptr<ASTNode> SimpleParser::parse_class_or_struct() {
     if (match(TokenType::Colon)) {
         while (!check(TokenType::LeftBrace) && !check(TokenType::Eof)) {
             if (check(TokenType::Identifier)) {
-                node->base_classes.push_back(advance().text);
+                InheritanceInfo inherit_info;
+                inherit_info.base_class_name = advance().text;
+                inherit_info.access = AccessSpecifier::Public;  // デフォルトpublic
+                inherit_info.is_virtual = false;
+                node->base_classes.push_back(inherit_info);
             }
             advance();
         }
