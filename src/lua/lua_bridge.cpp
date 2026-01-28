@@ -29,6 +29,9 @@ void LuaBridge::set_current_file(const std::string& file_path) {
 
 void LuaBridge::set_current_ast(std::shared_ptr<parser::TranslationUnitNode> ast) {
     current_ast_ = ast;
+    // Update g_bridge to this instance when AST is set
+    // This ensures the correct bridge is used when Lua calls API functions
+    g_bridge = this;
 }
 
 void LuaBridge::register_api() {
