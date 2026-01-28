@@ -1,0 +1,20 @@
+---
+version: "1.0"
+
+lua_scripts:
+  - path: "rules/test_constructor_explicit.lua"
+    priority: 100
+
+  - path: "rules/test_destructor_virtual.lua"
+    priority: 100
+
+  - path: "rules/test_call_restriction.lua"
+    priority: 100
+
+  - path: "rules/test_lambda_capture.lua"
+    priority: 100
+
+  - path: "rules/test_friend_detection.lua"
+    priority: 100
+
+output_format: "text"
