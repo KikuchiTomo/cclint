@@ -1178,8 +1178,7 @@ int LuaBridge::lua_get_usings(lua_State* L) {
         }
 
         // namespace, class, functionの中に入ったらスコープ内とマーク
-        bool child_in_scope = in_scope ||
-                              node->type == parser::ASTNodeType::Namespace ||
+        bool child_in_scope = in_scope || node->type == parser::ASTNodeType::Namespace ||
                               node->type == parser::ASTNodeType::Class ||
                               node->type == parser::ASTNodeType::Function;
 
