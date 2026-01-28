@@ -2,42 +2,34 @@
 rule_description = "Do not throw exceptions in destructors"
 rule_category = "restrictions"
 
-function check_file()
-    local in_destructor = false
-    local destructor_name = nil
-    local brace_depth = 0
+function check_ast()
+    local classes = cclint.get_classes()
+    if not classes then return end
 
-    for line_num, line in ipairs(file_lines) do
-        -- Match destructor definition: ~ClassName()
-        local dtor = line:match("~([%w_]+)%s*%(")
-        if dtor then
-            in_destructor = true
-            destructor_name = dtor
-            brace_depth = 0
-        end
+    for _, class_name in ipairs(classes) do
+        local methods = cclint.get_methods(class_name)
+        if methods then
+            for _, method_name in ipairs(methods) do
+                -- Check if this is a destructor (starts with ~)
+                if method_name:match("^~") then
+                    local method_info = cclint.get_method_info(class_name, method_name)
+                    if method_info then
+                        local start_line = method_info.line
+                        local end_line = math.min(start_line + 50, #file_lines)
 
-        -- Track braces
-        for _ in line:gmatch("{") do
-            if in_destructor then
-                brace_depth = brace_depth + 1
-            end
-        end
-        for _ in line:gmatch("}") do
-            if in_destructor then
-                brace_depth = brace_depth - 1
-                if brace_depth == 0 then
-                    in_destructor = false
-                    destructor_name = nil
+                        for line_num = start_line, end_line do
+                            local line = file_lines[line_num]
+                            if line and line:match("[^%w_]throw%s+") then
+                                cclint.report_error(
+                                    line_num, 1,
+                                    string.format("Do not throw exceptions in destructor '%s'. This will call std::terminate.",
+                                        method_name)
+                                )
+                            end
+                        end
+                    end
                 end
             end
-        end
-
-        -- Check for throw statement
-        if in_destructor and line:match("[^%w_]throw%s+") then
-            cclint.report_error(
-                line_num, 1,
-                string.format("Do not throw exceptions in destructor '~%s'. This will call std::terminate.", destructor_name or "unknown")
-            )
         end
     end
 end
