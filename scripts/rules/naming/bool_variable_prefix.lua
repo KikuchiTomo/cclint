@@ -1,12 +1,29 @@
--- bool変数にはis/has接頭辞を付けるべき
-local rule = {name = "bool-variable-prefix", description = "bool変数にはis/has接頭辞を付けるべき", severity = "info"}
-function rule:init(params) end
-function rule:visit_var_decl(var_decl)
-    if var_decl:get_type():is_bool() then
-        local name = var_decl:get_name()
-        if not (name:match("^is") or name:match("^has") or name:match("^should") or name:match("^can")) then
-            self:report_diagnostic({severity = self.severity, message = string.format("bool変数 '%s' にはis/has/should/can接頭辞を付けるべきです", name), location = var_decl:get_location()})
+-- Boolean variables should have descriptive names (is_, has_, can_, should_, etc.)
+rule_description = "Boolean variables should have descriptive prefixes"
+rule_category = "naming"
+
+function check_file()
+    for line_num, line in ipairs(file_lines) do
+        -- Match: bool variable_name
+        local bool_var = line:match("bool%s+([%w_]+)")
+        if bool_var then
+            -- Check if it has a good prefix
+            local good_prefixes = {"is_", "has_", "can_", "should_", "will_", "was_", "did_", "needs_", "enable", "disable", "allow"}
+            local has_good_prefix = false
+
+            for _, prefix in ipairs(good_prefixes) do
+                if bool_var:match("^" .. prefix) then
+                    has_good_prefix = true
+                    break
+                end
+            end
+
+            if not has_good_prefix then
+                cclint.report_info(
+                    line_num, 1,
+                    string.format("Boolean variable '%s' should have descriptive prefix (is_, has_, can_, should_, etc.)", bool_var)
+                )
+            end
         end
     end
 end
-return rule
