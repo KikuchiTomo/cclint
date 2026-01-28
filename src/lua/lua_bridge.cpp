@@ -1,6 +1,7 @@
 #include "lua/lua_bridge.hpp"
 
 #include <regex>
+#include <sstream>
 
 #include "parser/ast.hpp"
 #include "utils/file_utils.hpp"
@@ -36,6 +37,10 @@ void LuaBridge::register_api() {
     }
 
     lua_State* L = lua_engine_->get_state();
+
+    // Luaのprint関数を上書きしてログに統合
+    lua_pushcfunction(L, lua_print);
+    lua_setglobal(L, "print");
 
     // グローバルテーブル "cclint" を作成
     lua_newtable(L);
@@ -89,6 +94,16 @@ void LuaBridge::register_api() {
     lua_pushcfunction(L, lua_get_source_range);
     lua_setfield(L, -2, "get_source_range");
 
+    // 新しいLua Migration API
+    lua_pushcfunction(L, lua_get_files);
+    lua_setfield(L, -2, "get_files");
+
+    lua_pushcfunction(L, lua_get_functions);
+    lua_setfield(L, -2, "get_functions");
+
+    lua_pushcfunction(L, lua_get_enums);
+    lua_setfield(L, -2, "get_enums");
+
     // グローバルに設定
     lua_setglobal(L, "cclint");
 
@@ -119,6 +134,29 @@ void LuaBridge::report_diagnostic(const std::string& file_path, int line, int co
 }
 
 // Luaから呼び出されるC++関数の実装
+
+int LuaBridge::lua_print(lua_State* L) {
+    int n = lua_gettop(L);  // 引数の数
+    std::ostringstream oss;
+
+    for (int i = 1; i <= n; i++) {
+        if (i > 1) {
+            oss << "\t";
+        }
+        if (lua_isstring(L, i)) {
+            oss << lua_tostring(L, i);
+        } else if (lua_isnil(L, i)) {
+            oss << "nil";
+        } else if (lua_isboolean(L, i)) {
+            oss << (lua_toboolean(L, i) ? "true" : "false");
+        } else {
+            oss << luaL_typename(L, i);
+        }
+    }
+
+    utils::Logger::instance().info("[Lua] " + oss.str());
+    return 0;
+}
 
 int LuaBridge::lua_report_error(lua_State* L) {
     if (!g_bridge || !g_bridge->diag_engine_) {
@@ -636,6 +674,187 @@ int LuaBridge::lua_get_source_range(lua_State* L) {
     return 1;
 }
 
+// 新しいLua Migration API実装
+
+int LuaBridge::lua_get_files(lua_State* L) {
+    if (!g_bridge || !g_bridge->current_ast_) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    // ファイル配列を作成
+    lua_newtable(L);
+
+    std::string file_path = g_bridge->current_file_;
+
+    lua_pushnumber(L, 1);
+    lua_newtable(L);
+
+    // path
+    lua_pushstring(L, "path");
+    lua_pushstring(L, file_path.c_str());
+    lua_settable(L, -3);
+
+    // name
+    lua_pushstring(L, "name");
+    size_t pos = file_path.find_last_of("/\\");
+    std::string name = (pos == std::string::npos) ? file_path : file_path.substr(pos + 1);
+    lua_pushstring(L, name.c_str());
+    lua_settable(L, -3);
+
+    // extension
+    lua_pushstring(L, "extension");
+    pos = file_path.find_last_of('.');
+    std::string ext = (pos == std::string::npos) ? "" : file_path.substr(pos + 1);
+    lua_pushstring(L, ext.c_str());
+    lua_settable(L, -3);
+
+    // is_header
+    lua_pushstring(L, "is_header");
+    bool is_header = (ext == "h" || ext == "hpp" || ext == "hxx" || ext == "hh");
+    lua_pushboolean(L, is_header);
+    lua_settable(L, -3);
+
+    // is_implementation
+    lua_pushstring(L, "is_implementation");
+    bool is_impl = (ext == "cpp" || ext == "cc" || ext == "cxx" || ext == "c");
+    lua_pushboolean(L, is_impl);
+    lua_settable(L, -3);
+
+    lua_settable(L, -3);
+
+    return 1;
+}
+
+int LuaBridge::lua_get_functions(lua_State* L) {
+    if (!g_bridge || !g_bridge->current_ast_) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    // 関数を収集するヘルパー
+    std::vector<std::shared_ptr<parser::FunctionNode>> functions;
+    std::function<void(std::shared_ptr<parser::ASTNode>)> collect;
+    collect = [&](std::shared_ptr<parser::ASTNode> node) {
+        if (!node) return;
+
+        if (node->type == parser::ASTNodeType::Function) {
+            functions.push_back(std::static_pointer_cast<parser::FunctionNode>(node));
+        }
+
+        for (auto& child : node->children) {
+            collect(child);
+        }
+    };
+
+    collect(g_bridge->current_ast_);
+
+    // Luaテーブルを作成
+    lua_newtable(L);
+
+    for (size_t i = 0; i < functions.size(); i++) {
+        lua_pushnumber(L, i + 1);
+        lua_newtable(L);
+
+        auto func = functions[i];
+
+        lua_pushstring(L, "name");
+        lua_pushstring(L, func->name.c_str());
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "return_type");
+        lua_pushstring(L, func->return_type.c_str());
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "line");
+        lua_pushnumber(L, func->position.line);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "file");
+        lua_pushstring(L, func->position.filename.c_str());
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "is_static");
+        lua_pushboolean(L, func->is_static);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "is_virtual");
+        lua_pushboolean(L, func->is_virtual);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "is_const");
+        lua_pushboolean(L, func->is_const);
+        lua_settable(L, -3);
+
+        lua_settable(L, -3);
+    }
+
+    return 1;
+}
+
+int LuaBridge::lua_get_enums(lua_State* L) {
+    if (!g_bridge || !g_bridge->current_ast_) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    // enumを収集
+    std::vector<std::shared_ptr<parser::EnumNode>> enums;
+    std::function<void(std::shared_ptr<parser::ASTNode>)> collect;
+    collect = [&](std::shared_ptr<parser::ASTNode> node) {
+        if (!node) return;
+
+        if (node->type == parser::ASTNodeType::Enum) {
+            enums.push_back(std::static_pointer_cast<parser::EnumNode>(node));
+        }
+
+        for (auto& child : node->children) {
+            collect(child);
+        }
+    };
+
+    collect(g_bridge->current_ast_);
+
+    // Luaテーブルを作成
+    lua_newtable(L);
+
+    for (size_t i = 0; i < enums.size(); i++) {
+        lua_pushnumber(L, i + 1);
+        lua_newtable(L);
+
+        auto enum_node = enums[i];
+
+        lua_pushstring(L, "name");
+        lua_pushstring(L, enum_node->name.c_str());
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "is_class");
+        lua_pushboolean(L, enum_node->is_class);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "line");
+        lua_pushnumber(L, enum_node->position.line);
+        lua_settable(L, -3);
+
+        // values配列
+        lua_pushstring(L, "values");
+        lua_newtable(L);
+        int value_index = 1;
+        for (auto& child : enum_node->children) {
+            if (child->type == parser::ASTNodeType::EnumConstant) {
+                lua_pushnumber(L, value_index++);
+                lua_pushstring(L, child->name.c_str());
+                lua_settable(L, -3);
+            }
+        }
+        lua_settable(L, -3);
+
+        lua_settable(L, -3);
+    }
+
+    return 1;
+}
+
 #else  // HAVE_LUAJIT が定義されていない場合（スタブ実装）
 
 LuaBridge::LuaBridge(std::shared_ptr<LuaEngine> lua_engine) : lua_engine_(lua_engine) {}
@@ -727,6 +946,21 @@ int LuaBridge::lua_get_parent(lua_State* L) {
     return 0;
 }
 int LuaBridge::lua_get_source_range(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_files(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_functions(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_enums(lua_State* L) {
     (void)L;
     return 0;
 }

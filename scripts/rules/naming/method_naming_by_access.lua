@@ -5,22 +5,29 @@ rule_description = "Check method naming conventions based on access specifiers"
 rule_category = "naming"
 
 -- 命名規則パターン（正規表現）
-local public_pattern = "^[a-z][a-zA-Z0-9]*$"  -- camelCase (例: getValue, processData)
+local public_pattern = "^[a-z][a-z0-9_]*$"  -- camel_case (例: get_value, process_data)
 local protected_pattern = "^[a-z][a-z0-9_]*$"  -- snake_case (例: do_something, helper_func)
 local private_pattern = "^_[a-z][a-z0-9_]*$"   -- _snake_case (例: _internal_method, _helper)
 
 -- AST解析関数
 function check_ast(file_path)
+    -- デバッグ: 関数が呼ばれたことを確認
+    print("[DEBUG] check_ast called for: " .. file_path)
+
     -- すべてのクラスを取得
     local classes = cclint.get_classes()
 
     if not classes then
+        print("[DEBUG] No classes returned from cclint.get_classes()")
         return
     end
+
+    print("[DEBUG] Found " .. #classes .. " class(es)")
 
     -- 各クラスをチェック
     for i = 1, #classes do
         local class_name = classes[i]
+        print("[DEBUG] Checking class: " .. class_name)
         check_class_methods(file_path, class_name)
     end
 end
@@ -31,16 +38,23 @@ function check_class_methods(file_path, class_name)
     local methods = cclint.get_methods(class_name)
 
     if not methods then
+        print("[DEBUG] No methods found for class: " .. class_name)
         return
     end
+
+    print("[DEBUG] Found " .. #methods .. " method(s) in class " .. class_name)
 
     -- 各メソッドをチェック
     for i = 1, #methods do
         local method_name = methods[i]
+        print("[DEBUG] Method " .. i .. ": " .. method_name)
         local info = cclint.get_method_info(class_name, method_name)
 
         if info then
+            print("[DEBUG] Method info - access: " .. (info.access or "none") .. ", line: " .. (info.line or 0))
             check_method_naming(file_path, class_name, method_name, info)
+        else
+            print("[DEBUG] No info for method: " .. method_name)
         end
     end
 end
@@ -49,19 +63,25 @@ end
 function check_method_naming(file_path, class_name, method_name, info)
     -- コンストラクタ/デストラクタはスキップ
     if method_name == class_name or method_name == "~" .. class_name then
+        print("[DEBUG] Skipping constructor/destructor: " .. method_name)
         return
     end
 
     local access = info.access
     local line = info.line or 0
 
+    print("[DEBUG] Checking method: " .. method_name .. " (access: " .. access .. ")")
+
     if access == "public" then
         -- publicメソッドはcamelCaseであるべき
-        if not string.match(method_name, public_pattern) then
+        local matches = string.match(method_name, public_pattern)
+        print("[DEBUG] Public pattern match result: " .. tostring(matches ~= nil))
+        if not matches then
+            print("[DEBUG] Reporting warning for public method: " .. method_name)
             cclint.report_warning(
                 line, 0,
                 string.format(
-                    "Public method '%s::%s' should use camelCase (e.g., getValue, processData)",
+                    "Public method '%s::%s' should use snake_case (e.g., get_value, process_data)",
                     class_name, method_name
                 )
             )
@@ -79,7 +99,10 @@ function check_method_naming(file_path, class_name, method_name, info)
         end
     elseif access == "private" then
         -- privateメソッドはアンダースコアで始まるsnake_caseであるべき
-        if not string.match(method_name, private_pattern) then
+        local matches = string.match(method_name, private_pattern)
+        print("[DEBUG] Private pattern match result: " .. tostring(matches ~= nil))
+        if not matches then
+            print("[DEBUG] Reporting warning for private method: " .. method_name)
             cclint.report_warning(
                 line, 0,
                 string.format(

@@ -52,6 +52,9 @@ private:
     std::shared_ptr<parser::TranslationUnitNode> current_ast_;
 
     // Luaから呼び出されるC++関数（static）
+    // ログ出力
+    static int lua_print(lua_State* L);
+
     // 診断報告
     static int lua_report_error(lua_State* L);
     static int lua_report_warning(lua_State* L);
@@ -74,6 +77,11 @@ private:
     static int lua_get_children(lua_State* L);
     static int lua_get_parent(lua_State* L);
     static int lua_get_source_range(lua_State* L);
+
+    // 新しいLua Migration API
+    static int lua_get_files(lua_State* L);
+    static int lua_get_functions(lua_State* L);
+    static int lua_get_enums(lua_State* L);
 
     // ヘルパー関数
     void report_diagnostic(const std::string& file_path, int line, int column,

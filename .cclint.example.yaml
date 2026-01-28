@@ -168,9 +168,8 @@ rules:
     severity: error
     priority: 100
 
-# カスタムLuaスクリプト
-# lua_scripts:
-#   - path: custom/rules/my_rule.lua
-#     priority: 80
-#     parameters:
-#       custom_param: value
+lua_scripts:
+  - path: scripts/naming/method_naming_by_access.lua
+    priority: 80
+    parameters:
+      custom_param: value

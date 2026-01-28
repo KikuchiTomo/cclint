@@ -1,6 +1,7 @@
 #include "rules/builtin/naming_convention.hpp"
 
 #include <sstream>
+#include <unordered_set>
 
 #include "parser/ast.hpp"
 #include "utils/string_utils.hpp"
@@ -94,9 +95,20 @@ void NamingConventionRule::check_function_names(const std::string& file_path,
     std::regex func_decl_pattern(
         R"(\b(void|int|bool|char|float|double|auto|[A-Za-z_][A-Za-z0-9_:<>]*)\s+([A-Za-z_][A-Za-z0-9_]*)\s*\()");
 
-    auto lines = utils::StringUtils::split(content, '\n');
-    int line_num = 0;
+    // クラス名を抽出（コンストラクタ検出のため）
+    std::regex class_decl_pattern(R"(\b(class|struct)\s+([A-Za-z_][A-Za-z0-9_]*))");
+    std::unordered_set<std::string> class_names;
 
+    auto lines = utils::StringUtils::split(content, '\n');
+    for (const auto& line : lines) {
+        std::smatch match;
+        std::string line_str(line);
+        if (std::regex_search(line_str, match, class_decl_pattern)) {
+            class_names.insert(match[2].str());
+        }
+    }
+
+    int line_num = 0;
     for (const auto& line : lines) {
         line_num++;
 
@@ -107,6 +119,11 @@ void NamingConventionRule::check_function_names(const std::string& file_path,
 
             // 特殊な名前は除外（コンストラクタ、デストラクタ、main等）
             if (func_name == "main" || func_name[0] == '~') {
+                continue;
+            }
+
+            // コンストラクタを除外（関数名がクラス名と一致する場合）
+            if (class_names.find(func_name) != class_names.end()) {
                 continue;
             }
 

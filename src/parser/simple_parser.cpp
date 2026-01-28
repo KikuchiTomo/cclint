@@ -271,6 +271,22 @@ std::shared_ptr<ASTNode> SimpleParser::parse_class_or_struct() {
         if (member) {
             if (auto func = std::dynamic_pointer_cast<FunctionNode>(member)) {
                 func->access = current_access_;
+
+                // Fix constructors: if name is empty and return_type matches class name,
+                // it's a constructor (parser mistakenly treated class name as return type)
+                if (func->name.empty() && func->return_type == node->name) {
+                    func->name = func->return_type;
+                    func->return_type = "";
+                }
+                // Fix destructors: similar check for ~ClassName
+                else if (func->name.empty() && !func->return_type.empty() &&
+                         func->return_type[0] == '~') {
+                    std::string dtor_class = func->return_type.substr(1);
+                    if (dtor_class == node->name) {
+                        func->name = func->return_type;
+                        func->return_type = "";
+                    }
+                }
             } else if (auto field = std::dynamic_pointer_cast<VariableNode>(member)) {
                 auto field_node = std::make_shared<FieldNode>();
                 field_node->name = field->name;

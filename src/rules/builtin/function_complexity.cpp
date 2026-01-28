@@ -32,8 +32,8 @@ void FunctionComplexityRule::check_file(const std::string& file_path, const std:
     std::string::const_iterator search_start(content.cbegin());
     std::smatch match;
 
-    int line = 1;
-    size_t pos = 0;
+    // int line = 1;
+    // size_t pos = 0;
 
     while (std::regex_search(search_start, content.cend(), match, func_pattern)) {
         std::string return_type = match[1].str();

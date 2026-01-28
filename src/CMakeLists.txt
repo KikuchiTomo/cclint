@@ -95,32 +95,21 @@ target_include_directories(cclint-lsp
 if(USE_LUAJIT AND LUAJIT_FOUND)
     target_link_libraries(cclint ${LUAJIT_LIBRARIES})
     target_include_directories(cclint PRIVATE ${LUAJIT_INCLUDE_DIRS})
+    target_link_libraries(cclint-lsp ${LUAJIT_LIBRARIES})
+    target_include_directories(cclint-lsp PRIVATE ${LUAJIT_INCLUDE_DIRS})
 endif()
 
 # yaml-cpp
 if(USE_YAML_CPP AND yaml-cpp_FOUND)
-    target_link_libraries(cclint yaml-cpp)
+    target_link_libraries(cclint yaml-cpp::yaml-cpp)
+    target_link_libraries(cclint-lsp yaml-cpp::yaml-cpp)
 endif()
 
 # LLVM/Clang
 if(USE_LLVM_CLANG AND LLVM_FOUND)
-    llvm_map_components_to_libnames(llvm_libs support core irreader)
-    target_link_libraries(cclint ${llvm_libs})
-
-    # Clang libraries
-    target_link_libraries(cclint
-        clangTooling
-        clangFrontend
-        clangDriver
-        clangSerialization
-        clangParse
-        clangSema
-        clangAnalysis
-        clangEdit
-        clangAST
-        clangLex
-        clangBasic
-    )
+    # Clang libraries (依存関係は自動解決されるのでトップレベルのみ指定)
+    target_link_libraries(cclint clangTooling)
+    target_link_libraries(cclint-lsp clangTooling)
 endif()
 
 # Platform-specific libraries
