@@ -174,11 +174,12 @@ public:
     AccessSpecifier access = AccessSpecifier::None;
     int cyclomatic_complexity = 1;  // サイクロマティック複雑度
 
-    std::vector<AttributeInfo> attributes;             // 属性（[[nodiscard]]など）
-    std::vector<std::string> template_parameters;      // テンプレートパラメータ
-    std::vector<std::string> called_functions;         // この関数が呼び出す関数のリスト
-    std::vector<std::string> called_by_functions;      // この関数を呼び出す関数のリスト
-    std::string exception_spec;                        // 例外指定（throw()など、非推奨だが）
+    std::vector<AttributeInfo> attributes;  // 属性（[[nodiscard]]など）
+    std::vector<std::string> template_parameters;  // テンプレートパラメータ
+    std::vector<std::string> called_functions;  // この関数が呼び出す関数のリスト
+    std::vector<std::string>
+        called_by_functions;  // この関数を呼び出す関数のリスト
+    std::string exception_spec;  // 例外指定（throw()など、非推奨だが）
 
     FunctionNode() : ASTNode(ASTNodeType::Function) {}
 };
