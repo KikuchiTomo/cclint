@@ -1,0 +1,22 @@
+version: "1.0"
+
+lua_scripts:
+  - path: ../scripts/rules/debug_file_context.lua
+    enabled: true
+    severity: warning
+    parameters:
+      test_param: test_value
+
+rules: []
+
+include_patterns:
+  - "*.cpp"
+
+exclude_patterns: []
+
+output_format: "text"
+max_errors: 0
+show_compiler_output: false
+
+num_threads: 1
+enable_cache: false

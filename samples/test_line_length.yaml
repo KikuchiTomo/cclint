@@ -1,0 +1,22 @@
+version: "1.0"
+
+lua_scripts:
+  - path: ../scripts/rules/builtin/max_line_length.lua
+    enabled: true
+    severity: warning
+    parameters:
+      max_length: 40  # Set low to trigger warnings
+
+rules: []
+
+include_patterns:
+  - "*.cpp"
+
+exclude_patterns: []
+
+output_format: "text"
+max_errors: 0
+show_compiler_output: false
+
+num_threads: 1
+enable_cache: false
