@@ -452,6 +452,13 @@ std::shared_ptr<ASTNode> SimpleParser::parse_using() {
 
 std::string SimpleParser::parse_type() {
     std::string type;
+    bool has_base_type = false;  // Track if we've seen the main type
+
+    // Helper lambda to check if string ends with suffix (C++17 compatible)
+    auto ends_with = [](const std::string& str, const std::string& suffix) {
+        if (str.length() < suffix.length()) return false;
+        return str.compare(str.length() - suffix.length(), suffix.length(), suffix) == 0;
+    };
 
     while (check(TokenType::Const) || check(TokenType::Static) || check(TokenType::Unsigned) ||
            check(TokenType::Signed) || check(TokenType::Long) || check(TokenType::Short) ||
@@ -460,7 +467,24 @@ std::string SimpleParser::parse_type() {
            check(TokenType::Auto) || check(TokenType::Identifier) || check(TokenType::Scope) ||
            check(TokenType::Less) || check(TokenType::Greater) || check(TokenType::Comma) ||
            check(TokenType::Asterisk) || check(TokenType::Ampersand)) {
+
+        // Add space before token if not empty and not following scope operator
+        if (!type.empty() && !ends_with(type, "::") && !ends_with(type, "<") &&
+            current_token().text != "::" && current_token().text != "*" &&
+            current_token().text != "&" && current_token().text != "<" &&
+            current_token().text != ">") {
+            type += " ";
+        }
+
         type += current_token().text;
+
+        // Track if we've seen a base type (not just modifiers)
+        if (check(TokenType::Void) || check(TokenType::Int) || check(TokenType::Bool) ||
+            check(TokenType::Char) || check(TokenType::Float) || check(TokenType::Double) ||
+            check(TokenType::Auto) || check(TokenType::Identifier)) {
+            has_base_type = true;
+        }
+
         if (check(TokenType::Less)) {
             type += "<";
             advance();
@@ -477,8 +501,15 @@ std::string SimpleParser::parse_type() {
                 }
                 advance();
             }
+            has_base_type = true;
         } else {
             advance();
+        }
+
+        // If we have a base type and the next token is an identifier (not ::),
+        // it's probably the variable/function name, not part of the type
+        if (has_base_type && check(TokenType::Identifier) && !ends_with(type, "::")) {
+            break;
         }
     }
 
