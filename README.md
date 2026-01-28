@@ -1,21 +1,20 @@
-# cclint - Lua-First C++ Linter
+# cclint - Customizable C++ Linter
 
-A highly customizable C++ linter with **100% Lua-based rules**. No hardcoded rules - complete flexibility.
+**cclint** はカスタマイズ可能なC++ linterです。すべてのルールをLuaスクリプトで定義できます。
 
 ## Overview
 
-**cclint** is a Lua-first static analysis tool for C++. Define all your lint rules in Lua scripts with full AST access.
+cclintはLuaベースの静的解析ツールです。C++のASTにアクセスし、独自のルールを柔軟に記述できます。
 
 ### Key Features
 
-- **🎯 Zero Built-in Rules**: Start with a clean slate
-- **🔥 100% Lua-Based**: All rules written in Lua for maximum customizability
-- **⚡ LuaJIT Powered**: Blazing-fast rule execution
-- **🔍 Full AST Access**: Access to complete C++ Abstract Syntax Tree
-- **🎨 Fine-Grained Rules**: 1 rule per file, mix and match as needed
-- **⚙️ Compiler Wrapper**: Works with gcc, clang, msvc
-- **📊 Multiple Outputs**: Text, JSON, XML formats
-- **🚀 High Performance**: Multi-threaded, cached analysis
+- Lua-based rules - すべてのルールをLuaで記述
+- LuaJIT support - Luaルールの高速実行
+- AST access - C++抽象構文木へのアクセス
+- Fine-grained rules - 1ファイル1ルールで管理が容易
+- Compiler wrapper - gcc, clang, msvcに対応
+- Multiple output formats - text, JSON, XML形式で出力
+- Performance - マルチスレッド対応、キャッシュ機能
 
 ## Quick Start
 
