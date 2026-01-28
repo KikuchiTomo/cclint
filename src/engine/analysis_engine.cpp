@@ -5,13 +5,12 @@
 #include <sstream>
 
 #include "parser/simple_parser.hpp"
-#include "rules/builtin/function_complexity.hpp"
-#include "rules/builtin/header_guard.hpp"
-#include "rules/builtin/max_line_length.hpp"
-#include "rules/builtin/naming_convention.hpp"
 #include "rules/rule_registry.hpp"
 #include "utils/file_utils.hpp"
 #include "utils/logger.hpp"
+#ifdef HAVE_LUAJIT
+#include "lua/lua_rule.hpp"
+#endif
 
 namespace cclint {
 namespace engine {
@@ -31,11 +30,52 @@ AnalysisEngine::AnalysisEngine(const config::Config& config)
 void AnalysisEngine::initialize_rules() {
     auto& registry = rules::RuleRegistry::instance();
 
-    // ビルトインルールを登録
-    registry.register_rule(std::make_unique<rules::builtin::NamingConventionRule>());
-    registry.register_rule(std::make_unique<rules::builtin::HeaderGuardRule>());
-    registry.register_rule(std::make_unique<rules::builtin::MaxLineLengthRule>());
-    registry.register_rule(std::make_unique<rules::builtin::FunctionComplexityRule>());
+    // Luaスクリプトルールを登録
+#ifdef HAVE_LUAJIT
+    for (const auto& lua_config : config_.lua_scripts) {
+        try {
+            // ファイル名からルール名を生成
+            std::string rule_name = lua_config.path;
+            size_t last_slash = rule_name.find_last_of("/\\");
+            if (last_slash != std::string::npos) {
+                rule_name = rule_name.substr(last_slash + 1);
+            }
+            size_t dot = rule_name.find_last_of('.');
+            if (dot != std::string::npos) {
+                rule_name = rule_name.substr(0, dot);
+            }
+
+            auto lua_rule = std::make_unique<lua::LuaRule>(lua_config.path, rule_name);
+
+            // パラメータをvariantからstringに変換
+            rules::RuleParameters params;
+            for (const auto& [key, value] : lua_config.parameters) {
+                if (std::holds_alternative<int>(value)) {
+                    params[key] = std::to_string(std::get<int>(value));
+                } else if (std::holds_alternative<std::string>(value)) {
+                    params[key] = std::get<std::string>(value);
+                } else if (std::holds_alternative<bool>(value)) {
+                    params[key] = std::get<bool>(value) ? "true" : "false";
+                }
+            }
+
+            lua_rule->initialize(params);
+            registry.register_rule(std::move(lua_rule));
+
+            utils::Logger::instance().info("Loaded Lua rule: " + lua_config.path + " (" +
+                                           rule_name + ")");
+        } catch (const std::exception& e) {
+            utils::Logger::instance().error("Failed to load Lua rule " + lua_config.path + ": " +
+                                            e.what());
+        }
+    }
+#else
+    if (!config_.lua_scripts.empty()) {
+        utils::Logger::instance().warning("LuaJIT not available. " +
+                                          std::to_string(config_.lua_scripts.size()) +
+                                          " Lua script(s) will be ignored.");
+    }
+#endif
 
     // 設定からルールを有効化/無効化
     for (const auto& rule_config : config_.rules) {
@@ -129,6 +169,7 @@ FileAnalysisResult AnalysisEngine::analyze_file(const std::string& file_path) {
             file_path.find(".hpp") != std::string::npos ||
             file_path.find(".h") != std::string::npos) {
             try {
+                utils::Logger::instance().debug("Starting AST parsing for " + file_path);
                 parser::SimpleParser parser(content, file_path);
                 auto ast = parser.parse();
 
@@ -136,8 +177,11 @@ FileAnalysisResult AnalysisEngine::analyze_file(const std::string& file_path) {
                     utils::Logger::instance().debug("AST parse warnings for " + file_path);
                 }
 
+                utils::Logger::instance().debug("AST parsing complete, executing AST rules");
                 // ASTベースのルール実行
                 auto ast_stats = rule_executor_->execute_ast_rules(file_path, ast, diag_engine);
+                utils::Logger::instance().debug("AST rules executed, got " +
+                                                std::to_string(ast_stats.size()) + " stats");
 
                 // 統計をマージ
                 stats.insert(stats.end(), ast_stats.begin(), ast_stats.end());

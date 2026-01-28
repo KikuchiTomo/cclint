@@ -12,6 +12,10 @@ LuaRule::LuaRule(const std::string& script_path, const std::string& rule_name)
       rule_name_(rule_name),
       description_("Lua rule"),
       category_("custom") {
+    // Luaルールはデフォルトで有効
+    set_enabled(true);
+    set_severity(config::Severity::Warning);
+
     lua_engine_ = std::make_shared<LuaEngine>();
 
     if (LuaEngine::is_available()) {
@@ -106,11 +110,18 @@ void LuaRule::check_ast(clang::ASTUnit* ast_unit, diagnostic::DiagnosticEngine& 
 void LuaRule::check_ast(const std::string& file_path,
                         std::shared_ptr<parser::TranslationUnitNode> ast,
                         diagnostic::DiagnosticEngine& diag_engine) {
+    utils::Logger::instance().debug("LuaRule::check_ast called for rule: " + rule_name_ +
+                                    ", file: " + file_path);
+
     if (!loaded_ || !LuaEngine::is_available()) {
+        utils::Logger::instance().debug(
+            "LuaRule::check_ast skipped - not loaded or LuaJIT unavailable");
         return;
     }
 
 #ifdef HAVE_LUAJIT
+    utils::Logger::instance().debug("LuaRule::check_ast - setting up Lua bridge");
+
     // 診断エンジン、ファイルパス、ASTを設定
     lua_bridge_->set_diagnostic_engine(&diag_engine);
     lua_bridge_->set_current_file(file_path);
@@ -121,6 +132,8 @@ void LuaRule::check_ast(const std::string& file_path,
     lua_getglobal(L, "check_ast");
 
     if (lua_isfunction(L, -1)) {
+        utils::Logger::instance().debug("LuaRule::check_ast - calling Lua check_ast function");
+
         // file_path を引数として渡す
         lua_pushstring(L, file_path.c_str());
 
@@ -129,6 +142,9 @@ void LuaRule::check_ast(const std::string& file_path,
             lua_pop(L, 1);
             utils::Logger::instance().error("Lua AST rule execution failed: " + rule_name_ + " - " +
                                             error);
+        } else {
+            utils::Logger::instance().debug(
+                "LuaRule::check_ast - Lua function executed successfully");
         }
     } else {
         lua_pop(L, 1);

@@ -24,10 +24,6 @@ set(CCLINT_SOURCES
     rules/rule_registry.cpp
     rules/rule_executor.cpp
     rules/plugin_loader.cpp
-    rules/builtin/naming_convention.cpp
-    rules/builtin/header_guard.cpp
-    rules/builtin/max_line_length.cpp
-    rules/builtin/function_complexity.cpp
     engine/analysis_engine.cpp
     engine/incremental.cpp
     engine/dependency_tracker.cpp
@@ -62,10 +58,6 @@ set(CCLINT_LSP_SOURCES
     rules/rule_registry.cpp
     rules/rule_executor.cpp
     rules/plugin_loader.cpp
-    rules/builtin/naming_convention.cpp
-    rules/builtin/header_guard.cpp
-    rules/builtin/max_line_length.cpp
-    rules/builtin/function_complexity.cpp
     diagnostic/diagnostic.cpp
     diagnostic/fixer.cpp
     lua/lua_engine.cpp
@@ -95,32 +87,21 @@ target_include_directories(cclint-lsp
 if(USE_LUAJIT AND LUAJIT_FOUND)
     target_link_libraries(cclint ${LUAJIT_LIBRARIES})
     target_include_directories(cclint PRIVATE ${LUAJIT_INCLUDE_DIRS})
+    target_link_libraries(cclint-lsp ${LUAJIT_LIBRARIES})
+    target_include_directories(cclint-lsp PRIVATE ${LUAJIT_INCLUDE_DIRS})
 endif()
 
 # yaml-cpp
 if(USE_YAML_CPP AND yaml-cpp_FOUND)
     target_link_libraries(cclint yaml-cpp)
+    target_link_libraries(cclint-lsp yaml-cpp)
 endif()
 
 # LLVM/Clang
 if(USE_LLVM_CLANG AND LLVM_FOUND)
-    llvm_map_components_to_libnames(llvm_libs support core irreader)
-    target_link_libraries(cclint ${llvm_libs})
-
-    # Clang libraries
-    target_link_libraries(cclint
-        clangTooling
-        clangFrontend
-        clangDriver
-        clangSerialization
-        clangParse
-        clangSema
-        clangAnalysis
-        clangEdit
-        clangAST
-        clangLex
-        clangBasic
-    )
+    # Clang libraries (依存関係は自動解決されるのでトップレベルのみ指定)
+    target_link_libraries(cclint clangTooling)
+    target_link_libraries(cclint-lsp clangTooling)
 endif()
 
 # Platform-specific libraries

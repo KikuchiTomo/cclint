@@ -37,10 +37,19 @@ RuleExecutor::execute_ast_rules(const std::string& file_path,
     auto& registry = RuleRegistry::instance();
     auto enabled_rules = registry.get_enabled_rules();
 
+    utils::Logger::instance().debug("RuleExecutor::execute_ast_rules - " +
+                                    std::to_string(enabled_rules.size()) + " enabled rules");
+
     for (auto* rule : enabled_rules) {
+        utils::Logger::instance().debug("Checking rule: " + rule->name() +
+                                        ", enabled=" + (rule->is_enabled() ? "true" : "false"));
+
         if (!rule->is_enabled()) {
+            utils::Logger::instance().debug("Skipping disabled rule: " + rule->name());
             continue;
         }
+
+        utils::Logger::instance().debug("Executing AST rule: " + rule->name());
 
         RuleExecutionStats rule_stats;
         rule_stats.rule_name = rule->name();

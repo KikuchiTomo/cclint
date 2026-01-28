@@ -1,42 +1,23 @@
--- 1行の最大文字数を制限
---
--- 説明:
---   長すぎる行は可読性を低下させます。
---
--- 設定可能なパラメータ:
---   - severity: エラーの重要度
---   - max_length: 最大文字数 (デフォルト: 100)
+-- Lines should not exceed maximum length (default: 100 characters)
+rule_description = "Lines should not exceed maximum length"
+rule_category = "style"
 
-local rule = {
-    name = "max-line-length",
-    description = "1行の最大文字数を制限",
-    severity = "warning",
-}
+function check_ast()
+    local max_length = 100
+    if rule_parameters and rule_parameters.max_length then
+        max_length = tonumber(rule_parameters.max_length) or 100
+    end
 
-function rule:init(params)
-    self.max_length = params.max_length or 100
-end
+    local file_info = cclint.get_file_info()
+    if not file_info or not file_info.lines then return end
 
-function rule:check_file(file)
-    local source = file:get_source_text()
-    local line_num = 1
-
-    for line in source:gmatch("([^\n]*)\n?") do
-        local length = #line
-
-        if length > self.max_length then
-            self:report_diagnostic({
-                severity = self.severity,
-                message = string.format(
-                    "行が長すぎます（%d文字、最大%d文字）",
-                    length, self.max_length
-                ),
-                location = file:create_location(line_num, self.max_length + 1),
-            })
+    for line_num, line_info in pairs(file_info.lines) do
+        if line_info.length > max_length then
+            cclint.report_warning(
+                line_num, 1,
+                string.format("Line exceeds maximum length of %d characters (%d characters)",
+                    max_length, line_info.length)
+            )
         end
-
-        line_num = line_num + 1
     end
 end
-
-return rule

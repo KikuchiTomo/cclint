@@ -33,6 +33,18 @@ std::string ASTNode::get_type_name() const {
             return "Template";
         case ASTNodeType::Comment:
             return "Comment";
+        case ASTNodeType::IfStatement:
+            return "IfStatement";
+        case ASTNodeType::SwitchStatement:
+            return "SwitchStatement";
+        case ASTNodeType::LoopStatement:
+            return "LoopStatement";
+        case ASTNodeType::TryStatement:
+            return "TryStatement";
+        case ASTNodeType::Macro:
+            return "Macro";
+        case ASTNodeType::CallExpression:
+            return "CallExpression";
         case ASTNodeType::Unknown:
         default:
             return "Unknown";

@@ -271,6 +271,22 @@ std::shared_ptr<ASTNode> SimpleParser::parse_class_or_struct() {
         if (member) {
             if (auto func = std::dynamic_pointer_cast<FunctionNode>(member)) {
                 func->access = current_access_;
+
+                // Fix constructors: if name is empty and return_type matches class name,
+                // it's a constructor (parser mistakenly treated class name as return type)
+                if (func->name.empty() && func->return_type == node->name) {
+                    func->name = func->return_type;
+                    func->return_type = "";
+                }
+                // Fix destructors: similar check for ~ClassName
+                else if (func->name.empty() && !func->return_type.empty() &&
+                         func->return_type[0] == '~') {
+                    std::string dtor_class = func->return_type.substr(1);
+                    if (dtor_class == node->name) {
+                        func->name = func->return_type;
+                        func->return_type = "";
+                    }
+                }
             } else if (auto field = std::dynamic_pointer_cast<VariableNode>(member)) {
                 auto field_node = std::make_shared<FieldNode>();
                 field_node->name = field->name;
@@ -338,13 +354,26 @@ std::shared_ptr<ASTNode> SimpleParser::parse_function_or_variable() {
         }
     }
 
+    // Check for destructor (~ClassName)
+    bool is_destructor = false;
+    if (current_token().text == "~") {
+        is_destructor = true;
+        advance();  // consume ~
+    }
+
     // 型
-    std::string type_name = parse_type();
+    std::string type_name;
+    if (!is_destructor) {
+        type_name = parse_type();
+    }
 
     // 名前
     std::string name;
     if (check(TokenType::Identifier)) {
         name = advance().text;
+        if (is_destructor) {
+            name = "~" + name;
+        }
     }
 
     // 関数かどうか判定
@@ -382,7 +411,7 @@ std::shared_ptr<ASTNode> SimpleParser::parse_function_or_variable() {
         }
 
         // 関数本体またはセミコロン
-        if (match(TokenType::LeftBrace)) {
+        if (check(TokenType::LeftBrace)) {
             skip_braces();
         } else {
             match(TokenType::Semicolon);
@@ -436,6 +465,14 @@ std::shared_ptr<ASTNode> SimpleParser::parse_using() {
 
 std::string SimpleParser::parse_type() {
     std::string type;
+    bool has_base_type = false;  // Track if we've seen the main type
+
+    // Helper lambda to check if string ends with suffix (C++17 compatible)
+    auto ends_with = [](const std::string& str, const std::string& suffix) {
+        if (str.length() < suffix.length())
+            return false;
+        return str.compare(str.length() - suffix.length(), suffix.length(), suffix) == 0;
+    };
 
     while (check(TokenType::Const) || check(TokenType::Static) || check(TokenType::Unsigned) ||
            check(TokenType::Signed) || check(TokenType::Long) || check(TokenType::Short) ||
@@ -444,7 +481,23 @@ std::string SimpleParser::parse_type() {
            check(TokenType::Auto) || check(TokenType::Identifier) || check(TokenType::Scope) ||
            check(TokenType::Less) || check(TokenType::Greater) || check(TokenType::Comma) ||
            check(TokenType::Asterisk) || check(TokenType::Ampersand)) {
+        // Add space before token if not empty and not following scope operator
+        if (!type.empty() && !ends_with(type, "::") && !ends_with(type, "<") &&
+            current_token().text != "::" && current_token().text != "*" &&
+            current_token().text != "&" && current_token().text != "<" &&
+            current_token().text != ">") {
+            type += " ";
+        }
+
         type += current_token().text;
+
+        // Track if we've seen a base type (not just modifiers)
+        if (check(TokenType::Void) || check(TokenType::Int) || check(TokenType::Bool) ||
+            check(TokenType::Char) || check(TokenType::Float) || check(TokenType::Double) ||
+            check(TokenType::Auto) || check(TokenType::Identifier)) {
+            has_base_type = true;
+        }
+
         if (check(TokenType::Less)) {
             type += "<";
             advance();
@@ -461,8 +514,15 @@ std::string SimpleParser::parse_type() {
                 }
                 advance();
             }
+            has_base_type = true;
         } else {
             advance();
+        }
+
+        // If we have a base type and the next token is an identifier (not ::),
+        // it's probably the variable/function name, not part of the type
+        if (has_base_type && check(TokenType::Identifier) && !ends_with(type, "::")) {
+            break;
         }
     }
 

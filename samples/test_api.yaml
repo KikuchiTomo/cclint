@@ -1,0 +1,9 @@
+version: "1.0"
+cpp_standard: "auto"
+
+output_format: "text"
+max_errors: 0
+
+lua_scripts:
+  - path: /tmp/test_new_api.lua
+    enabled: true
