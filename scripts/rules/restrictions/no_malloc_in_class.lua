@@ -2,41 +2,36 @@
 rule_description = "Do not use malloc/calloc/realloc in class methods"
 rule_category = "restrictions"
 
-function check_file()
-    local in_class = false
-    local class_name = nil
-    local brace_depth = 0
+function check_ast()
+    local classes = cclint.get_classes()
+    if not classes then return end
 
-    for line_num, line in ipairs(file_lines) do
-        -- Track class definition
-        local found_class = line:match("^%s*class%s+([%w_]+)")
-        if found_class then
-            in_class = true
-            class_name = found_class
-            brace_depth = 0
-        end
+    local forbidden = {"malloc", "calloc", "realloc", "free"}
 
-        -- Track braces
-        for _ in line:gmatch("{") do
-            brace_depth = brace_depth + 1
-        end
-        for _ in line:gmatch("}") do
-            brace_depth = brace_depth - 1
-            if in_class and brace_depth == 0 then
-                in_class = false
-                class_name = nil
-            end
-        end
+    for _, class_name in ipairs(classes) do
+        local methods = cclint.get_methods(class_name)
+        if methods then
+            for _, method_name in ipairs(methods) do
+                local method_info = cclint.get_method_info(class_name, method_name)
+                if method_info then
+                    local start_line = method_info.line
+                    local end_line = math.min(start_line + 50, #file_lines)
 
-        -- Check for malloc/calloc/realloc
-        if in_class then
-            if line:match("[^%w_]malloc%s*%(") or
-               line:match("[^%w_]calloc%s*%(") or
-               line:match("[^%w_]realloc%s*%(") then
-                cclint.report_warning(
-                    line_num, 1,
-                    string.format("Do not use malloc/calloc/realloc in class '%s'. Use std::vector or std::array instead.", class_name or "unknown")
-                )
+                    for line_num = start_line, end_line do
+                        local line = file_lines[line_num]
+                        if line then
+                            for _, func in ipairs(forbidden) do
+                                if line:match(func .. "%s*%(") then
+                                    cclint.report_warning(
+                                        line_num, 1,
+                                        string.format("Do not use %s in class '%s' method '%s'. Use C++ containers and RAII instead.",
+                                            func, class_name, method_name)
+                                    )
+                                end
+                            end
+                        end
+                    end
+                end
             end
         end
     end
