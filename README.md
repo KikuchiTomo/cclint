@@ -8,12 +8,15 @@ C++ linter with Lua-scriptable rules.
 git clone https://github.com/KikuchiTomo/cclint.git
 cd cclint
 
-# Simple build with make
+# Debug build (default, for development)
 make build
+
+# Release build (optimized)
+make release
 
 # Or manual build
 mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake -DCMAKE_BUILD_TYPE=Debug ..  # or Release
 make -j$(nproc)
 ```
 
