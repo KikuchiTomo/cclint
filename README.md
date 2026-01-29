@@ -1,33 +1,34 @@
 # cclint
 
-CCLint is A Customizable C++ Linter.
-
-A key feature of cclint is that it does not come with predefined rules. All rules must be created and customized.
-When creating arbitrary rules, there is no need to recompile cclint. Simply write a Lua script and load it.
-
-All rules in cclint are written in Lua.
-This allows you to freely define rules such as the following:
-
-- A rule limiting specific `#include` directives to files with a particular suffix.
-- A rule restricting the creation of specific objects to only within the `main` function.
-
-It is also possible to prohibit the use of `printf` and enforce the use of a custom `logger` instead.
+C++ linter with Lua-scriptable rules.
 
 ## Build
 
 ```bash
 git clone https://github.com/KikuchiTomo/cclint.git
 cd cclint
+
+# Debug build (default, for development)
+make build
+
+# Release build (optimized)
+make release
+
+# Or manual build
 mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake -DCMAKE_BUILD_TYPE=Debug ..  # or Release
 make -j$(nproc)
 ```
 
 **Requirements:**
 - CMake 3.16+
-- C++17 compiler
+- C++17 compiler (g++ or clang++)
 - LuaJIT 2.1+
 - yaml-cpp 0.7+
+
+**Optional:**
+- LLVM/Clang 14+ (for advanced AST parsing, disabled by default)
+  - Enable with: `cmake -DUSE_LLVM_CLANG=ON ..`
 
 ## Usage
 

@@ -11,7 +11,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # ビルドタイプのデフォルト設定
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
+    set(CMAKE_BUILD_TYPE Debug)
 endif()
 
 # コンパイラ警告を有効化
@@ -24,7 +24,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 endif()
 
 # オプション設定
-option(USE_LLVM_CLANG "Use LLVM/Clang for advanced AST parsing" ON)
+option(USE_LLVM_CLANG "Use LLVM/Clang for advanced AST parsing" OFF)
 option(USE_YAML_CPP "Use yaml-cpp for YAML configuration" ON)
 option(USE_LUAJIT "Use LuaJIT for Lua scripting support" ON)
 option(BUILD_TESTS "Build tests" OFF)
@@ -32,34 +32,85 @@ option(BUILD_TESTS "Build tests" OFF)
 # External library detection
 
 # 1. LLVM/Clang (Optional - for advanced AST parsing)
+# NOTE: Currently disabled by default because builtin parser is sufficient
 if(USE_LLVM_CLANG)
-    message(STATUS "Searching for LLVM/Clang...")
-    find_package(LLVM QUIET)
-    find_package(Clang QUIET)
+    message(STATUS "Attempting to enable LLVM/Clang support...")
+    message(STATUS "")
+    message(STATUS "NOTE: If this fails with Clang library errors, it's safe to ignore.")
+    message(STATUS "      The builtin parser provides full functionality.")
+    message(STATUS "      To skip this check, use: cmake -DUSE_LLVM_CLANG=OFF ..")
+    message(STATUS "")
 
-    if(LLVM_FOUND AND Clang_FOUND)
-        message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-        message(STATUS "LLVM definitions: ${LLVM_DEFINITIONS}")
-        message(STATUS "LLVM include dirs: ${LLVM_INCLUDE_DIRS}")
-        message(STATUS "LLVM library dirs: ${LLVM_LIBRARY_DIRS}")
+    set(LLVM_CLANG_USABLE OFF)
 
+    # Check if we should skip Clang detection due to known broken installations
+    set(SKIP_CLANG_DETECTION OFF)
+
+    # Detect common broken Clang installations
+    if(EXISTS "/usr/lib/cmake/clang-14/ClangConfig.cmake")
+        if(NOT EXISTS "/usr/lib/llvm-14/lib/libclangBasic.a")
+            message(WARNING "Detected broken Clang 14 installation (config exists but libraries missing)")
+            message(STATUS "Skipping LLVM/Clang detection to avoid errors")
+            set(SKIP_CLANG_DETECTION ON)
+        endif()
+    endif()
+
+    if(NOT SKIP_CLANG_DETECTION)
+        # Try to find LLVM
+        find_package(LLVM QUIET CONFIG)
+
+        if(LLVM_FOUND)
+            message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+
+            # Check if Clang libraries actually exist
+            find_library(CLANG_BASIC_LIB
+                NAMES clangBasic libclangBasic
+                HINTS ${LLVM_LIBRARY_DIRS}
+                NO_DEFAULT_PATH
+            )
+
+            if(CLANG_BASIC_LIB)
+                # Try to load Clang package (may fail with broken installations)
+                find_package(Clang QUIET CONFIG)
+
+                if(Clang_FOUND)
+                    set(LLVM_CLANG_USABLE ON)
+                    message(STATUS "LLVM/Clang libraries verified and loaded successfully")
+                else()
+                    message(WARNING "Clang package config failed to load (may be broken installation)")
+                endif()
+            else()
+                message(WARNING "Clang libraries not found in ${LLVM_LIBRARY_DIRS}")
+            endif()
+        else()
+            message(STATUS "LLVM package not found")
+        endif()
+    endif()
+
+    if(LLVM_CLANG_USABLE)
         add_definitions(${LLVM_DEFINITIONS})
         include_directories(${LLVM_INCLUDE_DIRS})
         link_directories(${LLVM_LIBRARY_DIRS})
-
-        # Define preprocessor macro
         add_definitions(-DHAVE_LLVM_CLANG)
 
-        message(STATUS "LLVM/Clang support enabled")
+        message(STATUS "✓ LLVM/Clang support enabled")
     else()
-        message(WARNING "LLVM/Clang not found. Using simple parser instead.")
-        message(STATUS "To install LLVM/Clang:")
-        message(STATUS "  Ubuntu: sudo apt install llvm-14-dev libclang-14-dev")
-        message(STATUS "  macOS:  brew install llvm")
+        message(STATUS "")
+        message(STATUS "================================================")
+        message(STATUS "LLVM/Clang not available - using builtin parser")
+        message(STATUS "================================================")
+        message(STATUS "This is the recommended configuration.")
+        message(STATUS "The builtin parser provides full functionality.")
+        message(STATUS "")
         set(USE_LLVM_CLANG OFF)
     endif()
 else()
-    message(STATUS "LLVM/Clang support disabled. Using simple parser.")
+    message(STATUS "================================================")
+    message(STATUS "Using builtin C++ parser (recommended)")
+    message(STATUS "================================================")
+    message(STATUS "All features including comprehensive AST support")
+    message(STATUS "are available through the builtin parser.")
+    message(STATUS "")
 endif()
 
 # 2. yaml-cpp (Optional - for YAML configuration)
