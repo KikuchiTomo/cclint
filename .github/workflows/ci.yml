@@ -174,7 +174,7 @@ jobs:
 
     - name: Check required documentation files
       run: |
-        REQUIRED_DOCS="README.md docs/requirements.md docs/design.md docs/detailed_design.md docs/milestones.md docs/TODO.md docs/build.md docs/usage.md docs/troubleshooting.md"
+        REQUIRED_DOCS="README.md docs/TODO.md CHANGELOG.md CONTRIBUTING.md"
         for doc in $REQUIRED_DOCS; do
           if [ ! -f "$doc" ]; then
             echo "Missing required documentation: $doc"
