@@ -24,7 +24,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 endif()
 
 # オプション設定
-option(USE_LLVM_CLANG "Use LLVM/Clang for advanced AST parsing" ON)
+option(USE_LLVM_CLANG "Use LLVM/Clang for advanced AST parsing" OFF)
 option(USE_YAML_CPP "Use yaml-cpp for YAML configuration" ON)
 option(USE_LUAJIT "Use LuaJIT for Lua scripting support" ON)
 option(BUILD_TESTS "Build tests" OFF)

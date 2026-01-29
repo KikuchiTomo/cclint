@@ -7,6 +7,11 @@ C++ linter with Lua-scriptable rules.
 ```bash
 git clone https://github.com/KikuchiTomo/cclint.git
 cd cclint
+
+# Simple build with make
+make build
+
+# Or manual build
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j$(nproc)
@@ -14,9 +19,13 @@ make -j$(nproc)
 
 **Requirements:**
 - CMake 3.16+
-- C++17 compiler
+- C++17 compiler (g++ or clang++)
 - LuaJIT 2.1+
 - yaml-cpp 0.7+
+
+**Optional:**
+- LLVM/Clang 14+ (for advanced AST parsing, disabled by default)
+  - Enable with: `cmake -DUSE_LLVM_CLANG=ON ..`
 
 ## Usage
 
