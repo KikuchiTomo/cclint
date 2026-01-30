@@ -45,8 +45,10 @@ std::vector<Token> Preprocessor::preprocess() {
     // In linter mode (default), don't process directives, just return tokens
     // The parser will skip directive tokens during parsing
     if (!expand_macros_ && !expand_includes_) {
-        // Use move to avoid copying large token vector
-        return std::move(tokens_);
+        // Swap with empty result to transfer ownership without copy
+        std::vector<Token> result;
+        result.swap(tokens_);
+        return result;
     }
 
     // Process tokens
