@@ -1,5 +1,7 @@
 #include "parser/builtin_parser.hpp"
 
+#include <iostream>
+
 namespace cclint {
 namespace parser {
 
