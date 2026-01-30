@@ -44,11 +44,16 @@ void Preprocessor::set_expand_macros(bool expand) {
 }
 
 std::vector<Token> Preprocessor::preprocess() {
+    std::cerr << "[DEBUG] Preprocessor::preprocess() start" << std::endl;
     // First, tokenize the source
+    std::cerr << "[DEBUG] Creating EnhancedLexer..." << std::endl;
     EnhancedLexer lexer(source_, filename_);
+    std::cerr << "[DEBUG] Calling tokenize()..." << std::endl;
     auto raw_tokens = lexer.tokenize();
+    std::cerr << "[DEBUG] tokenize() returned " << raw_tokens.size() << " tokens" << std::endl;
 
     if (lexer.has_errors()) {
+        std::cerr << "[DEBUG] Lexer has errors" << std::endl;
         for (const auto& err : lexer.errors()) {
             errors_.push_back(err);
         }
@@ -58,6 +63,7 @@ std::vector<Token> Preprocessor::preprocess() {
     // In linter mode (default), don't process directives, just return tokens
     // The parser will skip directive tokens during parsing
     if (!expand_macros_ && !expand_includes_) {
+        std::cerr << "[DEBUG] Linter mode, returning raw tokens" << std::endl;
         // Return directly - compiler will use NRVO/copy elision
         return raw_tokens;
     }
