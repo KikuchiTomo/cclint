@@ -4,6 +4,7 @@
 #include <ctime>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 
 #include "macro_expander.hpp"
@@ -28,7 +29,9 @@ Preprocessor::Preprocessor(const std::string& source, const std::string& filenam
     macro_expander_ = std::make_unique<MacroExpander>(macros_);
 }
 
-Preprocessor::~Preprocessor() = default;
+Preprocessor::~Preprocessor() {
+    std::cerr << "[DEBUG] Preprocessor destructor called" << std::endl;
+}
 
 std::vector<Token> Preprocessor::preprocess() {
     // First, tokenize the source

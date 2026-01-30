@@ -1,4 +1,6 @@
 #include "parser/builtin_parser.hpp"
+#include "utils/logger.hpp"
+#include <iostream>
 
 namespace cclint {
 namespace parser {
@@ -6,18 +8,23 @@ namespace parser {
 BuiltinParser::BuiltinParser(const std::string& source, const std::string& filename,
                              bool use_preprocessor)
     : filename_(filename.empty() ? "<stdin>" : filename) {
+    std::cerr << "[DEBUG] BuiltinParser constructor start" << std::endl;
     if (use_preprocessor) {
+        std::cerr << "[DEBUG] Creating Preprocessor object" << std::endl;
         // Use preprocessor for macro expansion and include processing
         Preprocessor preprocessor(source, filename);
+        std::cerr << "[DEBUG] Calling preprocess()" << std::endl;
         // Note: Preprocessor defaults to linter mode (no expansion)
         // For full parsing, you may want to enable expansion
         tokens_ = preprocessor.preprocess();
+        std::cerr << "[DEBUG] preprocess() returned " << tokens_.size() << " tokens" << std::endl;
 
         if (preprocessor.has_errors()) {
             for (const auto& error : preprocessor.errors()) {
                 errors_.push_back(error);
             }
         }
+        std::cerr << "[DEBUG] About to exit preprocessor scope" << std::endl;
     } else {
         // Direct lexing without preprocessing
         EnhancedLexer lexer(source, filename);
@@ -29,6 +36,7 @@ BuiltinParser::BuiltinParser(const std::string& source, const std::string& filen
             }
         }
     }
+    std::cerr << "[DEBUG] BuiltinParser constructor end, got " << tokens_.size() << " tokens" << std::endl;
 }
 
 std::shared_ptr<TranslationUnitNode> BuiltinParser::parse() {
