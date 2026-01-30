@@ -21,11 +21,11 @@ Preprocessor::Preprocessor(const std::string& source, const std::string& filenam
       expand_includes_(false),          // Default: don't expand includes
       expand_system_includes_(false) {  // Default: skip system headers
 
-    // Define predefined macros (temporarily simplified to avoid std::localtime issues)
+    // Define predefined macros
     define_predefined_macros();
 
-    // Create macro expander (temporarily disabled)
-    // // macro_expander_ = std::make_unique<MacroExpander>(macros_); // Temporarily disabled
+    // Create macro expander
+    macro_expander_ = std::make_unique<MacroExpander>(macros_);
 }
 
 Preprocessor::~Preprocessor() = default;
@@ -42,9 +42,16 @@ std::vector<Token> Preprocessor::preprocess() {
         return {};
     }
 
-    // In linter mode (default), just return tokens without preprocessing
+    // In linter mode (default), filter out preprocessor directives and return
     if (!expand_macros_ && !expand_includes_) {
-        return tokens_;
+        std::vector<Token> result;
+        for (const auto& token : tokens_) {
+            // Skip preprocessor directive tokens
+            if (token.type < TokenType::PPInclude || token.type > TokenType::PPLine) {
+                result.push_back(token);
+            }
+        }
+        return result;
     }
 
     // Process tokens
@@ -478,7 +485,7 @@ void Preprocessor::process_define() {
     macros_[macro.name] = macro;
 
     // Recreate macro expander with updated macros
-    // macro_expander_ = std::make_unique<MacroExpander>(macros_); // Temporarily disabled
+    macro_expander_ = std::make_unique<MacroExpander>(macros_);
 }
 
 void Preprocessor::process_undef() {
@@ -516,7 +523,7 @@ void Preprocessor::process_undef() {
     macros_.erase(name);
 
     // Recreate macro expander with updated macros
-    // macro_expander_ = std::make_unique<MacroExpander>(macros_); // Temporarily disabled
+    macro_expander_ = std::make_unique<MacroExpander>(macros_);
 }
 
 void Preprocessor::process_if() {
@@ -985,13 +992,6 @@ std::vector<Token> Preprocessor::read_until_newline() {
 }
 
 void Preprocessor::define_predefined_macros() {
-    // Temporarily disabled to avoid crashes
-    // TODO: Investigate and fix properly
-    return;
-
-    // Note: Define predefined macros minimally to avoid platform-specific issues
-    // Full implementation can be added later if needed for specific lint rules
-
     // __FILE__
     MacroDefinition file_macro;
     file_macro.name = "__FILE__";
