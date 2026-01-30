@@ -261,12 +261,58 @@ struct Token {
           has_whitespace_before(false),
           is_at_start_of_line(false) {}
 
-    // Explicitly defaulted copy/move constructors and assignment operators
-    // to ensure they work correctly across all platforms and optimization levels
-    Token(const Token&) = default;
-    Token(Token&&) = default;
-    Token& operator=(const Token&) = default;
-    Token& operator=(Token&&) = default;
+    // Explicitly implemented copy/move constructors to avoid platform-specific issues
+    Token(const Token& other)
+        : type(other.type),
+          text(other.text),
+          value(other.value),
+          filename(other.filename),
+          line(other.line),
+          column(other.column),
+          offset(other.offset),
+          has_whitespace_before(other.has_whitespace_before),
+          is_at_start_of_line(other.is_at_start_of_line) {}
+
+    Token(Token&& other) noexcept
+        : type(other.type),
+          text(std::move(other.text)),
+          value(std::move(other.value)),
+          filename(std::move(other.filename)),
+          line(other.line),
+          column(other.column),
+          offset(other.offset),
+          has_whitespace_before(other.has_whitespace_before),
+          is_at_start_of_line(other.is_at_start_of_line) {}
+
+    Token& operator=(const Token& other) {
+        if (this != &other) {
+            type = other.type;
+            text = other.text;
+            value = other.value;
+            filename = other.filename;
+            line = other.line;
+            column = other.column;
+            offset = other.offset;
+            has_whitespace_before = other.has_whitespace_before;
+            is_at_start_of_line = other.is_at_start_of_line;
+        }
+        return *this;
+    }
+
+    Token& operator=(Token&& other) noexcept {
+        if (this != &other) {
+            type = other.type;
+            text = std::move(other.text);
+            value = std::move(other.value);
+            filename = std::move(other.filename);
+            line = other.line;
+            column = other.column;
+            offset = other.offset;
+            has_whitespace_before = other.has_whitespace_before;
+            is_at_start_of_line = other.is_at_start_of_line;
+        }
+        return *this;
+    }
 };
 
 /// Convert token type to string (for debugging)
