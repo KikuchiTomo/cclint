@@ -22,11 +22,15 @@ Preprocessor::Preprocessor(const std::string& source, const std::string& filenam
       expand_includes_(false),          // Default: don't expand includes
       expand_system_includes_(false) {  // Default: skip system headers
 
+    std::cerr << "[DEBUG] Preprocessor constructor: before define_predefined_macros" << std::endl;
     // Define predefined macros
     define_predefined_macros();
+    std::cerr << "[DEBUG] Preprocessor constructor: after define_predefined_macros" << std::endl;
 
+    std::cerr << "[DEBUG] Preprocessor constructor: before MacroExpander creation" << std::endl;
     // Create macro expander
     macro_expander_ = std::make_unique<MacroExpander>(macros_);
+    std::cerr << "[DEBUG] Preprocessor constructor: after MacroExpander creation" << std::endl;
 }
 
 Preprocessor::~Preprocessor() {
@@ -34,9 +38,13 @@ Preprocessor::~Preprocessor() {
 }
 
 std::vector<Token> Preprocessor::preprocess() {
+    std::cerr << "[DEBUG] preprocess(): start" << std::endl;
     // First, tokenize the source
+    std::cerr << "[DEBUG] preprocess(): creating EnhancedLexer" << std::endl;
     EnhancedLexer lexer(source_, filename_);
+    std::cerr << "[DEBUG] preprocess(): calling lexer.tokenize()" << std::endl;
     auto raw_tokens = lexer.tokenize();
+    std::cerr << "[DEBUG] preprocess(): tokenize returned " << raw_tokens.size() << " tokens" << std::endl;
 
     if (lexer.has_errors()) {
         for (const auto& err : lexer.errors()) {
