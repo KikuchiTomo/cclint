@@ -1397,14 +1397,24 @@ void EnhancedLexer::add_error(const std::string& message) {
 }
 
 Token EnhancedLexer::make_token(TokenType type, const std::string& text) {
+    std::cerr << "[DEBUG] make_token: start, type=" << static_cast<int>(type) << " text='" << text << "'" << std::endl;
     Token token;
+    std::cerr << "[DEBUG] make_token: Token created" << std::endl;
     token.type = type;
+    std::cerr << "[DEBUG] make_token: type set" << std::endl;
     token.text = text;
+    std::cerr << "[DEBUG] make_token: text set" << std::endl;
     token.value = text;
+    std::cerr << "[DEBUG] make_token: value set" << std::endl;
     token.line = line_;
+    std::cerr << "[DEBUG] make_token: line set to " << line_ << std::endl;
     token.column = column_ - text.size();
+    std::cerr << "[DEBUG] make_token: column set to " << (column_ - text.size()) << std::endl;
     token.has_whitespace_before = had_whitespace_before_;
+    std::cerr << "[DEBUG] make_token: has_whitespace_before set" << std::endl;
     token.is_at_start_of_line = at_start_of_line_;
+    std::cerr << "[DEBUG] make_token: is_at_start_of_line set" << std::endl;
+    std::cerr << "[DEBUG] make_token: about to return" << std::endl;
     return token;
 }
 
