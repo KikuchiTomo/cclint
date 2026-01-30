@@ -32,8 +32,13 @@ std::vector<Token> EnhancedLexer::tokenize() {
         std::cerr << "[DEBUG] lex_token() returned successfully!" << std::endl;
         std::cerr << "[DEBUG] Token type: " << static_cast<int>(token.type) << std::endl;
         if (token.type != TokenType::Whitespace && token.type != TokenType::Newline) {
+            std::cerr << "[DEBUG] Setting filename..." << std::endl;
             token.filename = filename_;
+            std::cerr << "[DEBUG] Filename set, pushing to vector..." << std::endl;
             tokens.push_back(token);
+            std::cerr << "[DEBUG] Token pushed successfully" << std::endl;
+        } else {
+            std::cerr << "[DEBUG] Skipping whitespace/newline token" << std::endl;
         }
     }
 
