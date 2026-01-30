@@ -10,6 +10,8 @@ set(CCLINT_SOURCES
     parser/ast.cpp
     parser/lexer.cpp
     parser/builtin_parser.cpp
+    parser/token_types_enhanced.cpp
+    parser/enhanced_lexer.cpp
     diagnostic/diagnostic.cpp
     diagnostic/fixer.cpp
     output/formatter.cpp
@@ -54,6 +56,8 @@ set(CCLINT_LSP_SOURCES
     parser/ast.cpp
     parser/lexer.cpp
     parser/builtin_parser.cpp
+    parser/token_types_enhanced.cpp
+    parser/enhanced_lexer.cpp
     rules/rule_base.cpp
     rules/rule_registry.cpp
     rules/rule_executor.cpp
