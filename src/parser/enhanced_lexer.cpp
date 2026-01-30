@@ -21,6 +21,7 @@ EnhancedLexer::EnhancedLexer(const std::string& source, const std::string& filen
 
 std::vector<Token> EnhancedLexer::tokenize() {
     std::vector<Token> tokens;
+    tokens.reserve(source_.size() / 4);  // Rough estimate: 1 token per 4 characters
 
     while (!is_eof()) {
         Token token = lex_token();
@@ -36,7 +37,7 @@ std::vector<Token> EnhancedLexer::tokenize() {
     eof.filename = filename_;
     eof.line = line_;
     eof.column = column_;
-    tokens.push_back(eof);
+    tokens.push_back(std::move(eof));
 
     return tokens;
 }
