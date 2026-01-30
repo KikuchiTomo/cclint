@@ -1142,8 +1142,11 @@ Token EnhancedLexer::lex_operator() {
     }
 
     // Single-character operators
+    std::cerr << "[DEBUG] lex_operator: single-char section, c='" << c << "'" << std::endl;
     std::string text(1, c);
+    std::cerr << "[DEBUG] lex_operator: created text string" << std::endl;
     advance();
+    std::cerr << "[DEBUG] lex_operator: advanced" << std::endl;
 
     switch (c) {
         case '+':
