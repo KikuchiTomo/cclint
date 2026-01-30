@@ -245,6 +245,9 @@ struct Token {
 
     Token()
         : type(TokenType::Eof),
+          text(),
+          value(),
+          filename(),
           line(0),
           column(0),
           offset(0),
