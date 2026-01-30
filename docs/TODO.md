@@ -147,12 +147,25 @@
   - [x] TranslationUnit, Namespace, Class, Function, Variable等のノード
   - [x] SourcePosition によるソースコード位置追跡
 
-#### 簡易C++パーサー（独自実装）
+#### 完全C++パーサー（独自実装）
 - [x] lexer.hpp/cpp の作成
   - [x] トークン化（識別子、リテラル、キーワード、演算子）
   - [x] コメント処理
   - [x] プリプロセッサディレクティブ対応
-- [x] builtin_parser.hpp/cpp の作成
+- [x] enhanced_lexer.hpp/cpp の作成（Phase 1 完了）
+  - [x] 200+ token types（全C++構文サポート）
+  - [x] C++17/20/23 キーワード
+  - [x] 全演算子（spaceship operator含む）
+  - [x] リテラル（raw string, u8/u16/u32, user-defined）
+  - [x] UTF-8/16/32サポート
+- [x] preprocessor.hpp/cpp の作成（Phase 2 完了）
+  - [x] #include, #define, マクロ展開
+  - [x] 条件付きコンパイル (#if, #ifdef, etc.)
+  - [x] 定義済みマクロ (__FILE__, __LINE__, etc.)
+  - [x] 可変長マクロ
+  - [x] 文字列化 (#), トークン結合 (##)
+  - [x] Linter mode（マクロ名保持）
+- [x] builtin_parser.hpp/cpp の作成（Phase 3 完了）
   - [x] 再帰下降パーサーの実装
   - [x] namespace, class, struct, enum の解析
   - [x] 関数/メソッド定義の解析
@@ -160,9 +173,42 @@
   - [x] エラーリカバリ機能
   - [x] EnhancedLexer統合（200+ token types）
   - [x] Preprocessor統合（linter mode対応）
+  - [x] **式パーサー（優先順位対応）**
+    - [x] 全演算子サポート（代入、三項、論理、比較、算術、単項）
+    - [x] キャスト演算子（static_cast等）
+    - [x] 後置式（配列添字、関数呼び出し、メンバアクセス）
+    - [x] 一次式（リテラル、識別子、括弧式、ラムダ、this）
+  - [x] **文パーサー（制御フロー完全対応）**
+    - [x] 複合文、if文（if constexpr含む）
+    - [x] switch文、for文（範囲for含む）
+    - [x] while文、do-while文
+    - [x] return文、try-catch文
+    - [x] break, continue, goto文
+- [x] semantic_analyzer.hpp/cpp の作成（Phase 4 完了）
+  - [x] **シンボルテーブル**
+    - [x] スコープ管理（global, namespace, class, function）
+    - [x] 名前検索（local, parent, qualified）
+    - [x] シンボル種別（変数、関数、クラス等）
+  - [x] **型システム**
+    - [x] 組み込み型（void, bool, int等）
+    - [x] 複合型（pointer, reference, array, function）
+    - [x] ユーザ定義型（class, enum）
+    - [x] CV修飾子（const, volatile, mutable）
+    - [x] 型変換チェック
+  - [x] **セマンティック解析**
+    - [x] AST走査
+    - [x] シンボル登録
+    - [x] 型解決
+    - [x] AnalysisEngine統合
+- [x] Phase 5-8 開始（進行中）
+  - [x] AnalysisEngine統合
+  - [x] セマンティック解析パイプライン
+  - [ ] 拡張AST（型アノテーション）
+  - [ ] エラーリカバリ強化
+  - [ ] パフォーマンス最適化
 - [ ] 単体テスト（tests/parser/test_builtin_parser.cpp）
 
-注: LLVM/Clangではなく独自の簡易パーサーを実装
+注: LLVM/Clangに依存しない完全な独自パーサー（~6200行実装）
 
 ### 5. Diagnostic Module (src/diagnostic/)
 
