@@ -22,11 +22,15 @@ Preprocessor::Preprocessor(const std::string& source, const std::string& filenam
       expand_includes_(false),         // Default: don't expand includes
       expand_system_includes_(false),  // Default: skip system headers
       predefined_macros_initialized_(false) {
+    std::cerr << "[DEBUG] Preprocessor constructor: start" << std::endl;
     // Don't define predefined macros yet - defer until needed
     // This avoids initialization issues in linter mode where macros aren't expanded
 
+    std::cerr << "[DEBUG] Preprocessor constructor: creating MacroExpander" << std::endl;
     // Create macro expander (it will be initialized with macros later if needed)
     macro_expander_ = std::make_unique<MacroExpander>(macros_);
+    std::cerr << "[DEBUG] Preprocessor constructor: MacroExpander created" << std::endl;
+    std::cerr << "[DEBUG] Preprocessor constructor: end" << std::endl;
 }
 
 Preprocessor::~Preprocessor() = default;
