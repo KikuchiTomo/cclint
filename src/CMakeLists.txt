@@ -68,6 +68,8 @@ set(CCLINT_LSP_SOURCES
     semantic/symbol_table.cpp
     semantic/type_system.cpp
     semantic/semantic_analyzer.cpp
+    parser/error_recovery.cpp
+    parser/parser_performance.cpp
     rules/rule_base.cpp
     rules/rule_registry.cpp
     rules/rule_executor.cpp

@@ -93,6 +93,26 @@ void SemanticAnalyzer::analyze_class(std::shared_ptr<parser::ClassNode> node) {
     // クラス型を作成
     auto class_type = type_system_->create_class_type(node->name);
 
+    // ASTノードにセマンティック情報を設定
+    node->resolved_type_name = node->name;
+    node->defining_scope = symbol_table_->current_scope()->name();
+    node->is_type_checked = true;
+    node->is_semantically_valid = true;
+
+    // 基底クラスの型を解決
+    for (const auto& base : node->base_classes) {
+        auto base_type = type_system_->resolve_type(base.base_class_name);
+        if (base_type && base_type->kind() == TypeKind::Class) {
+            auto base_class_type = std::dynamic_pointer_cast<ClassType>(base_type);
+            if (base_class_type) {
+                class_type->add_base(base_class_type);
+            }
+        } else {
+            // 基底クラスが見つからない
+            add_error("Class '" + node->name + "': Base class '" + base.base_class_name + "' not found");
+        }
+    }
+
     // クラスのスコープに入る
     symbol_table_->enter_scope(node->name);
 
@@ -116,6 +136,18 @@ void SemanticAnalyzer::analyze_function(std::shared_ptr<parser::FunctionNode> no
     symbol->is_virtual = node->is_virtual;
 
     symbol_table_->add_symbol(node->name, symbol);
+
+    // ASTノードにセマンティック情報を設定
+    node->resolved_type_name = node->return_type;
+    node->defining_scope = symbol_table_->current_scope()->name();
+    node->is_const_type = node->is_const;
+    node->is_type_checked = true;
+
+    // 戻り値型を解決
+    auto return_type = type_system_->resolve_type(node->return_type);
+    if (return_type) {
+        node->is_const_type = return_type->is_const();
+    }
 
     // 関数のスコープに入る
     symbol_table_->enter_scope(node->name);
@@ -142,10 +174,29 @@ void SemanticAnalyzer::analyze_variable(std::shared_ptr<parser::VariableNode> no
 
     symbol_table_->add_symbol(node->name, symbol);
 
+    // ASTノードにセマンティック情報を設定
+    node->resolved_type_name = node->type_name;
+    node->defining_scope = symbol_table_->current_scope()->name();
+    node->is_const_type = node->is_const;
+    node->is_type_checked = true;
+
     // 型を解決
     auto resolved_type = resolve_type_from_string(node->type_name);
-    // 型情報をASTに付加（拡張ASTの場合）
-    // node->resolved_type = resolved_type;
+    if (resolved_type) {
+        // 型の詳細情報をASTに反映
+        node->is_const_type = resolved_type->is_const();
+        node->is_semantically_valid = true;
+
+        // constexpr変数の場合、定数値を評価（将来の拡張）
+        if (node->is_constexpr) {
+            // TODO: constexpr evaluator を実装
+        }
+    } else {
+        // 型解決失敗
+        node->is_semantically_valid = false;
+        node->semantic_error = "Failed to resolve type: " + node->type_name;
+        add_error("Variable '" + node->name + "': " + node->semantic_error);
+    }
 }
 
 void SemanticAnalyzer::add_error(const std::string& message) {

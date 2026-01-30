@@ -114,6 +114,35 @@ public:
 
     // ノードタイプを文字列で取得
     std::string get_type_name() const;
+
+    // ========== セマンティック情報（解析時に段階的に設定） ==========
+    // Phase 4以降で使用。パーサーは空のままASTを構築し、
+    // SemanticAnalyzerが後から情報を埋める。
+
+    /// 解決された型名（型システムで解決後）
+    std::string resolved_type_name;
+
+    /// この型がconst修飾されているか
+    bool is_const_type = false;
+
+    /// この型がvolatile修飾されているか
+    bool is_volatile_type = false;
+
+    /// このノードが型チェック済みか
+    bool is_type_checked = false;
+
+    /// このノードが有効（パース/セマンティックエラーなし）か
+    bool is_semantically_valid = true;
+
+    /// 定数値（constexpr評価後、整数型のみ）
+    int64_t constant_int_value = 0;
+    bool has_constant_int_value = false;
+
+    /// シンボルが定義されているスコープ名（名前解決後）
+    std::string defining_scope;
+
+    /// セマンティックエラーメッセージ（エラー時のみ）
+    std::string semantic_error;
 };
 
 /// 翻訳単位（ファイル全体）
