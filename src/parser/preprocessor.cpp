@@ -1034,12 +1034,29 @@ void Preprocessor::define_predefined_macros() {
     };
 
     // Define standard macros
+    std::cerr << "[DEBUG] define_predefined_macros: before __FILE__" << std::endl;
     create_string_macro("__FILE__", "\"" + filename_ + "\"");
+    std::cerr << "[DEBUG] define_predefined_macros: after __FILE__" << std::endl;
+
+    std::cerr << "[DEBUG] define_predefined_macros: before __LINE__" << std::endl;
     create_int_macro("__LINE__", "1");
+    std::cerr << "[DEBUG] define_predefined_macros: after __LINE__" << std::endl;
+
+    std::cerr << "[DEBUG] define_predefined_macros: before __DATE__" << std::endl;
     create_string_macro("__DATE__", "\"??? ?? ????\"");
+    std::cerr << "[DEBUG] define_predefined_macros: after __DATE__" << std::endl;
+
+    std::cerr << "[DEBUG] define_predefined_macros: before __TIME__" << std::endl;
     create_string_macro("__TIME__", "\"??:??:??\"");
+    std::cerr << "[DEBUG] define_predefined_macros: after __TIME__" << std::endl;
+
+    std::cerr << "[DEBUG] define_predefined_macros: before __cplusplus" << std::endl;
     create_int_macro("__cplusplus", "201703L");
+    std::cerr << "[DEBUG] define_predefined_macros: after __cplusplus" << std::endl;
+
+    std::cerr << "[DEBUG] define_predefined_macros: before __STDC_HOSTED__" << std::endl;
     create_int_macro("__STDC_HOSTED__", "1");
+    std::cerr << "[DEBUG] define_predefined_macros: after __STDC_HOSTED__" << std::endl;
 }
 
 void Preprocessor::error(const std::string& message) {
