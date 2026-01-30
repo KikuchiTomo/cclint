@@ -33,7 +33,7 @@ Preprocessor::~Preprocessor() = default;
 std::vector<Token> Preprocessor::preprocess() {
     // First, tokenize the source
     EnhancedLexer lexer(source_, filename_);
-    tokens_ = lexer.tokenize();
+    auto raw_tokens = lexer.tokenize();
 
     if (lexer.has_errors()) {
         for (const auto& err : lexer.errors()) {
@@ -45,11 +45,12 @@ std::vector<Token> Preprocessor::preprocess() {
     // In linter mode (default), don't process directives, just return tokens
     // The parser will skip directive tokens during parsing
     if (!expand_macros_ && !expand_includes_) {
-        // Swap with empty result to transfer ownership without copy
-        std::vector<Token> result;
-        result.swap(tokens_);
-        return result;
+        // Return directly - compiler will use NRVO/copy elision
+        return raw_tokens;
     }
+
+    // For full preprocessing mode, store tokens in member variable
+    tokens_ = std::move(raw_tokens);
 
     // Process tokens
     current_index_ = 0;
