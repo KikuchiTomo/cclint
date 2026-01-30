@@ -258,6 +258,7 @@ struct Token {
         : type(t),
           text(txt),
           value(txt),
+          filename(),
           line(l),
           column(c),
           offset(0),
