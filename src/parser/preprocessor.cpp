@@ -21,7 +21,7 @@ Preprocessor::Preprocessor(const std::string& source, const std::string& filenam
       expand_includes_(false),          // Default: don't expand includes
       expand_system_includes_(false) {  // Default: skip system headers
 
-    // Define predefined macros
+    // Define predefined macros (temporarily simplified to avoid std::localtime issues)
     define_predefined_macros();
 
     // Create macro expander
@@ -968,6 +968,9 @@ std::vector<Token> Preprocessor::read_until_newline() {
 }
 
 void Preprocessor::define_predefined_macros() {
+    // Note: Define predefined macros minimally to avoid platform-specific issues
+    // Full implementation can be added later if needed for specific lint rules
+
     // __FILE__
     MacroDefinition file_macro;
     file_macro.name = "__FILE__";
@@ -992,35 +995,27 @@ void Preprocessor::define_predefined_macros() {
     line_macro.replacement_tokens.push_back(line_token);
     macros_["__LINE__"] = line_macro;
 
-    // __DATE__
-    std::time_t t = std::time(nullptr);
-    std::tm* tm = std::localtime(&t);
-    char date_buf[12];
-    std::strftime(date_buf, sizeof(date_buf), "%b %d %Y", tm);
-
+    // __DATE__ - Use default value for stability
     MacroDefinition date_macro;
     date_macro.name = "__DATE__";
     date_macro.is_function_like = false;
     date_macro.is_variadic = false;
     Token date_token;
     date_token.type = TokenType::StringLiteral;
-    date_token.text = "\"" + std::string(date_buf) + "\"";
-    date_token.value = "\"" + std::string(date_buf) + "\"";
+    date_token.text = "\"??? ?? ????\"";  // Standard placeholder
+    date_token.value = "\"??? ?? ????\"";
     date_macro.replacement_tokens.push_back(date_token);
     macros_["__DATE__"] = date_macro;
 
-    // __TIME__
-    char time_buf[9];
-    std::strftime(time_buf, sizeof(time_buf), "%H:%M:%S", tm);
-
+    // __TIME__ - Use default value for stability
     MacroDefinition time_macro;
     time_macro.name = "__TIME__";
     time_macro.is_function_like = false;
     time_macro.is_variadic = false;
     Token time_token;
     time_token.type = TokenType::StringLiteral;
-    time_token.text = "\"" + std::string(time_buf) + "\"";
-    time_token.value = "\"" + std::string(time_buf) + "\"";
+    time_token.text = "\"??:??:??\"";  // Standard placeholder
+    time_token.value = "\"??:??:??\"";
     time_macro.replacement_tokens.push_back(time_token);
     macros_["__TIME__"] = time_macro;
 

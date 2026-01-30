@@ -45,16 +45,18 @@ std::shared_ptr<Scope> Scope::create_child(const std::string& name) {
 SymbolTable::SymbolTable() {
     global_scope_ = std::make_shared<Scope>(nullptr, "global");
     current_scope_ = global_scope_;
+    scope_stack_.push_back(global_scope_);
 }
 
 void SymbolTable::enter_scope(const std::string& name) {
     current_scope_ = current_scope_->create_child(name);
+    scope_stack_.push_back(current_scope_);
 }
 
 void SymbolTable::exit_scope() {
-    if (current_scope_->parent()) {
-        current_scope_ =
-            std::make_shared<Scope>(current_scope_->parent(), current_scope_->parent()->name());
+    if (scope_stack_.size() > 1) {
+        scope_stack_.pop_back();
+        current_scope_ = scope_stack_.back();
     }
 }
 

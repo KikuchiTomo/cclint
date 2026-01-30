@@ -224,6 +224,11 @@ void BuiltinParser::parse_toplevel(TranslationUnitNode& root) {
     auto node = parse_function_or_variable();
     if (node) {
         root.children.push_back(node);
+    } else {
+        // パースに失敗した場合、無限ループを避けるため次のトークンに進む
+        if (!check(TokenType::Eof)) {
+            advance();
+        }
     }
 }
 
@@ -277,6 +282,11 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_namespace() {
 
         if (child) {
             node->children.push_back(child);
+        } else {
+            // パースに失敗した場合、無限ループを避けるため次のトークンに進む
+            if (!check(TokenType::RightBrace) && !check(TokenType::Eof)) {
+                advance();
+            }
         }
     }
 

@@ -107,6 +107,7 @@ public:
 private:
     std::shared_ptr<Scope> global_scope_;
     std::shared_ptr<Scope> current_scope_;
+    std::vector<std::shared_ptr<Scope>> scope_stack_;  // スコープスタック
 };
 
 }  // namespace semantic
