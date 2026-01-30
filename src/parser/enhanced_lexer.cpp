@@ -136,6 +136,7 @@ bool EnhancedLexer::is_identifier_continue(char c) const {
 // ========== Token lexing ==========
 
 Token EnhancedLexer::lex_token() {
+    std::cerr << "[DEBUG] lex_token: start, pos=" << pos_ << " char='" << current() << "' (" << static_cast<int>(current()) << ")" << std::endl;
     had_whitespace_before_ = false;
 
     // Skip whitespace
@@ -144,13 +145,17 @@ Token EnhancedLexer::lex_token() {
         had_whitespace_before_ = true;
     }
 
+    std::cerr << "[DEBUG] lex_token: after whitespace skip, pos=" << pos_ << std::endl;
+
     if (is_newline(current())) {
+        std::cerr << "[DEBUG] lex_token: found newline" << std::endl;
         char c = current();
         advance();
         return make_token(TokenType::Newline, std::string(1, c));
     }
 
     if (is_eof()) {
+        std::cerr << "[DEBUG] lex_token: at EOF" << std::endl;
         return make_token(TokenType::Eof, "");
     }
 
@@ -158,6 +163,7 @@ Token EnhancedLexer::lex_token() {
     int start_column = column_;
 
     char c = current();
+    std::cerr << "[DEBUG] lex_token: lexing char '" << c << "' at line=" << line_ << " col=" << column_ << std::endl;
 
     // Comments
     if (c == '/') {
