@@ -1148,46 +1148,67 @@ Token EnhancedLexer::lex_operator() {
     advance();
     std::cerr << "[DEBUG] lex_operator: advanced" << std::endl;
 
+    std::cerr << "[DEBUG] lex_operator: entering switch, c='" << c << "' (" << static_cast<int>(c) << ")" << std::endl;
     switch (c) {
         case '+':
+            std::cerr << "[DEBUG] case '+'" << std::endl;
             return make_token(TokenType::Plus, text);
         case '-':
+            std::cerr << "[DEBUG] case '-'" << std::endl;
             return make_token(TokenType::Minus, text);
         case '*':
+            std::cerr << "[DEBUG] case '*'" << std::endl;
             return make_token(TokenType::Star, text);
         case '/':
+            std::cerr << "[DEBUG] case '/'" << std::endl;
             return make_token(TokenType::Slash, text);
         case '%':
+            std::cerr << "[DEBUG] case '%'" << std::endl;
             return make_token(TokenType::Percent, text);
         case '<':
+            std::cerr << "[DEBUG] case '<'" << std::endl;
             return make_token(TokenType::Less, text);
         case '>':
+            std::cerr << "[DEBUG] case '>'" << std::endl;
             return make_token(TokenType::Greater, text);
         case '!':
+            std::cerr << "[DEBUG] case '!'" << std::endl;
             return make_token(TokenType::LogicalNot, text);
         case '&':
+            std::cerr << "[DEBUG] case '&'" << std::endl;
             return make_token(TokenType::Ampersand, text);
         case '|':
+            std::cerr << "[DEBUG] case '|'" << std::endl;
             return make_token(TokenType::Pipe, text);
         case '^':
+            std::cerr << "[DEBUG] case '^'" << std::endl;
             return make_token(TokenType::Caret, text);
         case '~':
+            std::cerr << "[DEBUG] case '~'" << std::endl;
             return make_token(TokenType::Tilde, text);
         case '=':
+            std::cerr << "[DEBUG] case '='" << std::endl;
             return make_token(TokenType::Assign, text);
         case '.':
+            std::cerr << "[DEBUG] case '.'" << std::endl;
             return make_token(TokenType::Dot, text);
         case '?':
+            std::cerr << "[DEBUG] case '?'" << std::endl;
             return make_token(TokenType::Question, text);
         case ':':
+            std::cerr << "[DEBUG] case ':'" << std::endl;
             return make_token(TokenType::Colon, text);
         case ';':
+            std::cerr << "[DEBUG] case ';'" << std::endl;
             return make_token(TokenType::Semicolon, text);
         case ',':
+            std::cerr << "[DEBUG] case ','" << std::endl;
             return make_token(TokenType::Comma, text);
         case '(':
+            std::cerr << "[DEBUG] case '('" << std::endl;
             return make_token(TokenType::LeftParen, text);
         case ')':
+            std::cerr << "[DEBUG] case ')'" << std::endl;
             return make_token(TokenType::RightParen, text);
         case '{':
             return make_token(TokenType::LeftBrace, text);
