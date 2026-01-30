@@ -171,7 +171,8 @@ FileAnalysisResult AnalysisEngine::analyze_file(const std::string& file_path) {
             file_path.find(".h") != std::string::npos) {
             try {
                 utils::Logger::instance().debug("Starting AST parsing for " + file_path);
-                parser::BuiltinParser parser(content, file_path);
+                // Disable preprocessor temporarily to avoid issues
+                parser::BuiltinParser parser(content, file_path, false);
                 auto ast = parser.parse();
 
                 if (parser.has_errors()) {

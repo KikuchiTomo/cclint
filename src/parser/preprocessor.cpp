@@ -64,7 +64,13 @@ std::vector<Token> Preprocessor::preprocess() {
 
         // Process preprocessor directives
         if (token.type >= TokenType::PPInclude && token.type <= TokenType::PPLine) {
-            process_directive();
+            // In linter mode (default), skip most directives except conditional compilation
+            if (!expand_macros_ && !expand_includes_) {
+                // Skip directive in linter mode (just advance past it)
+                advance();
+            } else {
+                process_directive();
+            }
         } else if (token.type == TokenType::Eof) {
             result.push_back(token);
             break;
@@ -212,7 +218,15 @@ void Preprocessor::process_directive() {
 }
 
 void Preprocessor::process_include() {
-    const auto& directive_token = current();
+    // Check if we should expand includes (check early to avoid unnecessary processing)
+    if (!expand_includes_) {
+        // Don't expand includes in linter mode (skip directive)
+        advance();  // Skip #include token
+        return;
+    }
+
+    // Copy token before advancing
+    Token directive_token = current();
     advance();  // Skip #include
 
     // Parse the directive text (e.g., "#include <iostream>" or "#include \"file.h\"")
@@ -264,12 +278,6 @@ void Preprocessor::process_include() {
         return;
     }
 
-    // Check if we should expand includes
-    if (!expand_includes_) {
-        // Don't expand includes in linter mode (keep #include directive as-is)
-        return;
-    }
-
     // Check if we should skip system includes
     if (is_system && !expand_system_includes_) {
         // Skip system includes to avoid expanding standard library
@@ -302,7 +310,8 @@ void Preprocessor::process_include() {
 }
 
 void Preprocessor::process_define() {
-    const auto& directive_token = current();
+    // Copy token before advancing
+    Token directive_token = current();
     advance();  // Skip #define
 
     // Parse the directive text (e.g., "#define MAX 100")
