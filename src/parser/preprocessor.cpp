@@ -42,16 +42,11 @@ std::vector<Token> Preprocessor::preprocess() {
         return {};
     }
 
-    // In linter mode (default), filter out preprocessor directives and return
+    // In linter mode (default), don't process directives, just return tokens
+    // The parser will skip directive tokens during parsing
     if (!expand_macros_ && !expand_includes_) {
-        std::vector<Token> result;
-        for (const auto& token : tokens_) {
-            // Skip preprocessor directive tokens
-            if (token.type < TokenType::PPInclude || token.type > TokenType::PPLine) {
-                result.push_back(token);
-            }
-        }
-        return result;
+        // Use move to avoid copying large token vector
+        return std::move(tokens_);
     }
 
     // Process tokens
@@ -457,7 +452,6 @@ void Preprocessor::process_define() {
 
             // For other tokens, collect a chunk and use lexer
             std::string chunk;
-            size_t start = i;
 
             // Collect until we hit # or whitespace
             while (i < replacement.size() && !std::isspace(replacement[i]) &&
@@ -992,77 +986,46 @@ std::vector<Token> Preprocessor::read_until_newline() {
 }
 
 void Preprocessor::define_predefined_macros() {
-    // __FILE__
-    MacroDefinition file_macro;
-    file_macro.name = "__FILE__";
-    file_macro.is_function_like = false;
-    file_macro.is_variadic = false;
-    Token file_token;
-    file_token.type = TokenType::StringLiteral;
-    file_token.text = "\"" + filename_ + "\"";
-    file_token.value = "\"" + filename_ + "\"";
-    file_macro.replacement_tokens.push_back(file_token);
-    macros_["__FILE__"] = file_macro;
+    // Helper lambda to create a macro
+    auto create_string_macro = [this](const std::string& name, const std::string& value) {
+        MacroDefinition macro;
+        macro.name = name;
+        macro.is_function_like = false;
+        macro.is_variadic = false;
+        macro.filename = filename_;
+        macro.line = 0;
 
-    // __LINE__
-    MacroDefinition line_macro;
-    line_macro.name = "__LINE__";
-    line_macro.is_function_like = false;
-    line_macro.is_variadic = false;
-    Token line_token;
-    line_token.type = TokenType::IntegerLiteral;
-    line_token.text = "1";
-    line_token.value = "1";
-    line_macro.replacement_tokens.push_back(line_token);
-    macros_["__LINE__"] = line_macro;
+        Token token(TokenType::StringLiteral, value, 0, 0);
+        token.value = value;
+        token.filename = filename_;
+        macro.replacement_tokens.push_back(token);
 
-    // __DATE__ - Use default value for stability
-    MacroDefinition date_macro;
-    date_macro.name = "__DATE__";
-    date_macro.is_function_like = false;
-    date_macro.is_variadic = false;
-    Token date_token;
-    date_token.type = TokenType::StringLiteral;
-    date_token.text = "\"??? ?? ????\"";  // Standard placeholder
-    date_token.value = "\"??? ?? ????\"";
-    date_macro.replacement_tokens.push_back(date_token);
-    macros_["__DATE__"] = date_macro;
+        macros_.emplace(name, std::move(macro));
+    };
 
-    // __TIME__ - Use default value for stability
-    MacroDefinition time_macro;
-    time_macro.name = "__TIME__";
-    time_macro.is_function_like = false;
-    time_macro.is_variadic = false;
-    Token time_token;
-    time_token.type = TokenType::StringLiteral;
-    time_token.text = "\"??:??:??\"";  // Standard placeholder
-    time_token.value = "\"??:??:??\"";
-    time_macro.replacement_tokens.push_back(time_token);
-    macros_["__TIME__"] = time_macro;
+    auto create_int_macro = [this](const std::string& name, const std::string& value) {
+        MacroDefinition macro;
+        macro.name = name;
+        macro.is_function_like = false;
+        macro.is_variadic = false;
+        macro.filename = filename_;
+        macro.line = 0;
 
-    // __cplusplus
-    MacroDefinition cplusplus_macro;
-    cplusplus_macro.name = "__cplusplus";
-    cplusplus_macro.is_function_like = false;
-    cplusplus_macro.is_variadic = false;
-    Token cplusplus_token;
-    cplusplus_token.type = TokenType::IntegerLiteral;
-    cplusplus_token.text = "201703L";  // C++17
-    cplusplus_token.value = "201703L";
-    cplusplus_macro.replacement_tokens.push_back(cplusplus_token);
-    macros_["__cplusplus"] = cplusplus_macro;
+        Token token(TokenType::IntegerLiteral, value, 0, 0);
+        token.value = value;
+        token.filename = filename_;
+        macro.replacement_tokens.push_back(token);
 
-    // __STDC_HOSTED__
-    MacroDefinition stdc_hosted_macro;
-    stdc_hosted_macro.name = "__STDC_HOSTED__";
-    stdc_hosted_macro.is_function_like = false;
-    stdc_hosted_macro.is_variadic = false;
-    Token stdc_hosted_token;
-    stdc_hosted_token.type = TokenType::IntegerLiteral;
-    stdc_hosted_token.text = "1";
-    stdc_hosted_token.value = "1";
-    stdc_hosted_macro.replacement_tokens.push_back(stdc_hosted_token);
-    macros_["__STDC_HOSTED__"] = stdc_hosted_macro;
+        macros_.emplace(name, std::move(macro));
+    };
+
+    // Define standard macros
+    create_string_macro("__FILE__", "\"" + filename_ + "\"");
+    create_int_macro("__LINE__", "1");
+    create_string_macro("__DATE__", "\"??? ?? ????\"");
+    create_string_macro("__TIME__", "\"??:??:??\"");
+    create_int_macro("__cplusplus", "201703L");
+    create_int_macro("__STDC_HOSTED__", "1");
 }
 
 void Preprocessor::error(const std::string& message) {
