@@ -200,13 +200,15 @@
     - [x] シンボル登録
     - [x] 型解決
     - [x] AnalysisEngine統合
-- [x] Phase 5-8 開始（進行中）
+- [x] Phase 5-8 完了
   - [x] AnalysisEngine統合
   - [x] セマンティック解析パイプライン
-  - [ ] 拡張AST（型アノテーション）
-  - [ ] エラーリカバリ強化
-  - [ ] パフォーマンス最適化
-- [ ] 単体テスト（tests/parser/test_builtin_parser.cpp）
+  - [x] 統合AST設計（セマンティック情報を直接ASTNodeに追加）
+  - [x] エラーリカバリシステム（error_recovery.hpp/cpp）
+  - [x] パフォーマンスモニタリング（parser_performance.hpp/cpp）
+  - [x] 単体テスト作成・実行（test_expression_parser, test_statement_parser）
+    - [x] 式パーサーテスト（7/7 passed）
+    - [x] 文パーサーテスト（5/5 passed）
 
 注: LLVM/Clangに依存しない完全な独自パーサー（~6200行実装）
 
