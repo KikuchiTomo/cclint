@@ -26,6 +26,7 @@ int x = MAX;
 )";
 
     Preprocessor pp(code, "test.cpp");
+    pp.set_expand_macros(true);  // Enable macro expansion for testing
     auto tokens = pp.preprocess();
 
     // Should expand MAX to 100
@@ -42,6 +43,7 @@ int result = ADD(1, 2);
 )";
 
     Preprocessor pp(code, "test.cpp");
+    pp.set_expand_macros(true);  // Enable macro expansion for testing
     auto tokens = pp.preprocess();
 
     // Should expand ADD(1, 2) to ((1) + (2))
@@ -61,6 +63,7 @@ int result = CUBE(3);
 )";
 
     Preprocessor pp(code, "test.cpp");
+    pp.set_expand_macros(true);  // Enable macro expansion for testing
     auto tokens = pp.preprocess();
 
     // Should expand CUBE(3) to ((3) * ((3) * (3)))
@@ -78,6 +81,7 @@ const char* str = STRINGIFY(hello world);
 )";
 
     Preprocessor pp(code, "test.cpp");
+    pp.set_expand_macros(true);  // Enable macro expansion for testing
     auto tokens = pp.preprocess();
 
     // Should stringify to "hello world"
@@ -100,6 +104,7 @@ int CONCAT(var, 123) = 456;
 )";
 
     Preprocessor pp(code, "test.cpp");
+    pp.set_expand_macros(true);  // Enable macro expansion for testing
     auto tokens = pp.preprocess();
 
     // Should paste to var123
@@ -115,6 +120,7 @@ LOG("Value: %d\n", 42);
 )";
 
     Preprocessor pp(code, "test.cpp");
+    pp.set_expand_macros(true);  // Enable macro expansion for testing
     auto tokens = pp.preprocess();
 
     // Should expand to printf("Value: %d\n", 42)
@@ -135,6 +141,7 @@ int debug_mode = 0;
 )";
 
     Preprocessor pp(code, "test.cpp");
+    pp.set_expand_macros(true);  // Enable macro expansion for testing
     auto tokens = pp.preprocess();
 
     // Should include "debug_mode = 1"
@@ -154,6 +161,7 @@ int debug_mode = 0;
 )";
 
     Preprocessor pp(code, "test.cpp");
+    pp.set_expand_macros(true);  // Enable macro expansion for testing
     auto tokens = pp.preprocess();
 
     // RELEASE is not defined, so should include "debug_mode = 1"
@@ -172,6 +180,7 @@ int x = VALUE;
 )";
 
     Preprocessor pp(code, "test.cpp");
+    pp.set_expand_macros(true);  // Enable macro expansion for testing
     auto tokens = pp.preprocess();
 
     // Should include "int x = VALUE" and expand VALUE to 5
@@ -194,6 +203,7 @@ int mode = 3;
 )";
 
     Preprocessor pp(code, "test.cpp");
+    pp.set_expand_macros(true);  // Enable macro expansion for testing
     auto tokens = pp.preprocess();
 
     // Should include "int mode = 2" (but condition evaluation is simplified)
@@ -211,6 +221,7 @@ int x = TEMP;
 )";
 
     Preprocessor pp(code, "test.cpp");
+    pp.set_expand_macros(true);  // Enable macro expansion for testing
     auto tokens = pp.preprocess();
 
     // TEMP should not be expanded after #undef
@@ -228,6 +239,7 @@ int cpp_version = __cplusplus;
 )";
 
     Preprocessor pp(code, "test.cpp");
+    pp.set_expand_macros(true);  // Enable macro expansion for testing
     auto tokens = pp.preprocess();
 
     // Should expand predefined macros
@@ -246,6 +258,7 @@ int x = FOO;
 )";
 
     Preprocessor pp(code, "test.cpp");
+    pp.set_expand_macros(true);  // Enable macro expansion for testing
     auto tokens = pp.preprocess();
 
     // Should not infinitely recurse
@@ -262,6 +275,7 @@ int x = MAX;
 
     Preprocessor pp(code, "test.cpp");
     pp.define_macro("MAX=200");
+    pp.set_expand_macros(true);  // Enable macro expansion for testing
     auto tokens = pp.preprocess();
 
     // Should expand MAX to 200
@@ -278,6 +292,7 @@ int x = EMPTY 123;
 )";
 
     Preprocessor pp(code, "test.cpp");
+    pp.set_expand_macros(true);  // Enable macro expansion for testing
     auto tokens = pp.preprocess();
 
     // EMPTY should expand to nothing
@@ -293,9 +308,81 @@ void test_multiline_macro() {
     std::cout << "✓ Multiline macro test skipped (requires line continuation support)\n";
 }
 
+void test_linter_mode_no_macro_expansion() {
+    std::string code = R"(
+#define MAX 100
+#define MIN 0
+int x = MAX;
+int y = MIN;
+)";
+
+    Preprocessor pp(code, "test.cpp");
+    // Don't set expand_macros (default is false for linter mode)
+    auto tokens = pp.preprocess();
+
+    // In linter mode, macro names should be preserved (not expanded)
+    assert(has_token_with_text(tokens, "MAX"));
+    assert(has_token_with_text(tokens, "MIN"));
+    assert(!has_token_with_text(tokens, "100"));
+    assert(!has_token_with_text(tokens, "0"));
+
+    std::cout << "✓ Linter mode (no macro expansion) test passed\n";
+}
+
+void test_linter_mode_no_include_expansion() {
+    std::string code = R"(
+#include <iostream>
+#include "myheader.h"
+int main() { return 0; }
+)";
+
+    Preprocessor pp(code, "test.cpp");
+    // Don't set expand_includes (default is false for linter mode)
+    auto tokens = pp.preprocess();
+
+    // In linter mode, includes should not be expanded
+    // We should just have the main function tokens
+    assert(has_token_with_text(tokens, "main"));
+    assert(has_token_with_text(tokens, "return"));
+
+    // Should not have expanded iostream contents
+    int token_count = 0;
+    for (const auto& token : tokens) {
+        if (token.type != TokenType::Eof) {
+            token_count++;
+        }
+    }
+
+    // Should be relatively small (just the code, not expanded includes)
+    assert(token_count < 50);  // If includes were expanded, this would be thousands
+
+    std::cout << "✓ Linter mode (no include expansion) test passed\n";
+}
+
+void test_selective_include_expansion() {
+    std::string code = R"(
+#include <system_header.h>
+#include "user_header.h"
+int main() { return 0; }
+)";
+
+    Preprocessor pp(code, "test.cpp");
+    pp.set_expand_includes(true);           // Enable includes
+    pp.set_expand_system_includes(false);   // But skip system includes
+
+    auto tokens = pp.preprocess();
+
+    // System includes should be skipped, user includes would be expanded
+    // (but user_header.h doesn't exist, so it will just warn)
+    assert(has_token_with_text(tokens, "main"));
+
+    std::cout << "✓ Selective include expansion test passed\n";
+}
+
 int main() {
     std::cout << "Testing Preprocessor...\n\n";
 
+    // Standard macro expansion tests
     test_object_like_macro();
     test_function_like_macro();
     test_nested_macro();
@@ -312,6 +399,11 @@ int main() {
     test_command_line_define();
     test_empty_macro();
     test_multiline_macro();
+
+    // Linter mode tests (new)
+    test_linter_mode_no_macro_expansion();
+    test_linter_mode_no_include_expansion();
+    test_selective_include_expansion();
 
     std::cout << "\n✓ All Preprocessor tests passed!\n";
     return 0;

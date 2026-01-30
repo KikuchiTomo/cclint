@@ -15,7 +15,10 @@ Preprocessor::Preprocessor(const std::string& source,
     : source_(source),
       filename_(filename.empty() ? "<stdin>" : filename),
       current_index_(0),
-      include_paths_(include_paths) {
+      include_paths_(include_paths),
+      expand_macros_(false),           // Default: don't expand (preserve macro names)
+      expand_includes_(false),          // Default: don't expand includes
+      expand_system_includes_(false) {  // Default: skip system headers
 
     // Define predefined macros
     define_predefined_macros();
@@ -75,16 +78,21 @@ std::vector<Token> Preprocessor::preprocess() {
         error("Unterminated #if/#ifdef/#ifndef directive");
     }
 
-    // Expand macros in the result
-    auto expanded = macro_expander_->expand(result);
+    // Expand macros in the result (if enabled)
+    if (expand_macros_) {
+        auto expanded = macro_expander_->expand(result);
 
-    if (macro_expander_->has_errors()) {
-        for (const auto& err : macro_expander_->errors()) {
-            errors_.push_back(err);
+        if (macro_expander_->has_errors()) {
+            for (const auto& err : macro_expander_->errors()) {
+                errors_.push_back(err);
+            }
         }
+
+        return expanded;
     }
 
-    return expanded;
+    // Return tokens without macro expansion (preserve macro names for rule checking)
+    return result;
 }
 
 void Preprocessor::define_macro(const std::string& definition) {
@@ -253,6 +261,18 @@ void Preprocessor::process_include() {
         filename = directive_text.substr(pos, end_pos - pos);
     } else {
         error("Invalid #include directive");
+        return;
+    }
+
+    // Check if we should expand includes
+    if (!expand_includes_) {
+        // Don't expand includes in linter mode (keep #include directive as-is)
+        return;
+    }
+
+    // Check if we should skip system includes
+    if (is_system && !expand_system_includes_) {
+        // Skip system includes to avoid expanding standard library
         return;
     }
 

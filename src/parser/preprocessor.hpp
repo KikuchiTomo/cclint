@@ -85,6 +85,19 @@ public:
     /// Add an include search path
     void add_include_path(const std::string& path);
 
+    /// Set whether to expand macros (default: false for linter mode)
+    /// @param expand If true, macros will be expanded
+    void set_expand_macros(bool expand) { expand_macros_ = expand; }
+
+    /// Set whether to process includes (default: false for linter mode)
+    /// @param expand If true, #include directives will be processed
+    void set_expand_includes(bool expand) { expand_includes_ = expand; }
+
+    /// Set whether to expand system includes (default: false)
+    /// Only applies if expand_includes is true
+    /// @param expand If true, system includes (<>) will be expanded
+    void set_expand_system_includes(bool expand) { expand_system_includes_ = expand; }
+
     /// Get all defined macros (for debugging)
     const std::unordered_map<std::string, MacroDefinition>& macros() const {
         return macros_;
@@ -107,6 +120,11 @@ private:
 
     // Macro expander
     std::unique_ptr<MacroExpander> macro_expander_;
+
+    // Preprocessor options (for linter integration)
+    bool expand_macros_;              // Default: false (preserve macro names for rule checking)
+    bool expand_includes_;            // Default: false (don't expand includes)
+    bool expand_system_includes_;     // Default: false (skip system headers)
 
     // Error reporting
     std::vector<std::string> errors_;
