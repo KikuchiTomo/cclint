@@ -47,8 +47,10 @@ bool Type::convertible_to(const Type& other) const {
 std::string BuiltinType::to_string() const {
     std::string result;
 
-    if (qualifiers_.is_const) result += "const ";
-    if (qualifiers_.is_volatile) result += "volatile ";
+    if (qualifiers_.is_const)
+        result += "const ";
+    if (qualifiers_.is_volatile)
+        result += "volatile ";
 
     switch (kind_) {
         case TypeKind::Void:
@@ -100,7 +102,8 @@ std::string FunctionType::to_string() const {
     std::string result = return_type_->to_string() + "(";
 
     for (size_t i = 0; i < param_types_.size(); ++i) {
-        if (i > 0) result += ", ";
+        if (i > 0)
+            result += ", ";
         result += param_types_[i]->to_string();
     }
 
@@ -146,7 +149,7 @@ std::shared_ptr<Type> TypeSystem::create_pointer_type(std::shared_ptr<Type> poin
 }
 
 std::shared_ptr<Type> TypeSystem::create_reference_type(std::shared_ptr<Type> referenced,
-                                                         bool is_rvalue) {
+                                                        bool is_rvalue) {
     auto ref_type = std::make_shared<ReferenceType>(referenced, is_rvalue);
     types_.push_back(ref_type);
     return ref_type;
@@ -158,8 +161,9 @@ std::shared_ptr<Type> TypeSystem::create_array_type(std::shared_ptr<Type> elemen
     return array_type;
 }
 
-std::shared_ptr<Type> TypeSystem::create_function_type(
-    std::shared_ptr<Type> return_type, const std::vector<std::shared_ptr<Type>>& param_types) {
+std::shared_ptr<Type>
+TypeSystem::create_function_type(std::shared_ptr<Type> return_type,
+                                 const std::vector<std::shared_ptr<Type>>& param_types) {
     auto func_type = std::make_shared<FunctionType>(return_type, param_types);
     types_.push_back(func_type);
     return func_type;
@@ -173,13 +177,20 @@ std::shared_ptr<ClassType> TypeSystem::create_class_type(const std::string& name
 
 std::shared_ptr<Type> TypeSystem::resolve_type(const std::string& type_name) {
     // 組み込み型のマッピング
-    if (type_name == "void") return void_type_;
-    if (type_name == "bool") return bool_type_;
-    if (type_name == "char") return char_type_;
-    if (type_name == "int") return int_type_;
-    if (type_name == "float") return float_type_;
-    if (type_name == "double") return double_type_;
-    if (type_name == "auto") return get_builtin_type(TypeKind::Auto);
+    if (type_name == "void")
+        return void_type_;
+    if (type_name == "bool")
+        return bool_type_;
+    if (type_name == "char")
+        return char_type_;
+    if (type_name == "int")
+        return int_type_;
+    if (type_name == "float")
+        return float_type_;
+    if (type_name == "double")
+        return double_type_;
+    if (type_name == "auto")
+        return get_builtin_type(TypeKind::Auto);
 
     // ポインタ型の検出
     if (type_name.back() == '*') {

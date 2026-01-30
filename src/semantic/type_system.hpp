@@ -15,17 +15,17 @@ enum class TypeKind {
     Int,
     Float,
     Double,
-    Auto,           // C++11 auto
-    Decltype,       // C++11 decltype
-    Pointer,        // T*
-    Reference,      // T&
+    Auto,             // C++11 auto
+    Decltype,         // C++11 decltype
+    Pointer,          // T*
+    Reference,        // T&
     RValueReference,  // T&& (C++11)
-    Array,          // T[]
-    Function,       // ret(args...)
-    Class,          // class/struct
-    Enum,           // enum
-    Template,       // template<...>
-    Dependent,      // テンプレート依存型
+    Array,            // T[]
+    Function,         // ret(args...)
+    Class,            // class/struct
+    Enum,             // enum
+    Template,         // template<...>
+    Dependent,        // テンプレート依存型
     Unknown
 };
 
@@ -48,9 +48,7 @@ public:
     bool is_const() const { return qualifiers_.is_const; }
 
     /// CV修飾子を設定
-    void set_qualifiers(const CVQualifiers& qualifiers) {
-        qualifiers_ = qualifiers;
-    }
+    void set_qualifiers(const CVQualifiers& qualifiers) { qualifiers_ = qualifiers; }
 
     /// CV修飾子を取得
     const CVQualifiers& qualifiers() const { return qualifiers_; }
@@ -85,9 +83,7 @@ public:
 
     std::shared_ptr<Type> pointee() const { return pointee_; }
 
-    std::string to_string() const override {
-        return pointee_->to_string() + "*";
-    }
+    std::string to_string() const override { return pointee_->to_string() + "*"; }
 
 private:
     std::shared_ptr<Type> pointee_;
@@ -134,14 +130,10 @@ class FunctionType : public Type {
 public:
     FunctionType(std::shared_ptr<Type> return_type,
                  const std::vector<std::shared_ptr<Type>>& param_types)
-        : Type(TypeKind::Function),
-          return_type_(return_type),
-          param_types_(param_types) {}
+        : Type(TypeKind::Function), return_type_(return_type), param_types_(param_types) {}
 
     std::shared_ptr<Type> return_type() const { return return_type_; }
-    const std::vector<std::shared_ptr<Type>>& param_types() const {
-        return param_types_;
-    }
+    const std::vector<std::shared_ptr<Type>>& param_types() const { return param_types_; }
 
     std::string to_string() const override;
 
@@ -153,21 +145,16 @@ private:
 /// クラス型
 class ClassType : public Type {
 public:
-    explicit ClassType(const std::string& name)
-        : Type(TypeKind::Class), name_(name) {}
+    explicit ClassType(const std::string& name) : Type(TypeKind::Class), name_(name) {}
 
     const std::string& name() const { return name_; }
 
     std::string to_string() const override { return name_; }
 
     /// 基底クラスを追加
-    void add_base(std::shared_ptr<ClassType> base) {
-        bases_.push_back(base);
-    }
+    void add_base(std::shared_ptr<ClassType> base) { bases_.push_back(base); }
 
-    const std::vector<std::shared_ptr<ClassType>>& bases() const {
-        return bases_;
-    }
+    const std::vector<std::shared_ptr<ClassType>>& bases() const { return bases_; }
 
 private:
     std::string name_;
@@ -187,15 +174,15 @@ public:
 
     /// 参照型を作成
     std::shared_ptr<Type> create_reference_type(std::shared_ptr<Type> referenced,
-                                                 bool is_rvalue = false);
+                                                bool is_rvalue = false);
 
     /// 配列型を作成
     std::shared_ptr<Type> create_array_type(std::shared_ptr<Type> element, int size = -1);
 
     /// 関数型を作成
-    std::shared_ptr<Type> create_function_type(
-        std::shared_ptr<Type> return_type,
-        const std::vector<std::shared_ptr<Type>>& param_types);
+    std::shared_ptr<Type>
+    create_function_type(std::shared_ptr<Type> return_type,
+                         const std::vector<std::shared_ptr<Type>>& param_types);
 
     /// クラス型を作成
     std::shared_ptr<ClassType> create_class_type(const std::string& name);

@@ -1,8 +1,8 @@
 #include "parser/enhanced_lexer.hpp"
 
 #include <cctype>
-#include <unordered_map>
 #include <sstream>
+#include <unordered_map>
 
 namespace cclint {
 namespace parser {
@@ -269,10 +269,12 @@ Token EnhancedLexer::lex_numeric() {
     while (is_digit(current()) || current() == '.' || current() == 'e' || current() == 'E' ||
            current() == '+' || current() == '-' || current() == '\'') {
         if (current() == '.') {
-            if (has_dot) break;
+            if (has_dot)
+                break;
             has_dot = true;
         } else if (current() == 'e' || current() == 'E') {
-            if (has_exp) break;
+            if (has_exp)
+                break;
             has_exp = true;
             advance();
             if (current() == '+' || current() == '-') {
@@ -568,7 +570,7 @@ Token EnhancedLexer::lex_character() {
 
 Token EnhancedLexer::lex_wide_character() {
     std::string text = "L";
-    advance();  // skip 'L'
+    advance();          // skip 'L'
     text += current();  // '
     advance();
 
@@ -600,8 +602,8 @@ Token EnhancedLexer::lex_wide_character() {
 
 Token EnhancedLexer::lex_utf8_character() {
     std::string text = "u8";
-    advance();  // skip 'u'
-    advance();  // skip '8'
+    advance();          // skip 'u'
+    advance();          // skip '8'
     text += current();  // '
     advance();
 
@@ -633,7 +635,7 @@ Token EnhancedLexer::lex_utf8_character() {
 
 Token EnhancedLexer::lex_utf16_character() {
     std::string text = "u";
-    advance();  // skip 'u'
+    advance();          // skip 'u'
     text += current();  // '
     advance();
 
@@ -665,7 +667,7 @@ Token EnhancedLexer::lex_utf16_character() {
 
 Token EnhancedLexer::lex_utf32_character() {
     std::string text = "U";
-    advance();  // skip 'U'
+    advance();          // skip 'U'
     text += current();  // '
     advance();
 
@@ -699,17 +701,39 @@ char EnhancedLexer::lex_escape_sequence() {
     char c = current();
 
     switch (c) {
-        case 'n': advance(); return 'n';
-        case 't': advance(); return 't';
-        case 'r': advance(); return 'r';
-        case 'b': advance(); return 'b';
-        case 'f': advance(); return 'f';
-        case 'v': advance(); return 'v';
-        case 'a': advance(); return 'a';
-        case '\\': advance(); return '\\';
-        case '\'': advance(); return '\'';
-        case '"': advance(); return '"';
-        case '?': advance(); return '?';
+        case 'n':
+            advance();
+            return 'n';
+        case 't':
+            advance();
+            return 't';
+        case 'r':
+            advance();
+            return 'r';
+        case 'b':
+            advance();
+            return 'b';
+        case 'f':
+            advance();
+            return 'f';
+        case 'v':
+            advance();
+            return 'v';
+        case 'a':
+            advance();
+            return 'a';
+        case '\\':
+            advance();
+            return '\\';
+        case '\'':
+            advance();
+            return '\'';
+        case '"':
+            advance();
+            return '"';
+        case '?':
+            advance();
+            return '?';
         case '0':
         case '1':
         case '2':
@@ -778,7 +802,7 @@ Token EnhancedLexer::lex_string() {
 
 Token EnhancedLexer::lex_wide_string() {
     std::string text = "L";
-    advance();  // skip 'L'
+    advance();          // skip 'L'
     text += current();  // "
     advance();
 
@@ -814,8 +838,8 @@ Token EnhancedLexer::lex_wide_string() {
 
 Token EnhancedLexer::lex_utf8_string() {
     std::string text = "u8";
-    advance();  // skip 'u'
-    advance();  // skip '8'
+    advance();          // skip 'u'
+    advance();          // skip '8'
     text += current();  // "
     advance();
 
@@ -851,7 +875,7 @@ Token EnhancedLexer::lex_utf8_string() {
 
 Token EnhancedLexer::lex_utf16_string() {
     std::string text = "u";
-    advance();  // skip 'u'
+    advance();          // skip 'u'
     text += current();  // "
     advance();
 
@@ -887,7 +911,7 @@ Token EnhancedLexer::lex_utf16_string() {
 
 Token EnhancedLexer::lex_utf32_string() {
     std::string text = "U";
-    advance();  // skip 'U'
+    advance();          // skip 'U'
     text += current();  // "
     advance();
 
@@ -923,7 +947,7 @@ Token EnhancedLexer::lex_utf32_string() {
 
 Token EnhancedLexer::lex_raw_string() {
     std::string text = "R";
-    advance();  // skip 'R'
+    advance();          // skip 'R'
     text += current();  // "
     advance();
 
@@ -1105,31 +1129,56 @@ Token EnhancedLexer::lex_operator() {
     advance();
 
     switch (c) {
-        case '+': return make_token(TokenType::Plus, text);
-        case '-': return make_token(TokenType::Minus, text);
-        case '*': return make_token(TokenType::Star, text);
-        case '/': return make_token(TokenType::Slash, text);
-        case '%': return make_token(TokenType::Percent, text);
-        case '<': return make_token(TokenType::Less, text);
-        case '>': return make_token(TokenType::Greater, text);
-        case '!': return make_token(TokenType::LogicalNot, text);
-        case '&': return make_token(TokenType::Ampersand, text);
-        case '|': return make_token(TokenType::Pipe, text);
-        case '^': return make_token(TokenType::Caret, text);
-        case '~': return make_token(TokenType::Tilde, text);
-        case '=': return make_token(TokenType::Assign, text);
-        case '.': return make_token(TokenType::Dot, text);
-        case '?': return make_token(TokenType::Question, text);
-        case ':': return make_token(TokenType::Colon, text);
-        case ';': return make_token(TokenType::Semicolon, text);
-        case ',': return make_token(TokenType::Comma, text);
-        case '(': return make_token(TokenType::LeftParen, text);
-        case ')': return make_token(TokenType::RightParen, text);
-        case '{': return make_token(TokenType::LeftBrace, text);
-        case '}': return make_token(TokenType::RightBrace, text);
-        case '[': return make_token(TokenType::LeftBracket, text);
-        case ']': return make_token(TokenType::RightBracket, text);
-        case '#': return make_token(TokenType::MacroStringify, text);
+        case '+':
+            return make_token(TokenType::Plus, text);
+        case '-':
+            return make_token(TokenType::Minus, text);
+        case '*':
+            return make_token(TokenType::Star, text);
+        case '/':
+            return make_token(TokenType::Slash, text);
+        case '%':
+            return make_token(TokenType::Percent, text);
+        case '<':
+            return make_token(TokenType::Less, text);
+        case '>':
+            return make_token(TokenType::Greater, text);
+        case '!':
+            return make_token(TokenType::LogicalNot, text);
+        case '&':
+            return make_token(TokenType::Ampersand, text);
+        case '|':
+            return make_token(TokenType::Pipe, text);
+        case '^':
+            return make_token(TokenType::Caret, text);
+        case '~':
+            return make_token(TokenType::Tilde, text);
+        case '=':
+            return make_token(TokenType::Assign, text);
+        case '.':
+            return make_token(TokenType::Dot, text);
+        case '?':
+            return make_token(TokenType::Question, text);
+        case ':':
+            return make_token(TokenType::Colon, text);
+        case ';':
+            return make_token(TokenType::Semicolon, text);
+        case ',':
+            return make_token(TokenType::Comma, text);
+        case '(':
+            return make_token(TokenType::LeftParen, text);
+        case ')':
+            return make_token(TokenType::RightParen, text);
+        case '{':
+            return make_token(TokenType::LeftBrace, text);
+        case '}':
+            return make_token(TokenType::RightBrace, text);
+        case '[':
+            return make_token(TokenType::LeftBracket, text);
+        case ']':
+            return make_token(TokenType::RightBracket, text);
+        case '#':
+            return make_token(TokenType::MacroStringify, text);
         default:
             add_error("Unknown character: " + text);
             return make_token(TokenType::Unknown, text);
@@ -1318,8 +1367,7 @@ Token EnhancedLexer::make_token(TokenType type, const std::string& text) {
     return token;
 }
 
-Token EnhancedLexer::make_token(TokenType type, const std::string& text,
-                                 const std::string& value) {
+Token EnhancedLexer::make_token(TokenType type, const std::string& text, const std::string& value) {
     Token token;
     token.type = type;
     token.text = text;

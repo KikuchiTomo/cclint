@@ -1,22 +1,23 @@
 #include "preprocessor.hpp"
-#include "macro_expander.hpp"
+
+#include <algorithm>
+#include <ctime>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
-#include <filesystem>
-#include <ctime>
-#include <algorithm>
+
+#include "macro_expander.hpp"
 
 namespace cclint {
 namespace parser {
 
-Preprocessor::Preprocessor(const std::string& source,
-                          const std::string& filename,
-                          const std::vector<std::string>& include_paths)
+Preprocessor::Preprocessor(const std::string& source, const std::string& filename,
+                           const std::vector<std::string>& include_paths)
     : source_(source),
       filename_(filename.empty() ? "<stdin>" : filename),
       current_index_(0),
       include_paths_(include_paths),
-      expand_macros_(false),           // Default: don't expand (preserve macro names)
+      expand_macros_(false),            // Default: don't expand (preserve macro names)
       expand_includes_(false),          // Default: don't expand includes
       expand_system_includes_(false) {  // Default: skip system headers
 
@@ -158,8 +159,7 @@ void Preprocessor::advance(int count) {
 }
 
 bool Preprocessor::is_eof() const {
-    return current_index_ >= tokens_.size() ||
-           current().type == TokenType::Eof;
+    return current_index_ >= tokens_.size() || current().type == TokenType::Eof;
 }
 
 void Preprocessor::process_directive() {
@@ -297,8 +297,8 @@ void Preprocessor::process_include() {
     auto included_tokens = read_and_lex_file(filepath);
 
     // Insert the tokens at the current position
-    tokens_.insert(tokens_.begin() + current_index_,
-                  included_tokens.begin(), included_tokens.end());
+    tokens_.insert(tokens_.begin() + current_index_, included_tokens.begin(),
+                   included_tokens.end());
 }
 
 void Preprocessor::process_define() {
@@ -355,7 +355,8 @@ void Preprocessor::process_define() {
                 ++pos;
             }
 
-            if (pos >= directive_text.size()) break;
+            if (pos >= directive_text.size())
+                break;
 
             if (directive_text.substr(pos, 3) == "...") {
                 // Variadic macro
@@ -408,7 +409,8 @@ void Preprocessor::process_define() {
                 ++i;
             }
 
-            if (i >= replacement.size()) break;
+            if (i >= replacement.size())
+                break;
 
             Token token;
             token.filename = macro.filename;
@@ -437,7 +439,8 @@ void Preprocessor::process_define() {
             size_t start = i;
 
             // Collect until we hit # or whitespace
-            while (i < replacement.size() && !std::isspace(replacement[i]) && replacement[i] != '#') {
+            while (i < replacement.size() && !std::isspace(replacement[i]) &&
+                   replacement[i] != '#') {
                 chunk += replacement[i];
                 ++i;
             }
@@ -453,7 +456,7 @@ void Preprocessor::process_define() {
                 }
 
                 macro.replacement_tokens.insert(macro.replacement_tokens.end(),
-                                               chunk_tokens.begin(), chunk_tokens.end());
+                                                chunk_tokens.begin(), chunk_tokens.end());
             }
         }
     }
@@ -523,7 +526,8 @@ void Preprocessor::process_if() {
         if (next_char == 'd' || next_char == 'n') {
             // This is ifdef or ifndef, not if
             error("Internal error: process_if called for ifdef/ifndef");
-            conditional_stack_.emplace_back(ConditionalContext::Type::If, false, directive_token.line);
+            conditional_stack_.emplace_back(ConditionalContext::Type::If, false,
+                                            directive_token.line);
             return;
         }
     }
@@ -545,8 +549,7 @@ void Preprocessor::process_if() {
         condition_tokens = lexer.tokenize();
 
         // Remove EOF token
-        if (!condition_tokens.empty() &&
-            condition_tokens.back().type == TokenType::Eof) {
+        if (!condition_tokens.empty() && condition_tokens.back().type == TokenType::Eof) {
             condition_tokens.pop_back();
         }
     }
@@ -679,8 +682,7 @@ void Preprocessor::process_elif() {
         condition_tokens = lexer.tokenize();
 
         // Remove EOF token
-        if (!condition_tokens.empty() &&
-            condition_tokens.back().type == TokenType::Eof) {
+        if (!condition_tokens.empty() && condition_tokens.back().type == TokenType::Eof) {
             condition_tokens.pop_back();
         }
     }
@@ -855,12 +857,9 @@ std::string Preprocessor::resolve_include_path(const std::string& filename, bool
     }
 
     // Try standard system paths
-    std::vector<std::string> system_paths = {
-        "/usr/include",
-        "/usr/local/include",
-        "/usr/include/c++/11",
-        "/usr/include/x86_64-linux-gnu/c++/11"
-    };
+    std::vector<std::string> system_paths = {"/usr/include", "/usr/local/include",
+                                             "/usr/include/c++/11",
+                                             "/usr/include/x86_64-linux-gnu/c++/11"};
 
     for (const auto& system_path : system_paths) {
         fs::path full_path = fs::path(system_path) / filename;
@@ -1056,8 +1055,7 @@ void Preprocessor::error(const std::string& message) {
 
 void Preprocessor::error(const Token& token, const std::string& message) {
     std::ostringstream oss;
-    oss << token.filename << ":" << token.line << ":" << token.column
-        << ": error: " << message;
+    oss << token.filename << ":" << token.line << ":" << token.column << ": error: " << message;
     errors_.push_back(oss.str());
 }
 
@@ -1067,10 +1065,9 @@ void Preprocessor::warning(const std::string& message) {
 
 void Preprocessor::warning(const Token& token, const std::string& message) {
     std::ostringstream oss;
-    oss << token.filename << ":" << token.line << ":" << token.column
-        << ": warning: " << message;
+    oss << token.filename << ":" << token.line << ":" << token.column << ": warning: " << message;
     errors_.push_back(oss.str());
 }
 
-} // namespace parser
-} // namespace cclint
+}  // namespace parser
+}  // namespace cclint

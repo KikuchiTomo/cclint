@@ -1,10 +1,11 @@
 #pragma once
 
-#include "token_types_enhanced.hpp"
 #include <string>
-#include <vector>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
+
+#include "token_types_enhanced.hpp"
 
 namespace cclint {
 namespace parser {
@@ -31,9 +32,8 @@ public:
     /// @param tokens Remaining tokens (for reading arguments)
     /// @param index Current position in tokens (will be updated)
     /// @return Expanded tokens
-    std::vector<Token> expand_macro(const Token& macro_token,
-                                   const std::vector<Token>& tokens,
-                                   size_t& index);
+    std::vector<Token> expand_macro(const Token& macro_token, const std::vector<Token>& tokens,
+                                    size_t& index);
 
     /// Get expansion errors
     const std::vector<std::string>& errors() const { return errors_; }
@@ -53,24 +53,21 @@ private:
 
     // Object-like macro expansion
     std::vector<Token> expand_object_like_macro(const MacroDefinition& macro,
-                                               const Token& macro_token);
+                                                const Token& macro_token);
 
     // Function-like macro expansion
     std::vector<Token> expand_function_like_macro(const MacroDefinition& macro,
-                                                 const Token& macro_token,
-                                                 const std::vector<Token>& tokens,
-                                                 size_t& index);
+                                                  const Token& macro_token,
+                                                  const std::vector<Token>& tokens, size_t& index);
 
     // Argument parsing for function-like macros
-    std::vector<std::vector<Token>> parse_macro_arguments(
-        const MacroDefinition& macro,
-        const std::vector<Token>& tokens,
-        size_t& index);
+    std::vector<std::vector<Token>> parse_macro_arguments(const MacroDefinition& macro,
+                                                          const std::vector<Token>& tokens,
+                                                          size_t& index);
 
     // Macro replacement with argument substitution
-    std::vector<Token> substitute_arguments(
-        const MacroDefinition& macro,
-        const std::vector<std::vector<Token>>& arguments);
+    std::vector<Token> substitute_arguments(const MacroDefinition& macro,
+                                            const std::vector<std::vector<Token>>& arguments);
 
     // Stringification operator (#)
     Token stringify(const std::vector<Token>& tokens);
@@ -81,11 +78,11 @@ private:
 
     // Variadic macro support
     std::vector<Token> handle_va_args(const std::vector<std::vector<Token>>& arguments,
-                                     size_t va_args_start);
+                                      size_t va_args_start);
 
     // Recursively expand tokens
     std::vector<Token> expand_recursive(const std::vector<Token>& tokens,
-                                       const std::string& exclude_macro = "");
+                                        const std::string& exclude_macro = "");
 
     // Helper functions
     bool is_macro_defined(const std::string& name) const;
@@ -98,5 +95,5 @@ private:
     void error(const Token& token, const std::string& message);
 };
 
-} // namespace parser
-} // namespace cclint
+}  // namespace parser
+}  // namespace cclint

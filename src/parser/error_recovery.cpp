@@ -37,7 +37,8 @@ std::string ParseError::format() const {
     if (!expected_tokens.empty()) {
         oss << " (expected ";
         for (size_t i = 0; i < expected_tokens.size(); ++i) {
-            if (i > 0) oss << " or ";
+            if (i > 0)
+                oss << " or ";
             // TokenTypeを文字列に変換（簡易版）
             oss << "token";
         }
@@ -75,10 +76,8 @@ size_t ErrorRecovery::warning_count() const {
     return count;
 }
 
-RecoveryStrategy ErrorRecovery::suggest_recovery(
-    const std::vector<TokenType>& expected,
-    TokenType /* found */) {
-
+RecoveryStrategy ErrorRecovery::suggest_recovery(const std::vector<TokenType>& expected,
+                                                 TokenType /* found */) {
     // セミコロンが期待されている場合
     for (auto exp : expected) {
         if (exp == TokenType::Semicolon) {
@@ -88,8 +87,7 @@ RecoveryStrategy ErrorRecovery::suggest_recovery(
 
     // 閉じ括弧が期待されている場合
     for (auto exp : expected) {
-        if (exp == TokenType::RightBrace ||
-            exp == TokenType::RightParen ||
+        if (exp == TokenType::RightBrace || exp == TokenType::RightParen ||
             exp == TokenType::RightBracket) {
             return RecoveryStrategy::SkipToCloseBrace;
         }
@@ -103,7 +101,8 @@ std::string ErrorRecovery::format_errors(const std::vector<ParseError>& errors) 
     std::ostringstream oss;
 
     for (size_t i = 0; i < errors.size(); ++i) {
-        if (i > 0) oss << "\n";
+        if (i > 0)
+            oss << "\n";
         oss << errors[i].format();
     }
 
@@ -126,7 +125,8 @@ std::string ErrorRecovery::format_errors(const std::vector<ParseError>& errors) 
             oss << error_count << " error(s) ";
         }
         if (warning_count > 0) {
-            if (error_count > 0) oss << "and ";
+            if (error_count > 0)
+                oss << "and ";
             oss << warning_count << " warning(s) ";
         }
         oss << "generated.";

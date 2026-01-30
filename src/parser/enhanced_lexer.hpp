@@ -1,10 +1,10 @@
 #pragma once
 
-#include "parser/token_types_enhanced.hpp"
-
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
+
+#include "parser/token_types_enhanced.hpp"
 
 namespace cclint {
 namespace parser {
@@ -57,27 +57,27 @@ private:
     Token lex_numeric();
     Token lex_integer();
     Token lex_floating();
-    Token lex_binary();      // 0b...
-    Token lex_octal();       // 0...
-    Token lex_hexadecimal(); // 0x...
+    Token lex_binary();       // 0b...
+    Token lex_octal();        // 0...
+    Token lex_hexadecimal();  // 0x...
     std::string lex_integer_suffix();
     std::string lex_floating_suffix();
 
     // Character literals
     Token lex_character();
-    Token lex_wide_character();      // L'...'
-    Token lex_utf8_character();      // u8'...'
-    Token lex_utf16_character();     // u'...'
-    Token lex_utf32_character();     // U'...'
+    Token lex_wide_character();   // L'...'
+    Token lex_utf8_character();   // u8'...'
+    Token lex_utf16_character();  // u'...'
+    Token lex_utf32_character();  // U'...'
     char lex_escape_sequence();
 
     // String literals
     Token lex_string();
-    Token lex_wide_string();         // L"..."
-    Token lex_utf8_string();         // u8"..."
-    Token lex_utf16_string();        // u"..."
-    Token lex_utf32_string();        // U"..."
-    Token lex_raw_string();          // R"(...)"
+    Token lex_wide_string();   // L"..."
+    Token lex_utf8_string();   // u8"..."
+    Token lex_utf16_string();  // u"..."
+    Token lex_utf32_string();  // U"..."
+    Token lex_raw_string();    // R"(...)"
     std::string lex_raw_string_delimiter();
 
     // User-defined literals

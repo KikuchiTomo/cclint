@@ -12,219 +12,219 @@ enum class TokenType {
 
     // ========== Keywords ==========
     // C++98/03 keywords
-    Alignas,          // alignas
-    Alignof,          // alignof
-    Asm,              // asm
-    Auto,             // auto
-    Bool,             // bool
-    Break,            // break
-    Case,             // case
-    Catch,            // catch
-    Char,             // char
-    Char8_t,          // char8_t (C++20)
-    Char16_t,         // char16_t
-    Char32_t,         // char32_t
-    Class,            // class
-    Const,            // const
-    Consteval,        // consteval (C++20)
-    Constexpr,        // constexpr
-    Constinit,        // constinit (C++20)
-    Const_cast,       // const_cast
-    Continue,         // continue
-    Co_await,         // co_await (C++20)
-    Co_return,        // co_return (C++20)
-    Co_yield,         // co_yield (C++20)
-    Decltype,         // decltype
-    Default,          // default
-    Delete,           // delete
-    Do,               // do
-    Double,           // double
-    Dynamic_cast,     // dynamic_cast
-    Else,             // else
-    Enum,             // enum
-    Explicit,         // explicit
-    Export,           // export
-    Extern,           // extern
-    False,            // false
-    Float,            // float
-    For,              // for
-    Friend,           // friend
-    Goto,             // goto
-    If,               // if
-    Inline,           // inline
-    Int,              // int
-    Long,             // long
-    Mutable,          // mutable
-    Namespace,        // namespace
-    New,              // new
-    Noexcept,         // noexcept
-    Nullptr,          // nullptr
-    Operator,         // operator
-    Private,          // private
-    Protected,        // protected
-    Public,           // public
-    Register,         // register
-    Reinterpret_cast, // reinterpret_cast
-    Requires,         // requires (C++20)
-    Return,           // return
-    Short,            // short
-    Signed,           // signed
-    Sizeof,           // sizeof
-    Static,           // static
-    Static_assert,    // static_assert
-    Static_cast,      // static_cast
-    Struct,           // struct
-    Switch,           // switch
-    Template,         // template
-    This,             // this
-    Thread_local,     // thread_local
-    Throw,            // throw
-    True,             // true
-    Try,              // try
-    Typedef,          // typedef
-    Typeid,           // typeid
-    Typename,         // typename
-    Union,            // union
-    Unsigned,         // unsigned
-    Using,            // using
-    Virtual,          // virtual
-    Void,             // void
-    Volatile,         // volatile
-    Wchar_t,          // wchar_t
-    While,            // while
+    Alignas,           // alignas
+    Alignof,           // alignof
+    Asm,               // asm
+    Auto,              // auto
+    Bool,              // bool
+    Break,             // break
+    Case,              // case
+    Catch,             // catch
+    Char,              // char
+    Char8_t,           // char8_t (C++20)
+    Char16_t,          // char16_t
+    Char32_t,          // char32_t
+    Class,             // class
+    Const,             // const
+    Consteval,         // consteval (C++20)
+    Constexpr,         // constexpr
+    Constinit,         // constinit (C++20)
+    Const_cast,        // const_cast
+    Continue,          // continue
+    Co_await,          // co_await (C++20)
+    Co_return,         // co_return (C++20)
+    Co_yield,          // co_yield (C++20)
+    Decltype,          // decltype
+    Default,           // default
+    Delete,            // delete
+    Do,                // do
+    Double,            // double
+    Dynamic_cast,      // dynamic_cast
+    Else,              // else
+    Enum,              // enum
+    Explicit,          // explicit
+    Export,            // export
+    Extern,            // extern
+    False,             // false
+    Float,             // float
+    For,               // for
+    Friend,            // friend
+    Goto,              // goto
+    If,                // if
+    Inline,            // inline
+    Int,               // int
+    Long,              // long
+    Mutable,           // mutable
+    Namespace,         // namespace
+    New,               // new
+    Noexcept,          // noexcept
+    Nullptr,           // nullptr
+    Operator,          // operator
+    Private,           // private
+    Protected,         // protected
+    Public,            // public
+    Register,          // register
+    Reinterpret_cast,  // reinterpret_cast
+    Requires,          // requires (C++20)
+    Return,            // return
+    Short,             // short
+    Signed,            // signed
+    Sizeof,            // sizeof
+    Static,            // static
+    Static_assert,     // static_assert
+    Static_cast,       // static_cast
+    Struct,            // struct
+    Switch,            // switch
+    Template,          // template
+    This,              // this
+    Thread_local,      // thread_local
+    Throw,             // throw
+    True,              // true
+    Try,               // try
+    Typedef,           // typedef
+    Typeid,            // typeid
+    Typename,          // typename
+    Union,             // union
+    Unsigned,          // unsigned
+    Using,             // using
+    Virtual,           // virtual
+    Void,              // void
+    Volatile,          // volatile
+    Wchar_t,           // wchar_t
+    While,             // while
 
     // Contextual keywords (C++20 Concepts)
-    Concept,          // concept
+    Concept,  // concept
 
     // ========== Operators ==========
     // Arithmetic
-    Plus,             // +
-    Minus,            // -
-    Star,             // *
-    Slash,            // /
-    Percent,          // %
+    Plus,     // +
+    Minus,    // -
+    Star,     // *
+    Slash,    // /
+    Percent,  // %
 
     // Increment/Decrement
-    PlusPlus,         // ++
-    MinusMinus,       // --
+    PlusPlus,    // ++
+    MinusMinus,  // --
 
     // Comparison
-    Equal,            // ==
-    NotEqual,         // !=
-    Less,             // <
-    Greater,          // >
-    LessEqual,        // <=
-    GreaterEqual,     // >=
-    Spaceship,        // <=> (C++20)
+    Equal,         // ==
+    NotEqual,      // !=
+    Less,          // <
+    Greater,       // >
+    LessEqual,     // <=
+    GreaterEqual,  // >=
+    Spaceship,     // <=> (C++20)
 
     // Logical
-    LogicalAnd,       // &&
-    LogicalOr,        // ||
-    LogicalNot,       // !
+    LogicalAnd,  // &&
+    LogicalOr,   // ||
+    LogicalNot,  // !
 
     // Bitwise
-    Ampersand,        // &
-    Pipe,             // |
-    Caret,            // ^
-    Tilde,            // ~
-    LeftShift,        // <<
-    RightShift,       // >>
+    Ampersand,   // &
+    Pipe,        // |
+    Caret,       // ^
+    Tilde,       // ~
+    LeftShift,   // <<
+    RightShift,  // >>
 
     // Assignment
-    Assign,           // =
-    PlusAssign,       // +=
-    MinusAssign,      // -=
-    StarAssign,       // *=
-    SlashAssign,      // /=
-    PercentAssign,    // %=
-    AmpersandAssign,  // &=
-    PipeAssign,       // |=
-    CaretAssign,      // ^=
-    LeftShiftAssign,  // <<=
-    RightShiftAssign, // >>=
+    Assign,            // =
+    PlusAssign,        // +=
+    MinusAssign,       // -=
+    StarAssign,        // *=
+    SlashAssign,       // /=
+    PercentAssign,     // %=
+    AmpersandAssign,   // &=
+    PipeAssign,        // |=
+    CaretAssign,       // ^=
+    LeftShiftAssign,   // <<=
+    RightShiftAssign,  // >>=
 
     // Member access
-    Dot,              // .
-    Arrow,            // ->
-    DotStar,          // .*
-    ArrowStar,        // ->*
-    DoubleColon,      // ::
+    Dot,          // .
+    Arrow,        // ->
+    DotStar,      // .*
+    ArrowStar,    // ->*
+    DoubleColon,  // ::
 
     // Other
-    Question,         // ?
-    Colon,            // :
-    Semicolon,        // ;
-    Comma,            // ,
-    Ellipsis,         // ...
+    Question,   // ?
+    Colon,      // :
+    Semicolon,  // ;
+    Comma,      // ,
+    Ellipsis,   // ...
 
     // Delimiters
-    LeftParen,        // (
-    RightParen,       // )
-    LeftBrace,        // {
-    RightBrace,       // }
-    LeftBracket,      // [
-    RightBracket,     // ]
+    LeftParen,     // (
+    RightParen,    // )
+    LeftBrace,     // {
+    RightBrace,    // }
+    LeftBracket,   // [
+    RightBracket,  // ]
 
     // ========== Literals ==========
     // Identifiers
     Identifier,
 
     // Numeric literals
-    IntegerLiteral,        // 123, 0x7F, 0b1010, 042
-    FloatingLiteral,       // 3.14, 1e-5, 0x1.2p3
+    IntegerLiteral,   // 123, 0x7F, 0b1010, 042
+    FloatingLiteral,  // 3.14, 1e-5, 0x1.2p3
 
     // Character literals
-    CharLiteral,           // 'a', '\n'
-    WideCharLiteral,       // L'a'
-    Utf8CharLiteral,       // u8'a' (C++17)
-    Utf16CharLiteral,      // u'a'
-    Utf32CharLiteral,      // U'a'
+    CharLiteral,       // 'a', '\n'
+    WideCharLiteral,   // L'a'
+    Utf8CharLiteral,   // u8'a' (C++17)
+    Utf16CharLiteral,  // u'a'
+    Utf32CharLiteral,  // U'a'
 
     // String literals
-    StringLiteral,         // "hello"
-    WideStringLiteral,     // L"hello"
-    Utf8StringLiteral,     // u8"hello"
-    Utf16StringLiteral,    // u"hello"
-    Utf32StringLiteral,    // U"hello"
-    RawStringLiteral,      // R"(raw)"
+    StringLiteral,       // "hello"
+    WideStringLiteral,   // L"hello"
+    Utf8StringLiteral,   // u8"hello"
+    Utf16StringLiteral,  // u"hello"
+    Utf32StringLiteral,  // U"hello"
+    RawStringLiteral,    // R"(raw)"
 
     // User-defined literals (handled in parser)
-    UserDefinedLiteral,    // 123_km, "hello"_s
+    UserDefinedLiteral,  // 123_km, "hello"_s
 
     // ========== Preprocessor ==========
     // Preprocessor directives (handled by preprocessor)
-    PPDirective,           // #include, #define, etc.
-    PPInclude,             // #include
-    PPDefine,              // #define
-    PPUndef,               // #undef
-    PPIf,                  // #if
-    PPIfdef,               // #ifdef
-    PPIfndef,              // #ifndef
-    PPElif,                // #elif
-    PPElse,                // #else
-    PPEndif,               // #endif
-    PPPragma,              // #pragma
-    PPError,               // #error
-    PPWarning,             // #warning
-    PPLine,                // #line
+    PPDirective,  // #include, #define, etc.
+    PPInclude,    // #include
+    PPDefine,     // #define
+    PPUndef,      // #undef
+    PPIf,         // #if
+    PPIfdef,      // #ifdef
+    PPIfndef,     // #ifndef
+    PPElif,       // #elif
+    PPElse,       // #else
+    PPEndif,      // #endif
+    PPPragma,     // #pragma
+    PPError,      // #error
+    PPWarning,    // #warning
+    PPLine,       // #line
 
     // Macro tokens
-    MacroParameter,        // Macro parameter token
-    MacroStringify,        // # (stringification)
-    MacroConcat,           // ## (token pasting)
+    MacroParameter,  // Macro parameter token
+    MacroStringify,  // # (stringification)
+    MacroConcat,     // ## (token pasting)
 
     // ========== Comments ==========
-    LineComment,           // // comment
-    BlockComment,          // /* comment */
+    LineComment,   // // comment
+    BlockComment,  // /* comment */
 
     // ========== Attributes ==========
-    AttributeStart,        // [[
-    AttributeEnd,          // ]]
+    AttributeStart,  // [[
+    AttributeEnd,    // ]]
 
     // ========== Special ==========
-    Whitespace,            // Space, tab (normally skipped)
-    Newline,               // \n (important for preprocessor)
-    Unknown,               // Unknown token
+    Whitespace,  // Space, tab (normally skipped)
+    Newline,     // \n (important for preprocessor)
+    Unknown,     // Unknown token
 };
 
 /// Token structure with location and value

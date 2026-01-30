@@ -1,19 +1,20 @@
 #include "macro_expander.hpp"
-#include "preprocessor.hpp"
-#include <sstream>
+
 #include <algorithm>
+#include <sstream>
+
+#include "preprocessor.hpp"
 
 namespace cclint {
 namespace parser {
 
-MacroExpander::MacroExpander(
-    const std::unordered_map<std::string, MacroDefinition>& macros)
+MacroExpander::MacroExpander(const std::unordered_map<std::string, MacroDefinition>& macros)
     : macros_(macros) {}
 
 std::vector<Token> MacroExpander::expand(const std::vector<Token>& tokens) {
     std::vector<Token> result;
 
-    for (size_t i = 0; i < tokens.size(); ) {
+    for (size_t i = 0; i < tokens.size();) {
         const auto& token = tokens[i];
 
         // Check if this is a macro identifier
@@ -39,11 +40,8 @@ std::vector<Token> MacroExpander::expand(const std::vector<Token>& tokens) {
     return result;
 }
 
-std::vector<Token> MacroExpander::expand_macro(
-    const Token& macro_token,
-    const std::vector<Token>& tokens,
-    size_t& index) {
-
+std::vector<Token> MacroExpander::expand_macro(const Token& macro_token,
+                                               const std::vector<Token>& tokens, size_t& index) {
     const auto* macro = get_macro(macro_token.text);
     if (!macro) {
         ++index;
@@ -68,10 +66,8 @@ std::vector<Token> MacroExpander::expand_macro(
     return result;
 }
 
-std::vector<Token> MacroExpander::expand_object_like_macro(
-    const MacroDefinition& macro,
-    const Token& macro_token) {
-
+std::vector<Token> MacroExpander::expand_object_like_macro(const MacroDefinition& macro,
+                                                           const Token& macro_token) {
     // Simple replacement with macro's replacement tokens
     std::vector<Token> result = macro.replacement_tokens;
 
@@ -79,12 +75,10 @@ std::vector<Token> MacroExpander::expand_object_like_macro(
     return expand_recursive(result, macro.name);
 }
 
-std::vector<Token> MacroExpander::expand_function_like_macro(
-    const MacroDefinition& macro,
-    const Token& macro_token,
-    const std::vector<Token>& tokens,
-    size_t& index) {
-
+std::vector<Token> MacroExpander::expand_function_like_macro(const MacroDefinition& macro,
+                                                             const Token& macro_token,
+                                                             const std::vector<Token>& tokens,
+                                                             size_t& index) {
     // Skip the macro name
     ++index;
 
@@ -109,15 +103,15 @@ std::vector<Token> MacroExpander::expand_function_like_macro(
 
     if (!macro.is_variadic && arguments.size() != macro.parameters.size()) {
         error(macro_token, "Macro '" + macro.name + "' expects " +
-              std::to_string(macro.parameters.size()) + " arguments, got " +
-              std::to_string(arguments.size()));
+                               std::to_string(macro.parameters.size()) + " arguments, got " +
+                               std::to_string(arguments.size()));
         return {macro_token};
     }
 
     if (macro.is_variadic && arguments.size() < expected_args) {
         error(macro_token, "Macro '" + macro.name + "' expects at least " +
-              std::to_string(expected_args) + " arguments, got " +
-              std::to_string(arguments.size()));
+                               std::to_string(expected_args) + " arguments, got " +
+                               std::to_string(arguments.size()));
         return {macro_token};
     }
 
@@ -128,11 +122,9 @@ std::vector<Token> MacroExpander::expand_function_like_macro(
     return expand_recursive(substituted, macro.name);
 }
 
-std::vector<std::vector<Token>> MacroExpander::parse_macro_arguments(
-    const MacroDefinition& macro,
-    const std::vector<Token>& tokens,
-    size_t& index) {
-
+std::vector<std::vector<Token>>
+MacroExpander::parse_macro_arguments(const MacroDefinition& macro, const std::vector<Token>& tokens,
+                                     size_t& index) {
     std::vector<std::vector<Token>> arguments;
     std::vector<Token> current_arg;
 
@@ -172,10 +164,9 @@ std::vector<std::vector<Token>> MacroExpander::parse_macro_arguments(
     return arguments;
 }
 
-std::vector<Token> MacroExpander::substitute_arguments(
-    const MacroDefinition& macro,
-    const std::vector<std::vector<Token>>& arguments) {
-
+std::vector<Token>
+MacroExpander::substitute_arguments(const MacroDefinition& macro,
+                                    const std::vector<std::vector<Token>>& arguments) {
     std::vector<Token> result;
 
     // Build argument map
@@ -313,21 +304,17 @@ Token MacroExpander::paste_two_tokens(const Token& left, const Token& right) {
     return result;
 }
 
-std::vector<Token> MacroExpander::expand_recursive(
-    const std::vector<Token>& tokens,
-    const std::string& exclude_macro) {
-
+std::vector<Token> MacroExpander::expand_recursive(const std::vector<Token>& tokens,
+                                                   const std::string& exclude_macro) {
     std::vector<Token> result;
 
-    for (size_t i = 0; i < tokens.size(); ) {
+    for (size_t i = 0; i < tokens.size();) {
         const auto& token = tokens[i];
 
         // Check if this is a macro identifier
-        if (token.type == TokenType::Identifier &&
-            is_macro_defined(token.text) &&
+        if (token.type == TokenType::Identifier && is_macro_defined(token.text) &&
             token.text != exclude_macro &&
             currently_expanding_.find(token.text) == currently_expanding_.end()) {
-
             // Expand the macro
             auto expanded = expand_macro(token, tokens, i);
             result.insert(result.end(), expanded.begin(), expanded.end());
@@ -369,10 +356,9 @@ void MacroExpander::error(const std::string& message) {
 
 void MacroExpander::error(const Token& token, const std::string& message) {
     std::ostringstream oss;
-    oss << token.filename << ":" << token.line << ":" << token.column
-        << ": error: " << message;
+    oss << token.filename << ":" << token.line << ":" << token.column << ": error: " << message;
     errors_.push_back(oss.str());
 }
 
-} // namespace parser
-} // namespace cclint
+}  // namespace parser
+}  // namespace cclint

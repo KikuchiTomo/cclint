@@ -53,10 +53,8 @@ void SymbolTable::enter_scope(const std::string& name) {
 
 void SymbolTable::exit_scope() {
     if (current_scope_->parent()) {
-        current_scope_ = std::make_shared<Scope>(
-            current_scope_->parent(),
-            current_scope_->parent()->name()
-        );
+        current_scope_ =
+            std::make_shared<Scope>(current_scope_->parent(), current_scope_->parent()->name());
     }
 }
 

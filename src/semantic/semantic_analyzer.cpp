@@ -27,12 +27,14 @@ void SemanticAnalyzer::analyze_node(std::shared_ptr<parser::ASTNode> node) {
     switch (node->type) {
         case parser::ASTNodeType::Namespace: {
             auto ns = std::dynamic_pointer_cast<parser::NamespaceNode>(node);
-            if (ns) analyze_namespace(ns);
+            if (ns)
+                analyze_namespace(ns);
             break;
         }
         case parser::ASTNodeType::Class: {
             auto cls = std::dynamic_pointer_cast<parser::ClassNode>(node);
-            if (cls) analyze_class(cls);
+            if (cls)
+                analyze_class(cls);
             break;
         }
         case parser::ASTNodeType::Function:
@@ -40,13 +42,15 @@ void SemanticAnalyzer::analyze_node(std::shared_ptr<parser::ASTNode> node) {
         case parser::ASTNodeType::Constructor:
         case parser::ASTNodeType::Destructor: {
             auto func = std::dynamic_pointer_cast<parser::FunctionNode>(node);
-            if (func) analyze_function(func);
+            if (func)
+                analyze_function(func);
             break;
         }
         case parser::ASTNodeType::Variable:
         case parser::ASTNodeType::Field: {
             auto var = std::dynamic_pointer_cast<parser::VariableNode>(node);
-            if (var) analyze_variable(var);
+            if (var)
+                analyze_variable(var);
             break;
         }
         default:
@@ -109,7 +113,8 @@ void SemanticAnalyzer::analyze_class(std::shared_ptr<parser::ClassNode> node) {
             }
         } else {
             // 基底クラスが見つからない
-            add_error("Class '" + node->name + "': Base class '" + base.base_class_name + "' not found");
+            add_error("Class '" + node->name + "': Base class '" + base.base_class_name +
+                      "' not found");
         }
     }
 

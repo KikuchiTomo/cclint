@@ -77,9 +77,8 @@ public:
     /// @param expected 期待されたトークン
     /// @param found 実際のトークン
     /// @return 推奨されるリカバリ戦略
-    static RecoveryStrategy suggest_recovery(
-        const std::vector<TokenType>& expected,
-        TokenType found);
+    static RecoveryStrategy suggest_recovery(const std::vector<TokenType>& expected,
+                                             TokenType found);
 
     /// エラーメッセージを整形
     /// @param errors エラーリスト

@@ -22,8 +22,8 @@ void ParserPerformance::stop_timer(const std::string& name) {
 int64_t ParserPerformance::get_elapsed_ms(const std::string& name) const {
     auto it = timers_.find(name);
     if (it != timers_.end() && !it->second.running) {
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-            it->second.end - it->second.start);
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(it->second.end -
+                                                                              it->second.start);
         return duration.count();
     }
     return 0;
@@ -47,8 +47,8 @@ std::string ParserPerformance::get_stats() const {
         oss << "\nTimings:\n";
         for (const auto& [name, timer] : timers_) {
             if (!timer.running) {
-                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-                    timer.end - timer.start);
+                auto duration =
+                    std::chrono::duration_cast<std::chrono::milliseconds>(timer.end - timer.start);
                 oss << "  " << name << ": " << duration.count() << " ms\n";
             }
         }

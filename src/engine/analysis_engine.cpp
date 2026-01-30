@@ -180,7 +180,8 @@ FileAnalysisResult AnalysisEngine::analyze_file(const std::string& file_path) {
 
                 // セマンティック解析を実行
                 if (config_.enable_semantic_analysis) {
-                    utils::Logger::instance().debug("Performing semantic analysis for " + file_path);
+                    utils::Logger::instance().debug("Performing semantic analysis for " +
+                                                    file_path);
                     semantic::SemanticAnalyzer analyzer;
                     analyzer.analyze(ast);
 

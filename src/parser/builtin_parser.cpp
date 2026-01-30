@@ -3,11 +3,9 @@
 namespace cclint {
 namespace parser {
 
-BuiltinParser::BuiltinParser(const std::string& source,
-                            const std::string& filename,
-                            bool use_preprocessor)
+BuiltinParser::BuiltinParser(const std::string& source, const std::string& filename,
+                             bool use_preprocessor)
     : filename_(filename.empty() ? "<stdin>" : filename) {
-
     if (use_preprocessor) {
         // Use preprocessor for macro expansion and include processing
         Preprocessor preprocessor(source, filename);
@@ -99,7 +97,8 @@ void BuiltinParser::parse_toplevel(TranslationUnitNode& root) {
     // コメントとプリプロセッサディレクティブをスキップ
     while (current_token().type == TokenType::LineComment ||
            current_token().type == TokenType::BlockComment ||
-           (current_token().type >= TokenType::PPInclude && current_token().type <= TokenType::PPLine)) {
+           (current_token().type >= TokenType::PPInclude &&
+            current_token().type <= TokenType::PPLine)) {
         advance();
     }
 
@@ -830,9 +829,9 @@ std::string BuiltinParser::parse_type() {
            check(TokenType::Signed) || check(TokenType::Long) || check(TokenType::Short) ||
            check(TokenType::Void) || check(TokenType::Int) || check(TokenType::Bool) ||
            check(TokenType::Char) || check(TokenType::Float) || check(TokenType::Double) ||
-           check(TokenType::Auto) || check(TokenType::Identifier) || check(TokenType::DoubleColon) ||
-           check(TokenType::Less) || check(TokenType::Greater) || check(TokenType::Comma) ||
-           check(TokenType::Star) || check(TokenType::Ampersand)) {
+           check(TokenType::Auto) || check(TokenType::Identifier) ||
+           check(TokenType::DoubleColon) || check(TokenType::Less) || check(TokenType::Greater) ||
+           check(TokenType::Comma) || check(TokenType::Star) || check(TokenType::Ampersand)) {
         // Add space before token if not empty and not following scope operator
         if (!type.empty() && !ends_with(type, "::") && !ends_with(type, "<") &&
             current_token().text != "::" && current_token().text != "*" &&
@@ -941,8 +940,10 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_assignment_expression() {
 
         auto expr = std::make_shared<ASTNode>(ASTNodeType::Variable);
         expr->name = "assignment:" + op;
-        if (left) expr->children.push_back(left);
-        if (right) expr->children.push_back(right);
+        if (left)
+            expr->children.push_back(left);
+        if (right)
+            expr->children.push_back(right);
         left = expr;
     }
 
@@ -961,9 +962,12 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_conditional_expression() {
         auto expr = std::make_shared<ASTNode>(ASTNodeType::Variable);
         expr->type = ASTNodeType::Variable;
         expr->name = "ternary";
-        if (cond) expr->children.push_back(cond);
-        if (true_expr) expr->children.push_back(true_expr);
-        if (false_expr) expr->children.push_back(false_expr);
+        if (cond)
+            expr->children.push_back(cond);
+        if (true_expr)
+            expr->children.push_back(true_expr);
+        if (false_expr)
+            expr->children.push_back(false_expr);
         return expr;
     }
 
@@ -980,8 +984,10 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_logical_or_expression() {
         auto expr = std::make_shared<ASTNode>(ASTNodeType::Variable);
         expr->type = ASTNodeType::Variable;
         expr->name = "logical_or";
-        if (left) expr->children.push_back(left);
-        if (right) expr->children.push_back(right);
+        if (left)
+            expr->children.push_back(left);
+        if (right)
+            expr->children.push_back(right);
         left = expr;
     }
 
@@ -998,8 +1004,10 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_logical_and_expression() {
         auto expr = std::make_shared<ASTNode>(ASTNodeType::Variable);
         expr->type = ASTNodeType::Variable;
         expr->name = "logical_and";
-        if (left) expr->children.push_back(left);
-        if (right) expr->children.push_back(right);
+        if (left)
+            expr->children.push_back(left);
+        if (right)
+            expr->children.push_back(right);
         left = expr;
     }
 
@@ -1017,8 +1025,10 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_equality_expression() {
         auto expr = std::make_shared<ASTNode>(ASTNodeType::Variable);
         expr->type = ASTNodeType::Variable;
         expr->name = "equality:" + op;
-        if (left) expr->children.push_back(left);
-        if (right) expr->children.push_back(right);
+        if (left)
+            expr->children.push_back(left);
+        if (right)
+            expr->children.push_back(right);
         left = expr;
     }
 
@@ -1028,8 +1038,8 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_equality_expression() {
 std::shared_ptr<ASTNode> BuiltinParser::parse_relational_expression() {
     auto left = parse_additive_expression();
 
-    while (check(TokenType::Less) || check(TokenType::Greater) ||
-           current_token().text == "<=" || current_token().text == ">=" ||
+    while (check(TokenType::Less) || check(TokenType::Greater) || current_token().text == "<=" ||
+           current_token().text == ">=" ||
            current_token().text == "<=>") {  // C++20 spaceship operator
         std::string op = current_token().text;
         advance();
@@ -1038,8 +1048,10 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_relational_expression() {
         auto expr = std::make_shared<ASTNode>(ASTNodeType::Variable);
         expr->type = ASTNodeType::Variable;
         expr->name = "relational:" + op;
-        if (left) expr->children.push_back(left);
-        if (right) expr->children.push_back(right);
+        if (left)
+            expr->children.push_back(left);
+        if (right)
+            expr->children.push_back(right);
         left = expr;
     }
 
@@ -1057,8 +1069,10 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_additive_expression() {
         auto expr = std::make_shared<ASTNode>(ASTNodeType::Variable);
         expr->type = ASTNodeType::Variable;
         expr->name = "additive:" + op;
-        if (left) expr->children.push_back(left);
-        if (right) expr->children.push_back(right);
+        if (left)
+            expr->children.push_back(left);
+        if (right)
+            expr->children.push_back(right);
         left = expr;
     }
 
@@ -1076,8 +1090,10 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_multiplicative_expression() {
         auto expr = std::make_shared<ASTNode>(ASTNodeType::Variable);
         expr->type = ASTNodeType::Variable;
         expr->name = "multiplicative:" + op;
-        if (left) expr->children.push_back(left);
-        if (right) expr->children.push_back(right);
+        if (left)
+            expr->children.push_back(left);
+        if (right)
+            expr->children.push_back(right);
         left = expr;
     }
 
@@ -1087,12 +1103,10 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_multiplicative_expression() {
 std::shared_ptr<ASTNode> BuiltinParser::parse_unary_expression() {
     // Unary operators: ++, --, !, ~, -, +, *, &, sizeof, alignof, new, delete
     if (current_token().text == "++" || current_token().text == "--" ||
-        check(TokenType::LogicalNot) || check(TokenType::Tilde) ||
-        check(TokenType::Minus) || check(TokenType::Plus) ||
-        check(TokenType::Star) || check(TokenType::Ampersand) ||
+        check(TokenType::LogicalNot) || check(TokenType::Tilde) || check(TokenType::Minus) ||
+        check(TokenType::Plus) || check(TokenType::Star) || check(TokenType::Ampersand) ||
         current_token().text == "sizeof" || current_token().text == "alignof" ||
         check(TokenType::New) || check(TokenType::Delete)) {
-
         std::string op = current_token().text;
         advance();
         auto operand = parse_unary_expression();
@@ -1100,14 +1114,14 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_unary_expression() {
         auto expr = std::make_shared<ASTNode>(ASTNodeType::Variable);
         expr->type = ASTNodeType::Variable;
         expr->name = "unary:" + op;
-        if (operand) expr->children.push_back(operand);
+        if (operand)
+            expr->children.push_back(operand);
         return expr;
     }
 
     // Cast expressions: static_cast, dynamic_cast, const_cast, reinterpret_cast
     if (current_token().text == "static_cast" || current_token().text == "dynamic_cast" ||
         current_token().text == "const_cast" || current_token().text == "reinterpret_cast") {
-
         std::string cast_type = current_token().text;
         advance();
 
@@ -1115,9 +1129,12 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_unary_expression() {
         if (match(TokenType::Less)) {
             int depth = 1;
             while (depth > 0 && !check(TokenType::Eof)) {
-                if (match(TokenType::Less)) depth++;
-                else if (match(TokenType::Greater)) depth--;
-                else advance();
+                if (match(TokenType::Less))
+                    depth++;
+                else if (match(TokenType::Greater))
+                    depth--;
+                else
+                    advance();
             }
         }
 
@@ -1129,7 +1146,8 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_unary_expression() {
             auto expr = std::make_shared<ASTNode>(ASTNodeType::Variable);
             expr->type = ASTNodeType::Variable;
             expr->name = "cast:" + cast_type;
-            if (operand) expr->children.push_back(operand);
+            if (operand)
+                expr->children.push_back(operand);
             return expr;
         }
     }
@@ -1149,8 +1167,10 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_postfix_expression() {
             auto subscript = std::make_shared<ASTNode>(ASTNodeType::Variable);
             subscript->type = ASTNodeType::Variable;
             subscript->name = "subscript";
-            if (expr) subscript->children.push_back(expr);
-            if (index) subscript->children.push_back(index);
+            if (expr)
+                subscript->children.push_back(expr);
+            if (index)
+                subscript->children.push_back(index);
             expr = subscript;
         }
         // Function call: expr(args...)
@@ -1164,8 +1184,10 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_postfix_expression() {
             // Parse arguments
             while (!check(TokenType::RightParen) && !check(TokenType::Eof)) {
                 auto arg = parse_assignment_expression();
-                if (arg) call->children.push_back(arg);
-                if (!match(TokenType::Comma)) break;
+                if (arg)
+                    call->children.push_back(arg);
+                if (!match(TokenType::Comma))
+                    break;
             }
 
             expect(TokenType::RightParen, "Expected ')' after function arguments");
@@ -1174,13 +1196,15 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_postfix_expression() {
         // Member access: expr.member or expr->member
         else if (match(TokenType::Dot) || current_token().text == "->") {
             std::string op = current_token().text;
-            if (op == "->") advance();
+            if (op == "->")
+                advance();
 
             if (check(TokenType::Identifier)) {
                 auto member = std::make_shared<ASTNode>(ASTNodeType::Variable);
                 member->type = ASTNodeType::Variable;
                 member->name = "member_access:" + op + ":" + advance().text;
-                if (expr) member->children.push_back(expr);
+                if (expr)
+                    member->children.push_back(expr);
                 expr = member;
             }
         }
@@ -1192,10 +1216,10 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_postfix_expression() {
             auto postfix = std::make_shared<ASTNode>(ASTNodeType::Variable);
             postfix->type = ASTNodeType::Variable;
             postfix->name = "postfix:" + op;
-            if (expr) postfix->children.push_back(expr);
+            if (expr)
+                postfix->children.push_back(expr);
             expr = postfix;
-        }
-        else {
+        } else {
             break;
         }
     }
@@ -1207,9 +1231,7 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_primary_expression() {
     // Literals: numbers, strings, characters, booleans, nullptr
     if (check(TokenType::IntegerLiteral) || check(TokenType::FloatingLiteral) ||
         check(TokenType::StringLiteral) || check(TokenType::CharLiteral) ||
-        check(TokenType::True) || check(TokenType::False) ||
-        check(TokenType::Nullptr)) {
-
+        check(TokenType::True) || check(TokenType::False) || check(TokenType::Nullptr)) {
         auto literal = std::make_shared<ASTNode>(ASTNodeType::Variable);
         literal->type = ASTNodeType::Variable;
         literal->name = "literal:" + current_token().text;
@@ -1242,8 +1264,10 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_primary_expression() {
         std::string capture;
         while (!check(TokenType::RightBracket) && !check(TokenType::Eof)) {
             capture += current_token().text;
-            if (current_token().text == "=") lambda->captures_by_value = true;
-            if (current_token().text == "&") lambda->captures_by_reference = true;
+            if (current_token().text == "=")
+                lambda->captures_by_value = true;
+            if (current_token().text == "&")
+                lambda->captures_by_reference = true;
             advance();
         }
         lambda->capture_clause = "[" + capture + "]";
@@ -1253,9 +1277,12 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_primary_expression() {
         if (match(TokenType::LeftParen)) {
             int depth = 1;
             while (depth > 0 && !check(TokenType::Eof)) {
-                if (match(TokenType::LeftParen)) depth++;
-                else if (match(TokenType::RightParen)) depth--;
-                else advance();
+                if (match(TokenType::LeftParen))
+                    depth++;
+                else if (match(TokenType::RightParen))
+                    depth--;
+                else
+                    advance();
             }
         }
 
@@ -1381,7 +1408,8 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_compound_statement() {
 
     while (!check(TokenType::RightBrace) && !check(TokenType::Eof)) {
         auto stmt = parse_statement();
-        if (stmt) compound->children.push_back(stmt);
+        if (stmt)
+            compound->children.push_back(stmt);
     }
 
     expect(TokenType::RightBrace, "Expected '}'");
@@ -1408,18 +1436,21 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_if_statement() {
     expect(TokenType::LeftParen, "Expected '(' after 'if'");
 
     auto condition = parse_expression();
-    if (condition) if_stmt->children.push_back(condition);
+    if (condition)
+        if_stmt->children.push_back(condition);
 
     expect(TokenType::RightParen, "Expected ')' after condition");
 
     auto then_stmt = parse_statement();
-    if (then_stmt) if_stmt->children.push_back(then_stmt);
+    if (then_stmt)
+        if_stmt->children.push_back(then_stmt);
 
     // Else clause
     if (check(TokenType::Else)) {
         advance();
         auto else_stmt = parse_statement();
-        if (else_stmt) if_stmt->children.push_back(else_stmt);
+        if (else_stmt)
+            if_stmt->children.push_back(else_stmt);
     }
 
     return if_stmt;
@@ -1435,11 +1466,13 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_switch_statement() {
 
     expect(TokenType::LeftParen, "Expected '(' after 'switch'");
     auto condition = parse_expression();
-    if (condition) switch_stmt->children.push_back(condition);
+    if (condition)
+        switch_stmt->children.push_back(condition);
     expect(TokenType::RightParen, "Expected ')' after switch condition");
 
     auto body = parse_compound_statement();
-    if (body) switch_stmt->children.push_back(body);
+    if (body)
+        switch_stmt->children.push_back(body);
 
     return switch_stmt;
 }
@@ -1483,35 +1516,40 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_for_statement() {
 
         // Parse range expression
         auto range = parse_expression();
-        if (range) for_stmt->children.push_back(range);
+        if (range)
+            for_stmt->children.push_back(range);
     } else {
         // Traditional for: for (init; condition; increment)
 
         // Init
         if (!check(TokenType::Semicolon)) {
             auto init = parse_expression();
-            if (init) for_stmt->children.push_back(init);
+            if (init)
+                for_stmt->children.push_back(init);
         }
         expect(TokenType::Semicolon, "Expected ';' after for init");
 
         // Condition
         if (!check(TokenType::Semicolon)) {
             auto cond = parse_expression();
-            if (cond) for_stmt->children.push_back(cond);
+            if (cond)
+                for_stmt->children.push_back(cond);
         }
         expect(TokenType::Semicolon, "Expected ';' after for condition");
 
         // Increment
         if (!check(TokenType::RightParen)) {
             auto inc = parse_expression();
-            if (inc) for_stmt->children.push_back(inc);
+            if (inc)
+                for_stmt->children.push_back(inc);
         }
     }
 
     expect(TokenType::RightParen, "Expected ')' after for");
 
     auto body = parse_statement();
-    if (body) for_stmt->children.push_back(body);
+    if (body)
+        for_stmt->children.push_back(body);
 
     return for_stmt;
 }
@@ -1526,11 +1564,13 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_while_statement() {
 
     expect(TokenType::LeftParen, "Expected '(' after 'while'");
     auto condition = parse_expression();
-    if (condition) while_stmt->children.push_back(condition);
+    if (condition)
+        while_stmt->children.push_back(condition);
     expect(TokenType::RightParen, "Expected ')' after while condition");
 
     auto body = parse_statement();
-    if (body) while_stmt->children.push_back(body);
+    if (body)
+        while_stmt->children.push_back(body);
 
     return while_stmt;
 }
@@ -1544,12 +1584,14 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_do_while_statement() {
     advance();  // consume 'do'
 
     auto body = parse_statement();
-    if (body) do_while_stmt->children.push_back(body);
+    if (body)
+        do_while_stmt->children.push_back(body);
 
     expect(TokenType::While, "Expected 'while' after do body");
     expect(TokenType::LeftParen, "Expected '(' after 'while'");
     auto condition = parse_expression();
-    if (condition) do_while_stmt->children.push_back(condition);
+    if (condition)
+        do_while_stmt->children.push_back(condition);
     expect(TokenType::RightParen, "Expected ')' after while condition");
     match(TokenType::Semicolon);
 
@@ -1566,7 +1608,8 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_return_statement() {
 
     if (!check(TokenType::Semicolon)) {
         auto expr = parse_expression();
-        if (expr) return_stmt->children.push_back(expr);
+        if (expr)
+            return_stmt->children.push_back(expr);
     }
 
     match(TokenType::Semicolon);
@@ -1582,7 +1625,8 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_try_statement() {
     advance();  // consume 'try'
 
     auto try_block = parse_compound_statement();
-    if (try_block) try_stmt->children.push_back(try_block);
+    if (try_block)
+        try_stmt->children.push_back(try_block);
 
     // Parse catch clauses
     while (check(TokenType::Catch)) {
@@ -1601,7 +1645,8 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_try_statement() {
         expect(TokenType::RightParen, "Expected ')' after catch parameter");
 
         auto catch_body = parse_compound_statement();
-        if (catch_body) catch_clause->children.push_back(catch_body);
+        if (catch_body)
+            catch_clause->children.push_back(catch_body);
 
         try_stmt->children.push_back(catch_clause);
     }

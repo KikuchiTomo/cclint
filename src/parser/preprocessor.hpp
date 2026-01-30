@@ -1,13 +1,14 @@
 #pragma once
 
-#include "enhanced_lexer.hpp"
-#include "token_types_enhanced.hpp"
+#include <functional>
+#include <memory>
 #include <string>
-#include <vector>
 #include <unordered_map>
 #include <unordered_set>
-#include <memory>
-#include <functional>
+#include <vector>
+
+#include "enhanced_lexer.hpp"
+#include "token_types_enhanced.hpp"
 
 namespace cclint {
 namespace parser {
@@ -30,13 +31,7 @@ struct MacroDefinition {
 
 /// Represents a conditional compilation context
 struct ConditionalContext {
-    enum class Type {
-        If,
-        Ifdef,
-        Ifndef,
-        Elif,
-        Else
-    };
+    enum class Type { If, Ifdef, Ifndef, Elif, Else };
 
     Type type;
     bool condition_result;  // Result of the condition evaluation
@@ -45,8 +40,7 @@ struct ConditionalContext {
     int line;               // Line where the directive started
 
     ConditionalContext(Type t, bool result, int l)
-        : type(t), condition_result(result), has_else(false),
-          any_branch_taken(result), line(l) {}
+        : type(t), condition_result(result), has_else(false), any_branch_taken(result), line(l) {}
 };
 
 /// C/C++ Preprocessor
@@ -57,9 +51,8 @@ public:
     /// @param source Source code to preprocess
     /// @param filename Source filename
     /// @param include_paths Additional include search paths
-    explicit Preprocessor(const std::string& source,
-                         const std::string& filename = "",
-                         const std::vector<std::string>& include_paths = {});
+    explicit Preprocessor(const std::string& source, const std::string& filename = "",
+                          const std::vector<std::string>& include_paths = {});
 
     /// Destructor (defined in .cpp to allow unique_ptr with forward declaration)
     ~Preprocessor();
@@ -99,9 +92,7 @@ public:
     void set_expand_system_includes(bool expand) { expand_system_includes_ = expand; }
 
     /// Get all defined macros (for debugging)
-    const std::unordered_map<std::string, MacroDefinition>& macros() const {
-        return macros_;
-    }
+    const std::unordered_map<std::string, MacroDefinition>& macros() const { return macros_; }
 
 private:
     // Source and tokens
@@ -122,9 +113,9 @@ private:
     std::unique_ptr<MacroExpander> macro_expander_;
 
     // Preprocessor options (for linter integration)
-    bool expand_macros_;              // Default: false (preserve macro names for rule checking)
-    bool expand_includes_;            // Default: false (don't expand includes)
-    bool expand_system_includes_;     // Default: false (skip system headers)
+    bool expand_macros_;           // Default: false (preserve macro names for rule checking)
+    bool expand_includes_;         // Default: false (don't expand includes)
+    bool expand_system_includes_;  // Default: false (skip system headers)
 
     // Error reporting
     std::vector<std::string> errors_;
@@ -180,5 +171,5 @@ private:
     void warning(const Token& token, const std::string& message);
 };
 
-} // namespace parser
-} // namespace cclint
+}  // namespace parser
+}  // namespace cclint
