@@ -8,7 +8,6 @@ set(CCLINT_SOURCES
     compiler/wrapper.cpp
     compiler/detector.cpp
     parser/ast.cpp
-    parser/lexer.cpp
     parser/builtin_parser.cpp
     parser/token_types_enhanced.cpp
     parser/enhanced_lexer.cpp
@@ -59,7 +58,6 @@ set(CCLINT_LSP_SOURCES
     parallel/thread_pool.cpp
     cache/file_cache.cpp
     parser/ast.cpp
-    parser/lexer.cpp
     parser/builtin_parser.cpp
     parser/token_types_enhanced.cpp
     parser/enhanced_lexer.cpp
