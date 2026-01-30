@@ -260,6 +260,13 @@ struct Token {
           offset(0),
           has_whitespace_before(false),
           is_at_start_of_line(false) {}
+
+    // Explicitly defaulted copy/move constructors and assignment operators
+    // to ensure they work correctly across all platforms and optimization levels
+    Token(const Token&) = default;
+    Token(Token&&) = default;
+    Token& operator=(const Token&) = default;
+    Token& operator=(Token&&) = default;
 };
 
 /// Convert token type to string (for debugging)
