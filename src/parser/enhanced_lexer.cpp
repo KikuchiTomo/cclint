@@ -1,7 +1,6 @@
 #include "parser/enhanced_lexer.hpp"
 
 #include <cctype>
-#include <iostream>
 #include <sstream>
 #include <unordered_map>
 
@@ -21,28 +20,16 @@ EnhancedLexer::EnhancedLexer(const std::string& source, const std::string& filen
       had_whitespace_before_(false) {}
 
 std::vector<Token> EnhancedLexer::tokenize() {
-    std::cerr << "[DEBUG] EnhancedLexer::tokenize() start" << std::endl;
     std::vector<Token> tokens;
 
-    int token_count = 0;
     while (!is_eof()) {
-        std::cerr << "[DEBUG] Lexing token #" << token_count++ << std::endl;
-        std::cerr << "[DEBUG] About to call lex_token()" << std::endl;
         Token token = lex_token();
-        std::cerr << "[DEBUG] lex_token() returned successfully!" << std::endl;
-        std::cerr << "[DEBUG] Token type: " << static_cast<int>(token.type) << std::endl;
         if (token.type != TokenType::Whitespace && token.type != TokenType::Newline) {
-            std::cerr << "[DEBUG] Setting filename..." << std::endl;
             token.filename = filename_;
-            std::cerr << "[DEBUG] Filename set, moving to vector..." << std::endl;
             tokens.push_back(std::move(token));
-            std::cerr << "[DEBUG] Token moved successfully" << std::endl;
-        } else {
-            std::cerr << "[DEBUG] Skipping whitespace/newline token" << std::endl;
         }
     }
 
-    std::cerr << "[DEBUG] Adding EOF token" << std::endl;
     // Add EOF token
     Token eof;
     eof.type = TokenType::Eof;
@@ -51,7 +38,6 @@ std::vector<Token> EnhancedLexer::tokenize() {
     eof.column = column_;
     tokens.push_back(eof);
 
-    std::cerr << "[DEBUG] EnhancedLexer::tokenize() end, " << tokens.size() << " tokens" << std::endl;
     return tokens;
 }
 
@@ -143,7 +129,6 @@ bool EnhancedLexer::is_identifier_continue(char c) const {
 // ========== Token lexing ==========
 
 Token EnhancedLexer::lex_token() {
-    std::cerr << "[DEBUG] lex_token: start, pos=" << pos_ << " char='" << current() << "' (" << static_cast<int>(current()) << ")" << std::endl;
     had_whitespace_before_ = false;
 
     // Skip whitespace
@@ -152,17 +137,13 @@ Token EnhancedLexer::lex_token() {
         had_whitespace_before_ = true;
     }
 
-    std::cerr << "[DEBUG] lex_token: after whitespace skip, pos=" << pos_ << std::endl;
-
     if (is_newline(current())) {
-        std::cerr << "[DEBUG] lex_token: found newline" << std::endl;
         char c = current();
         advance();
         return make_token(TokenType::Newline, std::string(1, c));
     }
 
     if (is_eof()) {
-        std::cerr << "[DEBUG] lex_token: at EOF" << std::endl;
         return make_token(TokenType::Eof, "");
     }
 
@@ -170,7 +151,6 @@ Token EnhancedLexer::lex_token() {
     int start_column = column_;
 
     char c = current();
-    std::cerr << "[DEBUG] lex_token: lexing char '" << c << "' at line=" << line_ << " col=" << column_ << std::endl;
 
     // Comments
     if (c == '/') {
@@ -1048,13 +1028,9 @@ Token EnhancedLexer::lex_user_defined_literal(Token base_literal) {
 // ========== Operators and punctuation ==========
 
 Token EnhancedLexer::lex_operator() {
-    std::cerr << "[DEBUG] lex_operator: start" << std::endl;
     char c = current();
-    std::cerr << "[DEBUG] lex_operator: current()='" << c << "'" << std::endl;
     char next = peek();
-    std::cerr << "[DEBUG] lex_operator: peek()='" << next << "'" << std::endl;
     char next2 = peek(2);
-    std::cerr << "[DEBUG] lex_operator: peek(2)='" << next2 << "'" << std::endl;
 
     // Three-character operators
     if (c == '<' && next == '<' && next2 == '=') {
@@ -1149,73 +1125,49 @@ Token EnhancedLexer::lex_operator() {
     }
 
     // Single-character operators
-    std::cerr << "[DEBUG] lex_operator: single-char section, c='" << c << "'" << std::endl;
     std::string text(1, c);
-    std::cerr << "[DEBUG] lex_operator: created text string" << std::endl;
     advance();
-    std::cerr << "[DEBUG] lex_operator: advanced" << std::endl;
 
-    std::cerr << "[DEBUG] lex_operator: entering switch, c='" << c << "' (" << static_cast<int>(c) << ")" << std::endl;
     switch (c) {
         case '+':
-            std::cerr << "[DEBUG] case '+'" << std::endl;
             return make_token(TokenType::Plus, text);
         case '-':
-            std::cerr << "[DEBUG] case '-'" << std::endl;
             return make_token(TokenType::Minus, text);
         case '*':
-            std::cerr << "[DEBUG] case '*'" << std::endl;
             return make_token(TokenType::Star, text);
         case '/':
-            std::cerr << "[DEBUG] case '/'" << std::endl;
             return make_token(TokenType::Slash, text);
         case '%':
-            std::cerr << "[DEBUG] case '%'" << std::endl;
             return make_token(TokenType::Percent, text);
         case '<':
-            std::cerr << "[DEBUG] case '<'" << std::endl;
             return make_token(TokenType::Less, text);
         case '>':
-            std::cerr << "[DEBUG] case '>'" << std::endl;
             return make_token(TokenType::Greater, text);
         case '!':
-            std::cerr << "[DEBUG] case '!'" << std::endl;
             return make_token(TokenType::LogicalNot, text);
         case '&':
-            std::cerr << "[DEBUG] case '&'" << std::endl;
             return make_token(TokenType::Ampersand, text);
         case '|':
-            std::cerr << "[DEBUG] case '|'" << std::endl;
             return make_token(TokenType::Pipe, text);
         case '^':
-            std::cerr << "[DEBUG] case '^'" << std::endl;
             return make_token(TokenType::Caret, text);
         case '~':
-            std::cerr << "[DEBUG] case '~'" << std::endl;
             return make_token(TokenType::Tilde, text);
         case '=':
-            std::cerr << "[DEBUG] case '='" << std::endl;
             return make_token(TokenType::Assign, text);
         case '.':
-            std::cerr << "[DEBUG] case '.'" << std::endl;
             return make_token(TokenType::Dot, text);
         case '?':
-            std::cerr << "[DEBUG] case '?'" << std::endl;
             return make_token(TokenType::Question, text);
         case ':':
-            std::cerr << "[DEBUG] case ':'" << std::endl;
             return make_token(TokenType::Colon, text);
         case ';':
-            std::cerr << "[DEBUG] case ';'" << std::endl;
             return make_token(TokenType::Semicolon, text);
         case ',':
-            std::cerr << "[DEBUG] case ','" << std::endl;
             return make_token(TokenType::Comma, text);
         case '(':
-            std::cerr << "[DEBUG] case '('" << std::endl;
             return make_token(TokenType::LeftParen, text);
         case ')':
-            std::cerr << "[DEBUG] case ')'" << std::endl;
             return make_token(TokenType::RightParen, text);
         case '{':
             return make_token(TokenType::LeftBrace, text);
@@ -1404,26 +1356,15 @@ void EnhancedLexer::add_error(const std::string& message) {
 }
 
 Token EnhancedLexer::make_token(TokenType type, const std::string& text) {
-    std::cerr << "[DEBUG] make_token: start, type=" << static_cast<int>(type) << " text='" << text << "'" << std::endl;
     Token token;
-    std::cerr << "[DEBUG] make_token: Token created" << std::endl;
     token.type = type;
-    std::cerr << "[DEBUG] make_token: type set" << std::endl;
     token.text = text;
-    std::cerr << "[DEBUG] make_token: text set" << std::endl;
     token.value = text;
-    std::cerr << "[DEBUG] make_token: value set" << std::endl;
     token.line = line_;
-    std::cerr << "[DEBUG] make_token: line set to " << line_ << std::endl;
     token.column = column_ - text.size();
-    std::cerr << "[DEBUG] make_token: column set to " << (column_ - text.size()) << std::endl;
-    token.offset = 0;  // Initialize offset field
-    std::cerr << "[DEBUG] make_token: offset set" << std::endl;
+    token.offset = 0;
     token.has_whitespace_before = had_whitespace_before_;
-    std::cerr << "[DEBUG] make_token: has_whitespace_before set" << std::endl;
     token.is_at_start_of_line = at_start_of_line_;
-    std::cerr << "[DEBUG] make_token: is_at_start_of_line set" << std::endl;
-    std::cerr << "[DEBUG] make_token: about to return" << std::endl;
     return token;
 }
 
