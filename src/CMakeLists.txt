@@ -16,6 +16,7 @@ set(CCLINT_SOURCES
     parser/macro_expander.cpp
     semantic/symbol_table.cpp
     semantic/type_system.cpp
+    semantic/semantic_analyzer.cpp
     diagnostic/diagnostic.cpp
     diagnostic/fixer.cpp
     output/formatter.cpp
@@ -66,6 +67,7 @@ set(CCLINT_LSP_SOURCES
     parser/macro_expander.cpp
     semantic/symbol_table.cpp
     semantic/type_system.cpp
+    semantic/semantic_analyzer.cpp
     rules/rule_base.cpp
     rules/rule_registry.cpp
     rules/rule_executor.cpp
