@@ -1,6 +1,6 @@
 # cclint TODO リスト
 
-**最終更新**: 2026-01-24
+**最終更新**: 2026-01-30
 
 このドキュメントはプロジェクトの進捗を管理するためのTODOリストです。
 作業を開始する前に必ずこのリストを確認し、作業が完了したら更新してください。
@@ -503,6 +503,22 @@
 - [x] match_pattern の実装
 - [x] get_file_content の実装
 - [x] get_source_range の実装
+
+#### Enhanced AST APIs（拡張版AST API）
+- [x] get_classes_with_info の実装（クラス詳細情報：namespace、base_classes、is_abstract等）
+- [x] get_methods_with_info の実装（メソッド詳細情報：パラメータ、is_override、is_noexcept等）
+- [x] get_all_methods の実装（全クラスの全メソッド取得）
+- [x] get_function_info の実装（関数詳細情報：namespace、パラメータ）
+- [x] get_function_parameters の実装（メソッドパラメータ取得）
+- [x] get_classes_in_namespace の実装（namespace内クラス一覧）
+- [x] get_functions_in_namespace の実装（namespace内関数一覧）
+- [x] get_include_details の実装（インクルード詳細：ヘッダー名解析）
+- [x] get_namespace_info の実装（namespace情報）
+- [x] get_class_methods_by_access の実装（アクセス指定子でフィルタ）
+- [x] get_class_fields_by_access の実装（アクセス指定子でフィルタ）
+- [x] is_call_allowed の実装（関数呼び出し許可チェック）
+- [x] get_all_using_declarations の実装（using宣言一覧）
+- [x] get_base_classes の実装（基底クラス情報）
 
 ### 3. Lua Sandbox
 
