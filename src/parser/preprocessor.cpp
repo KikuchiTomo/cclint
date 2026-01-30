@@ -19,16 +19,30 @@ Preprocessor::Preprocessor(const std::string& source, const std::string& filenam
       include_paths_(include_paths),
       expand_macros_(false),            // Default: don't expand (preserve macro names)
       expand_includes_(false),          // Default: don't expand includes
-      expand_system_includes_(false) {  // Default: skip system headers
+      expand_system_includes_(false),   // Default: skip system headers
+      predefined_macros_initialized_(false) {
 
-    // Define predefined macros
-    define_predefined_macros();
+    // Don't define predefined macros yet - defer until needed
+    // This avoids initialization issues in linter mode where macros aren't expanded
 
-    // Create macro expander
+    // Create macro expander (it will be initialized with macros later if needed)
     macro_expander_ = std::make_unique<MacroExpander>(macros_);
 }
 
 Preprocessor::~Preprocessor() = default;
+
+void Preprocessor::set_expand_macros(bool expand) {
+    expand_macros_ = expand;
+
+    // Initialize predefined macros only when macro expansion is enabled
+    if (expand && !predefined_macros_initialized_) {
+        define_predefined_macros();
+        predefined_macros_initialized_ = true;
+
+        // Update macro expander with new macros
+        macro_expander_ = std::make_unique<MacroExpander>(macros_);
+    }
+}
 
 std::vector<Token> Preprocessor::preprocess() {
     // First, tokenize the source
@@ -989,153 +1003,34 @@ std::vector<Token> Preprocessor::read_until_newline() {
 }
 
 void Preprocessor::define_predefined_macros() {
-    // __FILE__
-    {
+    // Helper to create a simple macro with a single token
+    auto create_macro = [this](const std::string& name, TokenType type, const std::string& value) {
         MacroDefinition macro;
-        macro.name = "__FILE__";
+        macro.name = name;
         macro.is_function_like = false;
         macro.is_variadic = false;
         macro.filename = filename_;
         macro.line = 0;
 
-        std::string file_value = "\"";
-        file_value += filename_;
-        file_value += "\"";
-
-        macro.replacement_tokens.emplace_back();
-        auto& token = macro.replacement_tokens.back();
-        token.type = TokenType::StringLiteral;
-        token.text = file_value;
-        token.value = file_value;
+        Token token;
+        token.type = type;
+        token.text = value;
+        token.value = value;
         token.filename = filename_;
         token.line = 0;
         token.column = 0;
-        token.offset = 0;
-        token.has_whitespace_before = false;
-        token.is_at_start_of_line = false;
 
-        macros_["__FILE__"] = std::move(macro);
-    }
+        macro.replacement_tokens.push_back(token);
+        macros_[name] = macro;
+    };
 
-    // __LINE__
-    {
-        MacroDefinition macro;
-        macro.name = "__LINE__";
-        macro.is_function_like = false;
-        macro.is_variadic = false;
-        macro.filename = filename_;
-        macro.line = 0;
-
-        macro.replacement_tokens.emplace_back();
-        auto& token = macro.replacement_tokens.back();
-        token.type = TokenType::IntegerLiteral;
-        token.text = "1";
-        token.value = "1";
-        token.filename = filename_;
-        token.line = 0;
-        token.column = 0;
-        token.offset = 0;
-        token.has_whitespace_before = false;
-        token.is_at_start_of_line = false;
-
-        macros_["__LINE__"] = std::move(macro);
-    }
-
-    // __DATE__
-    {
-        MacroDefinition macro;
-        macro.name = "__DATE__";
-        macro.is_function_like = false;
-        macro.is_variadic = false;
-        macro.filename = filename_;
-        macro.line = 0;
-
-        macro.replacement_tokens.emplace_back();
-        auto& token = macro.replacement_tokens.back();
-        token.type = TokenType::StringLiteral;
-        token.text = "\"??? ?? ????\"";
-        token.value = "\"??? ?? ????\"";
-        token.filename = filename_;
-        token.line = 0;
-        token.column = 0;
-        token.offset = 0;
-        token.has_whitespace_before = false;
-        token.is_at_start_of_line = false;
-
-        macros_["__DATE__"] = std::move(macro);
-    }
-
-    // __TIME__
-    {
-        MacroDefinition macro;
-        macro.name = "__TIME__";
-        macro.is_function_like = false;
-        macro.is_variadic = false;
-        macro.filename = filename_;
-        macro.line = 0;
-
-        macro.replacement_tokens.emplace_back();
-        auto& token = macro.replacement_tokens.back();
-        token.type = TokenType::StringLiteral;
-        token.text = "\"??:??:??\"";
-        token.value = "\"??:??:??\"";
-        token.filename = filename_;
-        token.line = 0;
-        token.column = 0;
-        token.offset = 0;
-        token.has_whitespace_before = false;
-        token.is_at_start_of_line = false;
-
-        macros_["__TIME__"] = std::move(macro);
-    }
-
-    // __cplusplus
-    {
-        MacroDefinition macro;
-        macro.name = "__cplusplus";
-        macro.is_function_like = false;
-        macro.is_variadic = false;
-        macro.filename = filename_;
-        macro.line = 0;
-
-        macro.replacement_tokens.emplace_back();
-        auto& token = macro.replacement_tokens.back();
-        token.type = TokenType::IntegerLiteral;
-        token.text = "201703L";
-        token.value = "201703L";
-        token.filename = filename_;
-        token.line = 0;
-        token.column = 0;
-        token.offset = 0;
-        token.has_whitespace_before = false;
-        token.is_at_start_of_line = false;
-
-        macros_["__cplusplus"] = std::move(macro);
-    }
-
-    // __STDC_HOSTED__
-    {
-        MacroDefinition macro;
-        macro.name = "__STDC_HOSTED__";
-        macro.is_function_like = false;
-        macro.is_variadic = false;
-        macro.filename = filename_;
-        macro.line = 0;
-
-        macro.replacement_tokens.emplace_back();
-        auto& token = macro.replacement_tokens.back();
-        token.type = TokenType::IntegerLiteral;
-        token.text = "1";
-        token.value = "1";
-        token.filename = filename_;
-        token.line = 0;
-        token.column = 0;
-        token.offset = 0;
-        token.has_whitespace_before = false;
-        token.is_at_start_of_line = false;
-
-        macros_["__STDC_HOSTED__"] = std::move(macro);
-    }
+    // Define all predefined macros
+    create_macro("__FILE__", TokenType::StringLiteral, "\"" + filename_ + "\"");
+    create_macro("__LINE__", TokenType::IntegerLiteral, "1");
+    create_macro("__DATE__", TokenType::StringLiteral, "\"??? ?? ????\"");
+    create_macro("__TIME__", TokenType::StringLiteral, "\"??:??:??\"");
+    create_macro("__cplusplus", TokenType::IntegerLiteral, "201703L");
+    create_macro("__STDC_HOSTED__", TokenType::IntegerLiteral, "1");
 }
 
 void Preprocessor::error(const std::string& message) {

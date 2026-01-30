@@ -80,7 +80,7 @@ public:
 
     /// Set whether to expand macros (default: false for linter mode)
     /// @param expand If true, macros will be expanded
-    void set_expand_macros(bool expand) { expand_macros_ = expand; }
+    void set_expand_macros(bool expand);
 
     /// Set whether to process includes (default: false for linter mode)
     /// @param expand If true, #include directives will be processed
@@ -116,6 +116,7 @@ private:
     bool expand_macros_;           // Default: false (preserve macro names for rule checking)
     bool expand_includes_;         // Default: false (don't expand includes)
     bool expand_system_includes_;  // Default: false (skip system headers)
+    bool predefined_macros_initialized_;  // Track if predefined macros have been defined
 
     // Error reporting
     std::vector<std::string> errors_;
