@@ -3,104 +3,15 @@
 #include <string>
 #include <vector>
 
+// Use the enhanced token types for complete C++ support
+#include "parser/token_types_enhanced.hpp"
+
 namespace cclint {
 namespace parser {
 
-/// トークンの種類
-enum class TokenType {
-    // リテラル
-    Identifier,     // 識別子
-    IntLiteral,     // 整数リテラル
-    StringLiteral,  // 文字列リテラル
-    CharLiteral,    // 文字リテラル
-
-    // キーワード
-    Class,
-    Struct,
-    Enum,
-    Namespace,
-    Using,
-    Typedef,
-    Public,
-    Protected,
-    Private,
-    Virtual,
-    Override,
-    Final,
-    Static,
-    Const,
-    Constexpr,
-    Mutable,
-    Void,
-    Int,
-    Bool,
-    Char,
-    Float,
-    Double,
-    Auto,
-    Unsigned,
-    Signed,
-    Long,
-    Short,
-    If,
-    Else,
-    For,
-    While,
-    Do,
-    Switch,
-    Case,
-    Default,
-    Return,
-    Break,
-    Continue,
-    Template,
-    Typename,
-
-    // 演算子・記号
-    LeftParen,     // (
-    RightParen,    // )
-    LeftBrace,     // {
-    RightBrace,    // }
-    LeftBracket,   // [
-    RightBracket,  // ]
-    Semicolon,     // ;
-    Comma,         // ,
-    Colon,         // :
-    Scope,         // ::
-    Arrow,         // ->
-    Dot,           // .
-    Asterisk,      // *
-    Ampersand,     // &
-    Less,          // <
-    Greater,       // >
-    Equal,         // =
-    Plus,          // +
-    Minus,         // -
-    Slash,         // /
-    Percent,       // %
-
-    // その他
-    Comment,       // コメント
-    Preprocessor,  // プリプロセッサディレクティブ
-    Eof,           // ファイル終端
-    Unknown
-};
-
-/// トークン
-struct Token {
-    TokenType type;
-    std::string text;
-    int line = 0;
-    int column = 0;
-
-    Token() : type(TokenType::Unknown) {}
-    Token(TokenType t, const std::string& txt, int ln, int col)
-        : type(t), text(txt), line(ln), column(col) {}
-
-    bool is(TokenType t) const { return type == t; }
-    bool is_keyword() const;
-    std::string get_type_name() const;
-};
+// Note: Token and TokenType are now defined in token_types_enhanced.hpp
+// This legacy lexer file is kept for backward compatibility but no longer
+// defines its own Token types to avoid ODR (One Definition Rule) violations
 
 /// 字句解析器
 class Lexer {

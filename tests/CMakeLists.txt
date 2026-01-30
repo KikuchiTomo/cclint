@@ -46,7 +46,16 @@ set(CCLINT_LIB_SOURCES
     ${CMAKE_SOURCE_DIR}/src/compiler/detector.cpp
     ${CMAKE_SOURCE_DIR}/src/parser/ast.cpp
     ${CMAKE_SOURCE_DIR}/src/parser/lexer.cpp
-    ${CMAKE_SOURCE_DIR}/src/parser/simple_parser.cpp
+    ${CMAKE_SOURCE_DIR}/src/parser/builtin_parser.cpp
+    ${CMAKE_SOURCE_DIR}/src/parser/token_types_enhanced.cpp
+    ${CMAKE_SOURCE_DIR}/src/parser/enhanced_lexer.cpp
+    ${CMAKE_SOURCE_DIR}/src/parser/preprocessor.cpp
+    ${CMAKE_SOURCE_DIR}/src/parser/macro_expander.cpp
+    ${CMAKE_SOURCE_DIR}/src/parser/error_recovery.cpp
+    ${CMAKE_SOURCE_DIR}/src/parser/parser_performance.cpp
+    ${CMAKE_SOURCE_DIR}/src/semantic/symbol_table.cpp
+    ${CMAKE_SOURCE_DIR}/src/semantic/type_system.cpp
+    ${CMAKE_SOURCE_DIR}/src/semantic/semantic_analyzer.cpp
     ${CMAKE_SOURCE_DIR}/src/diagnostic/diagnostic.cpp
     ${CMAKE_SOURCE_DIR}/src/diagnostic/fixer.cpp
     ${CMAKE_SOURCE_DIR}/src/output/formatter.cpp
@@ -61,10 +70,6 @@ set(CCLINT_LIB_SOURCES
     ${CMAKE_SOURCE_DIR}/src/rules/rule_registry.cpp
     ${CMAKE_SOURCE_DIR}/src/rules/rule_executor.cpp
     ${CMAKE_SOURCE_DIR}/src/rules/plugin_loader.cpp
-    ${CMAKE_SOURCE_DIR}/src/rules/builtin/naming_convention.cpp
-    ${CMAKE_SOURCE_DIR}/src/rules/builtin/header_guard.cpp
-    ${CMAKE_SOURCE_DIR}/src/rules/builtin/max_line_length.cpp
-    ${CMAKE_SOURCE_DIR}/src/rules/builtin/function_complexity.cpp
     ${CMAKE_SOURCE_DIR}/src/engine/analysis_engine.cpp
     ${CMAKE_SOURCE_DIR}/src/engine/incremental.cpp
     ${CMAKE_SOURCE_DIR}/src/engine/dependency_tracker.cpp
@@ -116,6 +121,25 @@ endif()
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/samples)
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/samples
          DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+endif()
+
+# Parser tests (standalone, no GTest dependency)
+file(GLOB PARSER_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/parser/*.cpp")
+if(PARSER_TEST_FILES)
+    foreach(TEST_FILE ${PARSER_TEST_FILES})
+        get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
+        add_executable(${TEST_NAME} ${TEST_FILE})
+        target_link_libraries(${TEST_NAME} cclint_lib)
+        # Link yaml-cpp if available
+        if(USE_YAML_CPP AND yaml-cpp_FOUND)
+            target_link_libraries(${TEST_NAME} yaml-cpp)
+        endif()
+        # Link platform-specific libraries
+        if(UNIX)
+            target_link_libraries(${TEST_NAME} dl pthread)
+        endif()
+        add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+    endforeach()
 endif()
 
 # Add custom target to run all tests

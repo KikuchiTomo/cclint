@@ -8,8 +8,14 @@ set(CCLINT_SOURCES
     compiler/wrapper.cpp
     compiler/detector.cpp
     parser/ast.cpp
-    parser/lexer.cpp
     parser/builtin_parser.cpp
+    parser/token_types_enhanced.cpp
+    parser/enhanced_lexer.cpp
+    parser/preprocessor.cpp
+    parser/macro_expander.cpp
+    semantic/symbol_table.cpp
+    semantic/type_system.cpp
+    semantic/semantic_analyzer.cpp
     diagnostic/diagnostic.cpp
     diagnostic/fixer.cpp
     output/formatter.cpp
@@ -52,8 +58,16 @@ set(CCLINT_LSP_SOURCES
     parallel/thread_pool.cpp
     cache/file_cache.cpp
     parser/ast.cpp
-    parser/lexer.cpp
     parser/builtin_parser.cpp
+    parser/token_types_enhanced.cpp
+    parser/enhanced_lexer.cpp
+    parser/preprocessor.cpp
+    parser/macro_expander.cpp
+    semantic/symbol_table.cpp
+    semantic/type_system.cpp
+    semantic/semantic_analyzer.cpp
+    parser/error_recovery.cpp
+    parser/parser_performance.cpp
     rules/rule_base.cpp
     rules/rule_registry.cpp
     rules/rule_executor.cpp

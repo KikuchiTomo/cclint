@@ -6,6 +6,7 @@
 
 #include "parser/builtin_parser.hpp"
 #include "rules/rule_registry.hpp"
+#include "semantic/semantic_analyzer.hpp"
 #include "utils/file_utils.hpp"
 #include "utils/logger.hpp"
 #ifdef HAVE_LUAJIT
@@ -175,6 +176,20 @@ FileAnalysisResult AnalysisEngine::analyze_file(const std::string& file_path) {
 
                 if (parser.has_errors()) {
                     utils::Logger::instance().debug("AST parse warnings for " + file_path);
+                }
+
+                // セマンティック解析を実行
+                if (config_.enable_semantic_analysis) {
+                    utils::Logger::instance().debug("Performing semantic analysis for " +
+                                                    file_path);
+                    semantic::SemanticAnalyzer analyzer;
+                    analyzer.analyze(ast);
+
+                    if (analyzer.has_errors()) {
+                        for (const auto& error : analyzer.errors()) {
+                            utils::Logger::instance().debug("Semantic error: " + error);
+                        }
+                    }
                 }
 
                 utils::Logger::instance().debug("AST parsing complete, executing AST rules");

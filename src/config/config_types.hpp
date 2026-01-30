@@ -50,6 +50,9 @@ struct Config {
     // ルール実行設定
     bool parallel_rules = true;
     bool fail_fast = false;
+
+    // 解析設定
+    bool enable_semantic_analysis = true;  // セマンティック解析を有効化
 };
 
 }  // namespace config
