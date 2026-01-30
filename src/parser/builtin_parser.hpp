@@ -23,7 +23,7 @@ public:
     /// @param filename ファイル名
     /// @param use_preprocessor プリプロセッサを使用するか（デフォルト: true）
     explicit BuiltinParser(const std::string& source, const std::string& filename = "",
-                           bool use_preprocessor = false);
+                           bool use_preprocessor = true);
 
     /// ASTを構築
     /// @return 翻訳単位（ファイル全体）のAST

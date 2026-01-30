@@ -6,29 +6,39 @@ namespace parser {
 BuiltinParser::BuiltinParser(const std::string& source, const std::string& filename,
                              bool use_preprocessor)
     : filename_(filename.empty() ? "<stdin>" : filename) {
+    std::cerr << "[DEBUG] BuiltinParser: constructor start, use_preprocessor=" << use_preprocessor << std::endl;
     if (use_preprocessor) {
+        std::cerr << "[DEBUG] BuiltinParser: creating Preprocessor..." << std::endl;
         // Use preprocessor for macro expansion and include processing
         Preprocessor preprocessor(source, filename);
+        std::cerr << "[DEBUG] BuiltinParser: Preprocessor created, calling preprocess..." << std::endl;
         // Note: Preprocessor defaults to linter mode (no expansion)
         // For full parsing, you may want to enable expansion
         tokens_ = preprocessor.preprocess();
+        std::cerr << "[DEBUG] BuiltinParser: preprocess() returned " << tokens_.size() << " tokens" << std::endl;
 
         if (preprocessor.has_errors()) {
             for (const auto& error : preprocessor.errors()) {
                 errors_.push_back(error);
             }
         }
+        std::cerr << "[DEBUG] BuiltinParser: preprocessor path complete" << std::endl;
     } else {
+        std::cerr << "[DEBUG] BuiltinParser: creating EnhancedLexer..." << std::endl;
         // Direct lexing without preprocessing
         EnhancedLexer lexer(source, filename);
+        std::cerr << "[DEBUG] BuiltinParser: calling tokenize..." << std::endl;
         tokens_ = lexer.tokenize();
+        std::cerr << "[DEBUG] BuiltinParser: tokenize() returned " << tokens_.size() << " tokens" << std::endl;
 
         if (lexer.has_errors()) {
             for (const auto& error : lexer.errors()) {
                 errors_.push_back(error);
             }
         }
+        std::cerr << "[DEBUG] BuiltinParser: lexer path complete" << std::endl;
     }
+    std::cerr << "[DEBUG] BuiltinParser: constructor end" << std::endl;
 }
 
 std::shared_ptr<TranslationUnitNode> BuiltinParser::parse() {
