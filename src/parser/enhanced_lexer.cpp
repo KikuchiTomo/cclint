@@ -1041,9 +1041,13 @@ Token EnhancedLexer::lex_user_defined_literal(Token base_literal) {
 // ========== Operators and punctuation ==========
 
 Token EnhancedLexer::lex_operator() {
+    std::cerr << "[DEBUG] lex_operator: start" << std::endl;
     char c = current();
+    std::cerr << "[DEBUG] lex_operator: current()='" << c << "'" << std::endl;
     char next = peek();
+    std::cerr << "[DEBUG] lex_operator: peek()='" << next << "'" << std::endl;
     char next2 = peek(2);
+    std::cerr << "[DEBUG] lex_operator: peek(2)='" << next2 << "'" << std::endl;
 
     // Three-character operators
     if (c == '<' && next == '<' && next2 == '=') {
