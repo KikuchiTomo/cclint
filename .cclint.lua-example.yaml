@@ -49,18 +49,18 @@ lua_scripts:
     # No parameters - checks for #pragma once or #ifndef/#define/#endif
 
   # Naming: Class and Function Naming Conventions
-  # Note: Currently limited by SimpleParser bugs
-  # - Only detects constructors, not all methods
-  # - Use text-based alternatives or fix parser first
+  # Note: BuiltinParser now supports comprehensive AST analysis
+  # - All C++ entities are properly detected with EnhancedLexer
+  # - AST-based rules fully functional
   - path: scripts/rules/builtin/naming_convention.lua
-    enabled: false  # Disabled until parser is fixed
+    enabled: true  # Now fully functional with BuiltinParser
     severity: warning
     priority: 70
 
   # Readability: Function Complexity
-  # Note: Requires working AST parser
+  # Note: Now works with BuiltinParser
   - path: scripts/rules/builtin/function_complexity.lua
-    enabled: false  # Disabled until parser is fixed
+    enabled: true  # Now fully functional
     severity: warning
     priority: 60
     parameters:
@@ -87,6 +87,6 @@ fail_fast: false
 # - This is a Lua-first linter - no hardcoded rules
 # - Create custom rules in Lua with full control
 # - Text-based rules (check_file) work perfectly
-# - AST-based rules (check_ast) need parser improvements
+# - AST-based rules (check_ast) fully functional with BuiltinParser + EnhancedLexer
 # - See scripts/rules/ for rule examples
-# - See docs/new_plans/ for API documentation
+# - See docs/lua_api.md for API documentation

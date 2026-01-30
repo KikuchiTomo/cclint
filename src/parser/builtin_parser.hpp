@@ -5,21 +5,26 @@
 #include <vector>
 
 #include "parser/ast.hpp"
-#include "parser/lexer.hpp"
+#include "parser/enhanced_lexer.hpp"
+#include "parser/preprocessor.hpp"
+#include "parser/token_types_enhanced.hpp"
 
 namespace cclint {
 namespace parser {
 
-/// 組み込みC++パーサー
-/// レキサーベースの独自実装パーサー。LLVM/Clangに依存せず、
-/// 基本的なC++構文（class, function, constructor, destructor, lambda,
-/// template, friend, operator overloadなど）を解析できる。
+/// 組み込みC++パーサー（Enhanced版）
+/// EnhancedLexerとPreprocessorを使用した独自実装パーサー。
+/// LLVM/Clangに依存せず、基本的なC++構文（class, function, constructor,
+/// destructor, lambda, template, friend, operator overloadなど）を解析できる。
 class BuiltinParser {
 public:
     /// コンストラクタ
     /// @param source ソースコード
     /// @param filename ファイル名
-    explicit BuiltinParser(const std::string& source, const std::string& filename = "");
+    /// @param use_preprocessor プリプロセッサを使用するか（デフォルト: true）
+    explicit BuiltinParser(const std::string& source,
+                          const std::string& filename = "",
+                          bool use_preprocessor = true);
 
     /// ASTを構築
     /// @return 翻訳単位（ファイル全体）のAST

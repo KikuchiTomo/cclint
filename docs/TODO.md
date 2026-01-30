@@ -57,7 +57,7 @@
 
 **完了済み**: CLI, Config, Compiler, Diagnostic, Output, Utils, Logger, Main統合 (8モジュール)
 **実装済み**: 102個の標準Luaルールスクリプト（AST解析対応ルール含む）
-**実装済み**: 独自SimpleParser（LLVM/Clang不要）
+**実装済み**: 独自BuiltinParser（LLVM/Clang不要、EnhancedLexer + Preprocessor統合完了）
 **統合完了**: Main.cppへの全モジュール統合完了
 
 ### 1. CLI Module (src/cli/)
@@ -152,13 +152,15 @@
   - [x] トークン化（識別子、リテラル、キーワード、演算子）
   - [x] コメント処理
   - [x] プリプロセッサディレクティブ対応
-- [x] simple_parser.hpp/cpp の作成
+- [x] builtin_parser.hpp/cpp の作成
   - [x] 再帰下降パーサーの実装
   - [x] namespace, class, struct, enum の解析
   - [x] 関数/メソッド定義の解析
   - [x] 変数/フィールド宣言の解析
   - [x] エラーリカバリ機能
-- [ ] 単体テスト（tests/parser/test_simple_parser.cpp）
+  - [x] EnhancedLexer統合（200+ token types）
+  - [x] Preprocessor統合（linter mode対応）
+- [ ] 単体テスト（tests/parser/test_builtin_parser.cpp）
 
 注: LLVM/Clangではなく独自の簡易パーサーを実装
 
@@ -254,7 +256,7 @@
     - [x] 引数解析
     - [x] 設定読み込み（ConfigLoader統合済み）
     - [x] ソースファイル抽出（CompilerWrapper統合済み）
-    - [x] パース（AST構築）（SimpleParser使用）
+    - [x] パース（AST構築）（BuiltinParser使用）
     - [x] コンパイラ実行（オプション）（CompilerWrapper統合済み）
     - [x] 結果出力（Formatter統合済み）
   - [x] エラーハンドリング

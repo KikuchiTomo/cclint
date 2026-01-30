@@ -3,10 +3,34 @@
 namespace cclint {
 namespace parser {
 
-BuiltinParser::BuiltinParser(const std::string& source, const std::string& filename)
-    : filename_(filename) {
-    Lexer lexer(source);
-    tokens_ = lexer.tokenize();
+BuiltinParser::BuiltinParser(const std::string& source,
+                            const std::string& filename,
+                            bool use_preprocessor)
+    : filename_(filename.empty() ? "<stdin>" : filename) {
+
+    if (use_preprocessor) {
+        // Use preprocessor for macro expansion and include processing
+        Preprocessor preprocessor(source, filename);
+        // Note: Preprocessor defaults to linter mode (no expansion)
+        // For full parsing, you may want to enable expansion
+        tokens_ = preprocessor.preprocess();
+
+        if (preprocessor.has_errors()) {
+            for (const auto& error : preprocessor.errors()) {
+                errors_.push_back(error);
+            }
+        }
+    } else {
+        // Direct lexing without preprocessing
+        EnhancedLexer lexer(source, filename);
+        tokens_ = lexer.tokenize();
+
+        if (lexer.has_errors()) {
+            for (const auto& error : lexer.errors()) {
+                errors_.push_back(error);
+            }
+        }
+    }
 }
 
 std::shared_ptr<TranslationUnitNode> BuiltinParser::parse() {
@@ -24,7 +48,9 @@ const Token& BuiltinParser::current_token() const {
     if (current_ < tokens_.size()) {
         return tokens_[current_];
     }
-    static Token eof_token(TokenType::Eof, "", 0, 0);
+    static Token eof_token;
+    eof_token.type = TokenType::Eof;
+    eof_token.text = "";
     return eof_token;
 }
 
@@ -33,7 +59,9 @@ const Token& BuiltinParser::peek_token(int offset) const {
     if (pos < tokens_.size()) {
         return tokens_[pos];
     }
-    static Token eof_token(TokenType::Eof, "", 0, 0);
+    static Token eof_token;
+    eof_token.type = TokenType::Eof;
+    eof_token.text = "";
     return eof_token;
 }
 
@@ -53,7 +81,10 @@ Token BuiltinParser::advance() {
     if (current_ < tokens_.size()) {
         return tokens_[current_++];
     }
-    return Token(TokenType::Eof, "", 0, 0);
+    Token eof_token;
+    eof_token.type = TokenType::Eof;
+    eof_token.text = "";
+    return eof_token;
 }
 
 Token BuiltinParser::expect(TokenType type, const std::string& message) {
@@ -65,9 +96,11 @@ Token BuiltinParser::expect(TokenType type, const std::string& message) {
 }
 
 void BuiltinParser::parse_toplevel(TranslationUnitNode& root) {
-    // コメントとプリプロセッサをスキップ
-    while (match(TokenType::Comment) || match(TokenType::Preprocessor)) {
-        // スキップ
+    // コメントとプリプロセッサディレクティブをスキップ
+    while (current_token().type == TokenType::LineComment ||
+           current_token().type == TokenType::BlockComment ||
+           (current_token().type >= TokenType::PPInclude && current_token().type <= TokenType::PPLine)) {
+        advance();
     }
 
     if (check(TokenType::Eof)) {
@@ -215,7 +248,7 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_namespace() {
     // namespace body - namespace内の要素を直接childrenに追加
     while (!check(TokenType::RightBrace) && !check(TokenType::Eof)) {
         // コメントとプリプロセッサをスキップ
-        while (match(TokenType::Comment) || match(TokenType::Preprocessor)) {
+        while (match(TokenType::LineComment) || match(TokenType::PPDirective)) {
         }
 
         if (check(TokenType::RightBrace) || check(TokenType::Eof)) {
@@ -328,7 +361,7 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_class_or_struct() {
         }
 
         // コメントをスキップ
-        if (match(TokenType::Comment) || match(TokenType::Preprocessor)) {
+        if (match(TokenType::LineComment) || match(TokenType::PPDirective)) {
             continue;
         }
 
@@ -529,10 +562,12 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_function_or_variable() {
         while (true) {
             if (match(TokenType::Const)) {
                 func->is_const = true;
-            } else if (match(TokenType::Override)) {
+            } else if (check(TokenType::Identifier) && current_token().text == "override") {
                 func->is_override = true;
-            } else if (match(TokenType::Final)) {
+                advance();
+            } else if (check(TokenType::Identifier) && current_token().text == "final") {
                 func->is_final = true;
+                advance();
             } else {
                 break;
             }
@@ -795,9 +830,9 @@ std::string BuiltinParser::parse_type() {
            check(TokenType::Signed) || check(TokenType::Long) || check(TokenType::Short) ||
            check(TokenType::Void) || check(TokenType::Int) || check(TokenType::Bool) ||
            check(TokenType::Char) || check(TokenType::Float) || check(TokenType::Double) ||
-           check(TokenType::Auto) || check(TokenType::Identifier) || check(TokenType::Scope) ||
+           check(TokenType::Auto) || check(TokenType::Identifier) || check(TokenType::DoubleColon) ||
            check(TokenType::Less) || check(TokenType::Greater) || check(TokenType::Comma) ||
-           check(TokenType::Asterisk) || check(TokenType::Ampersand)) {
+           check(TokenType::Star) || check(TokenType::Ampersand)) {
         // Add space before token if not empty and not following scope operator
         if (!type.empty() && !ends_with(type, "::") && !ends_with(type, "<") &&
             current_token().text != "::" && current_token().text != "*" &&

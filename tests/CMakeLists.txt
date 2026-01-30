@@ -46,7 +46,9 @@ set(CCLINT_LIB_SOURCES
     ${CMAKE_SOURCE_DIR}/src/compiler/detector.cpp
     ${CMAKE_SOURCE_DIR}/src/parser/ast.cpp
     ${CMAKE_SOURCE_DIR}/src/parser/lexer.cpp
-    ${CMAKE_SOURCE_DIR}/src/parser/simple_parser.cpp
+    ${CMAKE_SOURCE_DIR}/src/parser/builtin_parser.cpp
+    ${CMAKE_SOURCE_DIR}/src/parser/enhanced_lexer.cpp
+    ${CMAKE_SOURCE_DIR}/src/parser/preprocessor.cpp
     ${CMAKE_SOURCE_DIR}/src/diagnostic/diagnostic.cpp
     ${CMAKE_SOURCE_DIR}/src/diagnostic/fixer.cpp
     ${CMAKE_SOURCE_DIR}/src/output/formatter.cpp
