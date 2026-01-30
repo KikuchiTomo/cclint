@@ -1417,6 +1417,8 @@ Token EnhancedLexer::make_token(TokenType type, const std::string& text) {
     std::cerr << "[DEBUG] make_token: line set to " << line_ << std::endl;
     token.column = column_ - text.size();
     std::cerr << "[DEBUG] make_token: column set to " << (column_ - text.size()) << std::endl;
+    token.offset = 0;  // Initialize offset field
+    std::cerr << "[DEBUG] make_token: offset set" << std::endl;
     token.has_whitespace_before = had_whitespace_before_;
     std::cerr << "[DEBUG] make_token: has_whitespace_before set" << std::endl;
     token.is_at_start_of_line = at_start_of_line_;
@@ -1432,6 +1434,7 @@ Token EnhancedLexer::make_token(TokenType type, const std::string& text, const s
     token.value = value;
     token.line = line_;
     token.column = column_ - text.size();
+    token.offset = 0;  // Initialize offset field
     token.has_whitespace_before = had_whitespace_before_;
     token.is_at_start_of_line = at_start_of_line_;
     return token;
