@@ -62,6 +62,32 @@ private:
     void skip_braces();
     AccessSpecifier current_access_ = AccessSpecifier::None;
 
+    // 式パーサー (Expression Parsing)
+    std::shared_ptr<ASTNode> parse_expression();
+    std::shared_ptr<ASTNode> parse_assignment_expression();
+    std::shared_ptr<ASTNode> parse_conditional_expression();
+    std::shared_ptr<ASTNode> parse_logical_or_expression();
+    std::shared_ptr<ASTNode> parse_logical_and_expression();
+    std::shared_ptr<ASTNode> parse_equality_expression();
+    std::shared_ptr<ASTNode> parse_relational_expression();
+    std::shared_ptr<ASTNode> parse_additive_expression();
+    std::shared_ptr<ASTNode> parse_multiplicative_expression();
+    std::shared_ptr<ASTNode> parse_unary_expression();
+    std::shared_ptr<ASTNode> parse_postfix_expression();
+    std::shared_ptr<ASTNode> parse_primary_expression();
+
+    // 文パーサー (Statement Parsing)
+    std::shared_ptr<ASTNode> parse_statement();
+    std::shared_ptr<ASTNode> parse_compound_statement();
+    std::shared_ptr<ASTNode> parse_if_statement();
+    std::shared_ptr<ASTNode> parse_switch_statement();
+    std::shared_ptr<ASTNode> parse_for_statement();
+    std::shared_ptr<ASTNode> parse_while_statement();
+    std::shared_ptr<ASTNode> parse_do_while_statement();
+    std::shared_ptr<ASTNode> parse_return_statement();
+    std::shared_ptr<ASTNode> parse_try_statement();
+    std::shared_ptr<ASTNode> parse_declaration_statement();
+
     // ヘルパー
     std::string parse_type();
     void add_error(const std::string& message);
