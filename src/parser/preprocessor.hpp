@@ -113,9 +113,9 @@ private:
     std::unique_ptr<MacroExpander> macro_expander_;
 
     // Preprocessor options (for linter integration)
-    bool expand_macros_;           // Default: false (preserve macro names for rule checking)
-    bool expand_includes_;         // Default: false (don't expand includes)
-    bool expand_system_includes_;  // Default: false (skip system headers)
+    bool expand_macros_;                  // Default: false (preserve macro names for rule checking)
+    bool expand_includes_;                // Default: false (don't expand includes)
+    bool expand_system_includes_;         // Default: false (skip system headers)
     bool predefined_macros_initialized_;  // Track if predefined macros have been defined
 
     // Error reporting

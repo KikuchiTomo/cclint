@@ -17,11 +17,10 @@ Preprocessor::Preprocessor(const std::string& source, const std::string& filenam
       filename_(filename.empty() ? "<stdin>" : filename),
       current_index_(0),
       include_paths_(include_paths),
-      expand_macros_(false),            // Default: don't expand (preserve macro names)
-      expand_includes_(false),          // Default: don't expand includes
-      expand_system_includes_(false),   // Default: skip system headers
+      expand_macros_(false),           // Default: don't expand (preserve macro names)
+      expand_includes_(false),         // Default: don't expand includes
+      expand_system_includes_(false),  // Default: skip system headers
       predefined_macros_initialized_(false) {
-
     // Don't define predefined macros yet - defer until needed
     // This avoids initialization issues in linter mode where macros aren't expanded
 
