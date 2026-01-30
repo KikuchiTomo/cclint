@@ -27,7 +27,9 @@ std::vector<Token> EnhancedLexer::tokenize() {
     int token_count = 0;
     while (!is_eof()) {
         std::cerr << "[DEBUG] Lexing token #" << token_count++ << std::endl;
+        std::cerr << "[DEBUG] About to call lex_token()" << std::endl;
         Token token = lex_token();
+        std::cerr << "[DEBUG] lex_token() returned successfully!" << std::endl;
         std::cerr << "[DEBUG] Token type: " << static_cast<int>(token.type) << std::endl;
         if (token.type != TokenType::Whitespace && token.type != TokenType::Newline) {
             token.filename = filename_;
