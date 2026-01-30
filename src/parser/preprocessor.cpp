@@ -4,7 +4,6 @@
 #include <ctime>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <sstream>
 
 #include "macro_expander.hpp"
@@ -22,29 +21,19 @@ Preprocessor::Preprocessor(const std::string& source, const std::string& filenam
       expand_includes_(false),          // Default: don't expand includes
       expand_system_includes_(false) {  // Default: skip system headers
 
-    std::cerr << "[DEBUG] Preprocessor constructor: before define_predefined_macros" << std::endl;
     // Define predefined macros
     define_predefined_macros();
-    std::cerr << "[DEBUG] Preprocessor constructor: after define_predefined_macros" << std::endl;
 
-    std::cerr << "[DEBUG] Preprocessor constructor: before MacroExpander creation" << std::endl;
     // Create macro expander
     macro_expander_ = std::make_unique<MacroExpander>(macros_);
-    std::cerr << "[DEBUG] Preprocessor constructor: after MacroExpander creation" << std::endl;
 }
 
-Preprocessor::~Preprocessor() {
-    std::cerr << "[DEBUG] Preprocessor destructor called" << std::endl;
-}
+Preprocessor::~Preprocessor() = default;
 
 std::vector<Token> Preprocessor::preprocess() {
-    std::cerr << "[DEBUG] preprocess(): start" << std::endl;
     // First, tokenize the source
-    std::cerr << "[DEBUG] preprocess(): creating EnhancedLexer" << std::endl;
     EnhancedLexer lexer(source_, filename_);
-    std::cerr << "[DEBUG] preprocess(): calling lexer.tokenize()" << std::endl;
     auto raw_tokens = lexer.tokenize();
-    std::cerr << "[DEBUG] preprocess(): tokenize returned " << raw_tokens.size() << " tokens" << std::endl;
 
     if (lexer.has_errors()) {
         for (const auto& err : lexer.errors()) {
@@ -1009,11 +998,19 @@ void Preprocessor::define_predefined_macros() {
         macro.filename = filename_;
         macro.line = 0;
 
-        Token token(TokenType::StringLiteral, value, 0, 0);
+        // Use default constructor to avoid issues
+        Token token;
+        token.type = TokenType::StringLiteral;
+        token.text = value;
         token.value = value;
         token.filename = filename_;
-        macro.replacement_tokens.push_back(token);
+        token.line = 0;
+        token.column = 0;
+        token.offset = 0;
+        token.has_whitespace_before = false;
+        token.is_at_start_of_line = false;
 
+        macro.replacement_tokens.push_back(token);
         macros_.emplace(name, std::move(macro));
     };
 
@@ -1025,38 +1022,29 @@ void Preprocessor::define_predefined_macros() {
         macro.filename = filename_;
         macro.line = 0;
 
-        Token token(TokenType::IntegerLiteral, value, 0, 0);
+        // Use default constructor to avoid issues
+        Token token;
+        token.type = TokenType::IntegerLiteral;
+        token.text = value;
         token.value = value;
         token.filename = filename_;
-        macro.replacement_tokens.push_back(token);
+        token.line = 0;
+        token.column = 0;
+        token.offset = 0;
+        token.has_whitespace_before = false;
+        token.is_at_start_of_line = false;
 
+        macro.replacement_tokens.push_back(token);
         macros_.emplace(name, std::move(macro));
     };
 
     // Define standard macros
-    std::cerr << "[DEBUG] define_predefined_macros: before __FILE__" << std::endl;
     create_string_macro("__FILE__", "\"" + filename_ + "\"");
-    std::cerr << "[DEBUG] define_predefined_macros: after __FILE__" << std::endl;
-
-    std::cerr << "[DEBUG] define_predefined_macros: before __LINE__" << std::endl;
     create_int_macro("__LINE__", "1");
-    std::cerr << "[DEBUG] define_predefined_macros: after __LINE__" << std::endl;
-
-    std::cerr << "[DEBUG] define_predefined_macros: before __DATE__" << std::endl;
     create_string_macro("__DATE__", "\"??? ?? ????\"");
-    std::cerr << "[DEBUG] define_predefined_macros: after __DATE__" << std::endl;
-
-    std::cerr << "[DEBUG] define_predefined_macros: before __TIME__" << std::endl;
     create_string_macro("__TIME__", "\"??:??:??\"");
-    std::cerr << "[DEBUG] define_predefined_macros: after __TIME__" << std::endl;
-
-    std::cerr << "[DEBUG] define_predefined_macros: before __cplusplus" << std::endl;
     create_int_macro("__cplusplus", "201703L");
-    std::cerr << "[DEBUG] define_predefined_macros: after __cplusplus" << std::endl;
-
-    std::cerr << "[DEBUG] define_predefined_macros: before __STDC_HOSTED__" << std::endl;
     create_int_macro("__STDC_HOSTED__", "1");
-    std::cerr << "[DEBUG] define_predefined_macros: after __STDC_HOSTED__" << std::endl;
 }
 
 void Preprocessor::error(const std::string& message) {
