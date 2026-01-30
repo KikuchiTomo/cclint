@@ -1,6 +1,7 @@
 #include "parser/enhanced_lexer.hpp"
 
 #include <cctype>
+#include <iostream>
 #include <sstream>
 #include <unordered_map>
 
@@ -20,16 +21,21 @@ EnhancedLexer::EnhancedLexer(const std::string& source, const std::string& filen
       had_whitespace_before_(false) {}
 
 std::vector<Token> EnhancedLexer::tokenize() {
+    std::cerr << "[DEBUG] EnhancedLexer::tokenize() start" << std::endl;
     std::vector<Token> tokens;
 
+    int token_count = 0;
     while (!is_eof()) {
+        std::cerr << "[DEBUG] Lexing token #" << token_count++ << std::endl;
         Token token = lex_token();
+        std::cerr << "[DEBUG] Token type: " << static_cast<int>(token.type) << std::endl;
         if (token.type != TokenType::Whitespace && token.type != TokenType::Newline) {
             token.filename = filename_;
             tokens.push_back(token);
         }
     }
 
+    std::cerr << "[DEBUG] Adding EOF token" << std::endl;
     // Add EOF token
     Token eof;
     eof.type = TokenType::Eof;
@@ -38,6 +44,7 @@ std::vector<Token> EnhancedLexer::tokenize() {
     eof.column = column_;
     tokens.push_back(eof);
 
+    std::cerr << "[DEBUG] EnhancedLexer::tokenize() end, " << tokens.size() << " tokens" << std::endl;
     return tokens;
 }
 
