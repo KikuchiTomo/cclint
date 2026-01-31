@@ -123,6 +123,22 @@ private:
     static int lua_get_inheritance_tree(lua_State* L);
     static int lua_get_attributes(lua_State* L);
 
+    // Enhanced AST APIs for complex linting rules
+    static int lua_get_classes_with_info(lua_State* L);
+    static int lua_get_methods_with_info(lua_State* L);
+    static int lua_get_all_methods(lua_State* L);
+    static int lua_get_function_info(lua_State* L);
+    static int lua_get_function_parameters(lua_State* L);
+    static int lua_get_classes_in_namespace(lua_State* L);
+    static int lua_get_functions_in_namespace(lua_State* L);
+    static int lua_get_include_details(lua_State* L);
+    static int lua_get_namespace_info(lua_State* L);
+    static int lua_get_class_methods_by_access(lua_State* L);
+    static int lua_get_class_fields_by_access(lua_State* L);
+    static int lua_is_call_allowed(lua_State* L);
+    static int lua_get_all_using_declarations(lua_State* L);
+    static int lua_get_base_classes(lua_State* L);
+
     // ヘルパー関数
     void report_diagnostic(const std::string& file_path, int line, int column,
                            const std::string& message, diagnostic::Severity severity);

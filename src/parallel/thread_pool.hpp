@@ -29,8 +29,8 @@ public:
     /// @param func 実行する関数
     /// @return future オブジェクト
     template <typename F, typename... Args>
-    auto enqueue(F&& func, Args&&... args)
-        -> std::future<typename std::invoke_result<F, Args...>::type>;
+    auto enqueue(F&& func,
+                 Args&&... args) -> std::future<typename std::invoke_result<F, Args...>::type>;
 
     /// スレッド数を取得
     size_t size() const { return workers_.size(); }
