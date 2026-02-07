@@ -1,5 +1,6 @@
 #include "lua/lua_bridge.hpp"
 
+#include <cstring>
 #include <regex>
 #include <sstream>
 
