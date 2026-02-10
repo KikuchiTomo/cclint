@@ -89,9 +89,9 @@ void Logger::log(LogLevel level, const std::string& message) {
     }
 
     // ログ出力
-    *stream << "[" << std::put_time(&tm_buf, "%Y-%m-%d %H:%M:%S") << "." << std::setfill('0')
-            << std::setw(3) << ms.count() << "] " << "[" << level_str << "] " << message
-            << std::endl;
+    *stream << "[" << std::put_time(&tm_buf, "%Y-%m-%d %H:%M:%S") << "."
+            << std::setfill('0') << std::setw(3) << ms.count() << "] "
+            << "[" << level_str << "] " << message << std::endl;
 }
 
 }  // namespace utils
