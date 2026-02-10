@@ -123,7 +123,7 @@ jobs:
 
     - name: Check code formatting
       run: |
-        find src -name '*.cpp' -o -name '*.hpp' | xargs clang-format-14 --dry-run --Werror
+        find src \( -name '*.cpp' -o -name '*.hpp' \) | xargs clang-format-14 --dry-run --Werror
 
     # clang-tidy check temporarily disabled due to dependency issues in CI
     # - name: Install clang-tidy
