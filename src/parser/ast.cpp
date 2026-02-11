@@ -45,6 +45,40 @@ std::string ASTNode::get_type_name() const {
             return "Macro";
         case ASTNodeType::CallExpression:
             return "CallExpression";
+        case ASTNodeType::Lambda:
+            return "Lambda";
+        case ASTNodeType::Operator:
+            return "Operator";
+        case ASTNodeType::Friend:
+            return "Friend";
+        case ASTNodeType::StaticAssert:
+            return "StaticAssert";
+        case ASTNodeType::Attribute:
+            return "Attribute";
+        case ASTNodeType::Constructor:
+            return "Constructor";
+        case ASTNodeType::Destructor:
+            return "Destructor";
+        case ASTNodeType::ReturnStatement:
+            return "ReturnStatement";
+        case ASTNodeType::BreakStatement:
+            return "BreakStatement";
+        case ASTNodeType::ContinueStatement:
+            return "ContinueStatement";
+        case ASTNodeType::CoAwaitExpression:
+            return "CoAwaitExpression";
+        case ASTNodeType::CoYieldExpression:
+            return "CoYieldExpression";
+        case ASTNodeType::CoReturnStatement:
+            return "CoReturnStatement";
+        case ASTNodeType::ModuleDeclaration:
+            return "ModuleDeclaration";
+        case ASTNodeType::ImportDeclaration:
+            return "ImportDeclaration";
+        case ASTNodeType::ExportDeclaration:
+            return "ExportDeclaration";
+        case ASTNodeType::TemplateSpecialization:
+            return "TemplateSpecialization";
         case ASTNodeType::Unknown:
         default:
             return "Unknown";

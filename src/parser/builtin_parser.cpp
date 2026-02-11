@@ -151,6 +151,114 @@ void BuiltinParser::parse_toplevel(TranslationUnitNode& root) {
         return;
     }
 
+    // export declaration (C++20)
+    if (check(TokenType::Export)) {
+        auto export_node = std::make_shared<ExportDeclarationNode>();
+        export_node->position = get_position();
+        advance();  // consume 'export'
+
+        // export module ...
+        if (current_token().text == "module") {
+            export_node->is_module_declaration = true;
+            advance();  // consume 'module'
+            if (check(TokenType::Identifier)) {
+                export_node->name = advance().text;
+            }
+        }
+        // export import ...
+        else if (current_token().text == "import") {
+            export_node->is_import = true;
+            advance();  // consume 'import'
+            if (check(TokenType::Identifier)) {
+                export_node->name = advance().text;
+            }
+        }
+        // export { ... }
+        else if (check(TokenType::LeftBrace)) {
+            export_node->is_block = true;
+            // Parse export block (simplified - just skip for now)
+            int depth = 1;
+            advance();  // consume '{'
+            while (depth > 0 && !check(TokenType::Eof)) {
+                if (match(TokenType::LeftBrace))
+                    depth++;
+                else if (match(TokenType::RightBrace))
+                    depth--;
+                else
+                    advance();
+            }
+        }
+
+        match(TokenType::Semicolon);
+        root.children.push_back(export_node);
+        return;
+    }
+
+    // module declaration (C++20)
+    if (current_token().text == "module") {
+        auto module_node = std::make_shared<ModuleDeclarationNode>();
+        module_node->position = get_position();
+        advance();  // consume 'module'
+
+        // module name
+        if (check(TokenType::Identifier)) {
+            module_node->module_name = advance().text;
+            module_node->name = module_node->module_name;
+
+            // partitions (module:partition)
+            while (match(TokenType::Colon)) {
+                if (check(TokenType::Identifier)) {
+                    module_node->partitions.push_back(advance().text);
+                    module_node->is_partition = true;
+                }
+            }
+        }
+
+        match(TokenType::Semicolon);
+        root.children.push_back(module_node);
+        return;
+    }
+
+    // import declaration (C++20)
+    if (current_token().text == "import") {
+        auto import_node = std::make_shared<ImportDeclarationNode>();
+        import_node->position = get_position();
+        advance();  // consume 'import'
+
+        // import <header> or import "header"
+        if (check(TokenType::Less) || check(TokenType::StringLiteral)) {
+            import_node->is_header_unit = true;
+            if (check(TokenType::Less)) {
+                advance();
+                std::string header;
+                while (!check(TokenType::Greater) && !check(TokenType::Eof)) {
+                    header += current_token().text;
+                    advance();
+                }
+                match(TokenType::Greater);
+                import_node->header_name = "<" + header + ">";
+            } else {
+                import_node->header_name = advance().text;
+            }
+        }
+        // import module.name
+        else if (check(TokenType::Identifier)) {
+            import_node->module_name = advance().text;
+            import_node->name = import_node->module_name;
+
+            // partitions
+            while (match(TokenType::Colon)) {
+                if (check(TokenType::Identifier)) {
+                    import_node->partitions.push_back(advance().text);
+                }
+            }
+        }
+
+        match(TokenType::Semicolon);
+        root.children.push_back(import_node);
+        return;
+    }
+
     // template
     if (check(TokenType::Template)) {
         auto tmpl = std::make_shared<TemplateNode>();
@@ -414,11 +522,11 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_class_or_struct() {
                     ctor->class_name = node->name;
                     ctor->position = func->position;
                     ctor->access = current_access_;
-                    ctor->is_explicit = false;  // TODO: detect explicit keyword
+                    ctor->is_explicit = func->is_explicit;
                     ctor->is_default = false;
                     ctor->is_delete = false;
-                    ctor->is_constexpr = false;
-                    ctor->is_noexcept = false;
+                    ctor->is_constexpr = func->is_constexpr;
+                    ctor->is_noexcept = func->is_noexcept;
                     node->children.push_back(ctor);
                     continue;
                 }
@@ -499,6 +607,7 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_function_or_variable() {
     bool is_const = false;
     bool is_virtual = false;
     bool is_constexpr = false;
+    bool is_explicit = false;
 
     // 修飾子
     while (true) {
@@ -508,6 +617,8 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_function_or_variable() {
             is_virtual = true;
         } else if (match(TokenType::Constexpr)) {
             is_constexpr = true;
+        } else if (match(TokenType::Explicit)) {
+            is_explicit = true;
         } else if (match(TokenType::Const) && !is_const) {
             is_const = true;
         } else {
@@ -554,6 +665,7 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_function_or_variable() {
         func->return_type = type_name;
         func->is_static = is_static;
         func->is_virtual = is_virtual;
+        func->is_explicit = is_explicit;
         func->position = pos;
 
         // パラメータをスキップ
@@ -1362,6 +1474,27 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_statement() {
     // Return statement
     if (check(TokenType::Return)) {
         return parse_return_statement();
+    }
+
+    // Co_return statement (C++20)
+    if (check(TokenType::Co_return)) {
+        auto co_return_stmt = std::make_shared<CoReturnStatementNode>();
+        co_return_stmt->position = get_position();
+        advance();  // consume 'co_return'
+
+        // Parse return value (if any)
+        if (!check(TokenType::Semicolon)) {
+            std::string return_value;
+            while (!check(TokenType::Semicolon) && !check(TokenType::Eof)) {
+                return_value += current_token().text + " ";
+                advance();
+            }
+            co_return_stmt->return_value = return_value;
+            co_return_stmt->has_value = true;
+        }
+
+        match(TokenType::Semicolon);
+        return co_return_stmt;
     }
 
     // Try-catch block

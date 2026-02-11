@@ -98,6 +98,12 @@ enum class ASTNodeType {
     Friend,                  // friend宣言
     StaticAssert,            // static_assert
     Attribute,               // [[attribute]]
+    CoAwaitExpression,       // co_await expression (C++20)
+    CoYieldExpression,       // co_yield expression (C++20)
+    CoReturnStatement,       // co_return statement (C++20)
+    ModuleDeclaration,       // module declaration (C++20)
+    ImportDeclaration,       // import declaration (C++20)
+    ExportDeclaration,       // export declaration (C++20)
     Unknown
 };
 
@@ -505,6 +511,63 @@ public:
 class ContinueStatementNode : public ASTNode {
 public:
     ContinueStatementNode() : ASTNode(ASTNodeType::ContinueStatement) {}
+};
+
+/// co_await式 (C++20)
+class CoAwaitExpressionNode : public ASTNode {
+public:
+    std::string expression;  // co_awaitの対象となる式
+
+    CoAwaitExpressionNode() : ASTNode(ASTNodeType::CoAwaitExpression) {}
+};
+
+/// co_yield式 (C++20)
+class CoYieldExpressionNode : public ASTNode {
+public:
+    std::string expression;  // co_yieldの対象となる式
+    bool is_braced = false;  // co_yield { expr } 形式か
+
+    CoYieldExpressionNode() : ASTNode(ASTNodeType::CoYieldExpression) {}
+};
+
+/// co_return文 (C++20)
+class CoReturnStatementNode : public ASTNode {
+public:
+    std::string return_value;  // 戻り値（文字列表現）
+    bool has_value = false;
+
+    CoReturnStatementNode() : ASTNode(ASTNodeType::CoReturnStatement) {}
+};
+
+/// module宣言 (C++20)
+class ModuleDeclarationNode : public ASTNode {
+public:
+    std::string module_name;             // モジュール名
+    std::vector<std::string> partitions;  // モジュールパーティション
+    bool is_partition = false;           // パーティションか
+
+    ModuleDeclarationNode() : ASTNode(ASTNodeType::ModuleDeclaration) {}
+};
+
+/// import宣言 (C++20)
+class ImportDeclarationNode : public ASTNode {
+public:
+    std::string module_name;              // インポートするモジュール名
+    bool is_header_unit = false;          // ヘッダーユニットインポートか
+    std::string header_name;              // ヘッダー名（ヘッダーユニットの場合）
+    std::vector<std::string> partitions;  // インポートするパーティション
+
+    ImportDeclarationNode() : ASTNode(ASTNodeType::ImportDeclaration) {}
+};
+
+/// export宣言 (C++20)
+class ExportDeclarationNode : public ASTNode {
+public:
+    bool is_module_declaration = false;  // export module宣言か
+    bool is_import = false;              // export import宣言か
+    bool is_block = false;               // export { ... } ブロックか
+
+    ExportDeclarationNode() : ASTNode(ASTNodeType::ExportDeclaration) {}
 };
 
 }  // namespace parser

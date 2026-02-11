@@ -53,16 +53,16 @@ Lua API (expose to rules)
 **Current**: Basic token types
 **Target**: Complete C++ tokenization
 
-- [ ] All C++ keywords (C++17/20/23)
-- [ ] All operators (including spaceship `<=>`)
-- [ ] String literals (raw strings, u8/u16/u32, etc.)
-- [ ] Character literals
-- [ ] Numeric literals (binary, octal, hex, floating point)
-- [ ] User-defined literals
-- [ ] Preprocessor directives
-- [ ] Comments (line, block, nested)
-- [ ] Whitespace handling
-- [ ] UTF-8/UTF-16/UTF-32 support
+- [x] All C++ keywords (C++17/20/23)
+- [x] All operators (including spaceship `<=>`)
+- [x] String literals (raw strings, u8/u16/u32, etc.)
+- [x] Character literals
+- [x] Numeric literals (binary, octal, hex, floating point)
+- [x] User-defined literals
+- [x] Preprocessor directives
+- [x] Comments (line, block, nested)
+- [x] Whitespace handling
+- [x] UTF-8/UTF-16/UTF-32 support
 
 **Files**:
 - `src/parser/enhanced_lexer.hpp`
@@ -73,16 +73,16 @@ Lua API (expose to rules)
 
 Implement full C preprocessor:
 
-- [ ] `#include` with path resolution
-- [ ] `#define` macro definition
-- [ ] Macro expansion (function-like, object-like)
-- [ ] `#if`, `#ifdef`, `#ifndef`, `#elif`, `#else`, `#endif`
-- [ ] `#pragma`
-- [ ] `#error`, `#warning`
-- [ ] Predefined macros (`__FILE__`, `__LINE__`, etc.)
-- [ ] Variadic macros
-- [ ] Stringification (`#`)
-- [ ] Token pasting (`##`)
+- [x] `#include` with path resolution
+- [x] `#define` macro definition
+- [x] Macro expansion (function-like, object-like)
+- [x] `#if`, `#ifdef`, `#ifndef`, `#elif`, `#else`, `#endif`
+- [x] `#pragma`
+- [x] `#error`, `#warning`
+- [x] Predefined macros (`__FILE__`, `__LINE__`, etc.)
+- [x] Variadic macros
+- [x] Stringification (`#`)
+- [x] Token pasting (`##`)
 
 **Files**:
 - `src/parser/preprocessor.hpp`
