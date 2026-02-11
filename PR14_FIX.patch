@@ -1,0 +1,27 @@
+From 6966f3e21707d66eeefd655daa3633a405473301 Mon Sep 17 00:00:00 2001
+From: "copilot-swe-agent[bot]" <198982749+Copilot@users.noreply.github.com>
+Date: Sat, 7 Feb 2026 15:41:35 +0000
+Subject: [PATCH] fix: Add missing cstring include to lua_bridge.cpp
+
+This fixes the build error where strcmp was not declared in scope.
+The function strcmp requires the cstring header to be included.
+
+This resolves the CI build failures in PR #14.
+---
+ src/lua/lua_bridge.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/lua/lua_bridge.cpp b/src/lua/lua_bridge.cpp
+index 2ed2f7a..bdede54 100644
+--- a/src/lua/lua_bridge.cpp
++++ b/src/lua/lua_bridge.cpp
+@@ -1,5 +1,6 @@
+ #include "lua/lua_bridge.hpp"
+ 
++#include <cstring>
+ #include <regex>
+ #include <sstream>
+ 
+-- 
+2.52.0
+

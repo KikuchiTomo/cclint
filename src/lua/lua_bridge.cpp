@@ -1,5 +1,6 @@
 #include "lua/lua_bridge.hpp"
 
+#include <cstring>
 #include <regex>
 #include <sstream>
 
@@ -216,6 +217,49 @@ void LuaBridge::register_api() {
 
     lua_pushcfunction(L, lua_get_attributes);
     lua_setfield(L, -2, "get_attributes");
+
+    // Enhanced AST APIs for complex linting rules
+    lua_pushcfunction(L, lua_get_classes_with_info);
+    lua_setfield(L, -2, "get_classes_with_info");
+
+    lua_pushcfunction(L, lua_get_methods_with_info);
+    lua_setfield(L, -2, "get_methods_with_info");
+
+    lua_pushcfunction(L, lua_get_all_methods);
+    lua_setfield(L, -2, "get_all_methods");
+
+    lua_pushcfunction(L, lua_get_function_info);
+    lua_setfield(L, -2, "get_function_info");
+
+    lua_pushcfunction(L, lua_get_function_parameters);
+    lua_setfield(L, -2, "get_function_parameters");
+
+    lua_pushcfunction(L, lua_get_classes_in_namespace);
+    lua_setfield(L, -2, "get_classes_in_namespace");
+
+    lua_pushcfunction(L, lua_get_functions_in_namespace);
+    lua_setfield(L, -2, "get_functions_in_namespace");
+
+    lua_pushcfunction(L, lua_get_include_details);
+    lua_setfield(L, -2, "get_include_details");
+
+    lua_pushcfunction(L, lua_get_namespace_info);
+    lua_setfield(L, -2, "get_namespace_info");
+
+    lua_pushcfunction(L, lua_get_class_methods_by_access);
+    lua_setfield(L, -2, "get_class_methods_by_access");
+
+    lua_pushcfunction(L, lua_get_class_fields_by_access);
+    lua_setfield(L, -2, "get_class_fields_by_access");
+
+    lua_pushcfunction(L, lua_is_call_allowed);
+    lua_setfield(L, -2, "is_call_allowed");
+
+    lua_pushcfunction(L, lua_get_all_using_declarations);
+    lua_setfield(L, -2, "get_all_using_declarations");
+
+    lua_pushcfunction(L, lua_get_base_classes);
+    lua_setfield(L, -2, "get_base_classes");
 
     // グローバルに設定
     lua_setglobal(L, "cclint");
@@ -3067,6 +3111,1182 @@ int LuaBridge::lua_get_attributes(lua_State* L) {
     return 1;
 }
 
+// ========== Enhanced AST APIs for complex linting rules ==========
+
+int LuaBridge::lua_get_classes_with_info(lua_State* L) {
+    if (!g_bridge || !g_bridge->current_ast_) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    lua_newtable(L);
+    int index = 1;
+
+    // 親namespaceを追跡しながらクラスを収集
+    std::function<void(std::shared_ptr<parser::ASTNode>, const std::string&)> collect_classes;
+    collect_classes = [&](std::shared_ptr<parser::ASTNode> node,
+                          const std::string& current_namespace) {
+        if (!node)
+            return;
+
+        std::string ns = current_namespace;
+        if (node->type == parser::ASTNodeType::Namespace) {
+            auto ns_node = std::dynamic_pointer_cast<parser::NamespaceNode>(node);
+            if (ns_node) {
+                ns = current_namespace.empty() ? ns_node->name
+                                               : current_namespace + "::" + ns_node->name;
+            }
+        }
+
+        if (node->type == parser::ASTNodeType::Class) {
+            auto class_node = std::dynamic_pointer_cast<parser::ClassNode>(node);
+            if (class_node) {
+                lua_pushinteger(L, index++);
+                lua_newtable(L);
+
+                lua_pushstring(L, "name");
+                lua_pushstring(L, class_node->name.c_str());
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "namespace");
+                lua_pushstring(L, ns.c_str());
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "qualified_name");
+                std::string qualified =
+                    ns.empty() ? class_node->name : ns + "::" + class_node->name;
+                lua_pushstring(L, qualified.c_str());
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "line");
+                lua_pushinteger(L, class_node->position.line);
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "is_struct");
+                lua_pushboolean(L, class_node->is_struct);
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "is_abstract");
+                lua_pushboolean(L, class_node->is_abstract);
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "is_final");
+                lua_pushboolean(L, class_node->is_final);
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "is_template");
+                lua_pushboolean(L, class_node->is_template);
+                lua_settable(L, -3);
+
+                // Base classes
+                lua_pushstring(L, "base_classes");
+                lua_newtable(L);
+                for (size_t i = 0; i < class_node->base_classes.size(); i++) {
+                    lua_pushinteger(L, i + 1);
+                    lua_newtable(L);
+
+                    lua_pushstring(L, "name");
+                    lua_pushstring(L, class_node->base_classes[i].base_class_name.c_str());
+                    lua_settable(L, -3);
+
+                    const char* access_str = "public";
+                    switch (class_node->base_classes[i].access) {
+                        case parser::AccessSpecifier::Protected:
+                            access_str = "protected";
+                            break;
+                        case parser::AccessSpecifier::Private:
+                            access_str = "private";
+                            break;
+                        default:
+                            break;
+                    }
+                    lua_pushstring(L, "access");
+                    lua_pushstring(L, access_str);
+                    lua_settable(L, -3);
+
+                    lua_pushstring(L, "is_virtual");
+                    lua_pushboolean(L, class_node->base_classes[i].is_virtual);
+                    lua_settable(L, -3);
+
+                    lua_settable(L, -3);
+                }
+                lua_settable(L, -3);
+
+                lua_settable(L, -3);
+            }
+        }
+
+        for (const auto& child : node->children) {
+            collect_classes(child, ns);
+        }
+    };
+
+    collect_classes(g_bridge->current_ast_, "");
+    return 1;
+}
+
+int LuaBridge::lua_get_methods_with_info(lua_State* L) {
+    const char* class_name = luaL_checkstring(L, 1);
+
+    if (!g_bridge || !g_bridge->current_ast_) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    // クラスを検索
+    std::shared_ptr<parser::ClassNode> found_class;
+    std::function<void(std::shared_ptr<parser::ASTNode>)> find_class;
+    find_class = [&](std::shared_ptr<parser::ASTNode> node) {
+        if (!node || found_class)
+            return;
+
+        if (node->type == parser::ASTNodeType::Class) {
+            auto class_node = std::dynamic_pointer_cast<parser::ClassNode>(node);
+            if (class_node && class_node->name == class_name) {
+                found_class = class_node;
+                return;
+            }
+        }
+
+        for (const auto& child : node->children) {
+            find_class(child);
+        }
+    };
+
+    find_class(g_bridge->current_ast_);
+
+    if (!found_class) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    lua_newtable(L);
+    int index = 1;
+
+    for (const auto& child : found_class->children) {
+        if (child->type == parser::ASTNodeType::Function ||
+            child->type == parser::ASTNodeType::Method) {
+            auto func = std::dynamic_pointer_cast<parser::FunctionNode>(child);
+            if (func) {
+                lua_pushinteger(L, index++);
+                lua_newtable(L);
+
+                lua_pushstring(L, "name");
+                lua_pushstring(L, func->name.c_str());
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "return_type");
+                lua_pushstring(L, func->return_type.c_str());
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "line");
+                lua_pushinteger(L, func->position.line);
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "column");
+                lua_pushinteger(L, func->position.column);
+                lua_settable(L, -3);
+
+                // Access specifier
+                const char* access_str = "none";
+                switch (func->access) {
+                    case parser::AccessSpecifier::Public:
+                        access_str = "public";
+                        break;
+                    case parser::AccessSpecifier::Protected:
+                        access_str = "protected";
+                        break;
+                    case parser::AccessSpecifier::Private:
+                        access_str = "private";
+                        break;
+                    default:
+                        break;
+                }
+                lua_pushstring(L, "access");
+                lua_pushstring(L, access_str);
+                lua_settable(L, -3);
+
+                // Modifiers
+                lua_pushstring(L, "is_const");
+                lua_pushboolean(L, func->is_const);
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "is_static");
+                lua_pushboolean(L, func->is_static);
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "is_virtual");
+                lua_pushboolean(L, func->is_virtual);
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "is_override");
+                lua_pushboolean(L, func->is_override);
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "is_final");
+                lua_pushboolean(L, func->is_final);
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "is_pure_virtual");
+                lua_pushboolean(L, func->is_pure_virtual);
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "is_noexcept");
+                lua_pushboolean(L, func->is_noexcept);
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "is_constexpr");
+                lua_pushboolean(L, func->is_constexpr);
+                lua_settable(L, -3);
+
+                // Parameters
+                lua_pushstring(L, "parameters");
+                lua_newtable(L);
+                size_t param_count =
+                    std::min(func->parameter_types.size(), func->parameter_names.size());
+                for (size_t i = 0; i < param_count; i++) {
+                    lua_pushinteger(L, i + 1);
+                    lua_newtable(L);
+
+                    lua_pushstring(L, "type");
+                    lua_pushstring(L, func->parameter_types[i].c_str());
+                    lua_settable(L, -3);
+
+                    lua_pushstring(L, "name");
+                    lua_pushstring(L, func->parameter_names[i].c_str());
+                    lua_settable(L, -3);
+
+                    lua_settable(L, -3);
+                }
+                lua_settable(L, -3);
+
+                lua_settable(L, -3);
+            }
+        }
+    }
+
+    return 1;
+}
+
+int LuaBridge::lua_get_all_methods(lua_State* L) {
+    if (!g_bridge || !g_bridge->current_ast_) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    lua_newtable(L);
+    int index = 1;
+
+    // すべてのクラスのメソッドを収集
+    std::function<void(std::shared_ptr<parser::ASTNode>, const std::string&, const std::string&)>
+        collect;
+    collect = [&](std::shared_ptr<parser::ASTNode> node, const std::string& current_namespace,
+                  const std::string& current_class) {
+        if (!node)
+            return;
+
+        std::string ns = current_namespace;
+        std::string cls = current_class;
+
+        if (node->type == parser::ASTNodeType::Namespace) {
+            auto ns_node = std::dynamic_pointer_cast<parser::NamespaceNode>(node);
+            if (ns_node) {
+                ns = current_namespace.empty() ? ns_node->name
+                                               : current_namespace + "::" + ns_node->name;
+            }
+        } else if (node->type == parser::ASTNodeType::Class) {
+            auto class_node = std::dynamic_pointer_cast<parser::ClassNode>(node);
+            if (class_node) {
+                cls = class_node->name;
+            }
+        }
+
+        if ((node->type == parser::ASTNodeType::Function ||
+             node->type == parser::ASTNodeType::Method) &&
+            !cls.empty()) {
+            auto func = std::dynamic_pointer_cast<parser::FunctionNode>(node);
+            if (func) {
+                lua_pushinteger(L, index++);
+                lua_newtable(L);
+
+                lua_pushstring(L, "name");
+                lua_pushstring(L, func->name.c_str());
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "class_name");
+                lua_pushstring(L, cls.c_str());
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "namespace");
+                lua_pushstring(L, ns.c_str());
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "return_type");
+                lua_pushstring(L, func->return_type.c_str());
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "line");
+                lua_pushinteger(L, func->position.line);
+                lua_settable(L, -3);
+
+                const char* access_str = "none";
+                switch (func->access) {
+                    case parser::AccessSpecifier::Public:
+                        access_str = "public";
+                        break;
+                    case parser::AccessSpecifier::Protected:
+                        access_str = "protected";
+                        break;
+                    case parser::AccessSpecifier::Private:
+                        access_str = "private";
+                        break;
+                    default:
+                        break;
+                }
+                lua_pushstring(L, "access");
+                lua_pushstring(L, access_str);
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "is_const");
+                lua_pushboolean(L, func->is_const);
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "is_static");
+                lua_pushboolean(L, func->is_static);
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "is_virtual");
+                lua_pushboolean(L, func->is_virtual);
+                lua_settable(L, -3);
+
+                // Parameters
+                lua_pushstring(L, "parameters");
+                lua_newtable(L);
+                size_t param_count =
+                    std::min(func->parameter_types.size(), func->parameter_names.size());
+                for (size_t i = 0; i < param_count; i++) {
+                    lua_pushinteger(L, i + 1);
+                    lua_newtable(L);
+                    lua_pushstring(L, "type");
+                    lua_pushstring(L, func->parameter_types[i].c_str());
+                    lua_settable(L, -3);
+                    lua_pushstring(L, "name");
+                    lua_pushstring(L, func->parameter_names[i].c_str());
+                    lua_settable(L, -3);
+                    lua_settable(L, -3);
+                }
+                lua_settable(L, -3);
+
+                lua_settable(L, -3);
+            }
+        }
+
+        for (const auto& child : node->children) {
+            collect(child, ns, (node->type == parser::ASTNodeType::Class) ? cls : current_class);
+        }
+    };
+
+    collect(g_bridge->current_ast_, "", "");
+    return 1;
+}
+
+int LuaBridge::lua_get_function_info(lua_State* L) {
+    const char* func_name = luaL_checkstring(L, 1);
+
+    if (!g_bridge || !g_bridge->current_ast_) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    // 関数を検索
+    std::shared_ptr<parser::FunctionNode> found_func;
+    std::string found_namespace;
+
+    std::function<void(std::shared_ptr<parser::ASTNode>, const std::string&)> find_func;
+    find_func = [&](std::shared_ptr<parser::ASTNode> node, const std::string& ns) {
+        if (!node || found_func)
+            return;
+
+        std::string current_ns = ns;
+        if (node->type == parser::ASTNodeType::Namespace) {
+            auto ns_node = std::dynamic_pointer_cast<parser::NamespaceNode>(node);
+            if (ns_node) {
+                current_ns = ns.empty() ? ns_node->name : ns + "::" + ns_node->name;
+            }
+        }
+
+        if (node->type == parser::ASTNodeType::Function) {
+            auto func = std::dynamic_pointer_cast<parser::FunctionNode>(node);
+            if (func && func->name == func_name) {
+                found_func = func;
+                found_namespace = current_ns;
+                return;
+            }
+        }
+
+        for (const auto& child : node->children) {
+            find_func(child, current_ns);
+        }
+    };
+
+    find_func(g_bridge->current_ast_, "");
+
+    if (!found_func) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    lua_newtable(L);
+
+    lua_pushstring(L, "name");
+    lua_pushstring(L, found_func->name.c_str());
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "namespace");
+    lua_pushstring(L, found_namespace.c_str());
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "return_type");
+    lua_pushstring(L, found_func->return_type.c_str());
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "line");
+    lua_pushinteger(L, found_func->position.line);
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "is_static");
+    lua_pushboolean(L, found_func->is_static);
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "is_inline");
+    lua_pushboolean(L, found_func->is_inline);
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "is_constexpr");
+    lua_pushboolean(L, found_func->is_constexpr);
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "is_noexcept");
+    lua_pushboolean(L, found_func->is_noexcept);
+    lua_settable(L, -3);
+
+    // Parameters
+    lua_pushstring(L, "parameters");
+    lua_newtable(L);
+    size_t param_count =
+        std::min(found_func->parameter_types.size(), found_func->parameter_names.size());
+    for (size_t i = 0; i < param_count; i++) {
+        lua_pushinteger(L, i + 1);
+        lua_newtable(L);
+        lua_pushstring(L, "type");
+        lua_pushstring(L, found_func->parameter_types[i].c_str());
+        lua_settable(L, -3);
+        lua_pushstring(L, "name");
+        lua_pushstring(L, found_func->parameter_names[i].c_str());
+        lua_settable(L, -3);
+        lua_settable(L, -3);
+    }
+    lua_settable(L, -3);
+
+    return 1;
+}
+
+int LuaBridge::lua_get_function_parameters(lua_State* L) {
+    const char* class_name = luaL_checkstring(L, 1);
+    const char* method_name = luaL_checkstring(L, 2);
+
+    if (!g_bridge || !g_bridge->current_ast_) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    // クラスを検索
+    std::shared_ptr<parser::ClassNode> found_class;
+    std::function<void(std::shared_ptr<parser::ASTNode>)> find_class;
+    find_class = [&](std::shared_ptr<parser::ASTNode> node) {
+        if (!node || found_class)
+            return;
+
+        if (node->type == parser::ASTNodeType::Class) {
+            auto class_node = std::dynamic_pointer_cast<parser::ClassNode>(node);
+            if (class_node && class_node->name == class_name) {
+                found_class = class_node;
+                return;
+            }
+        }
+
+        for (const auto& child : node->children) {
+            find_class(child);
+        }
+    };
+
+    find_class(g_bridge->current_ast_);
+
+    if (!found_class) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    // メソッドを検索
+    std::shared_ptr<parser::FunctionNode> found_method;
+    for (const auto& child : found_class->children) {
+        if (child->type == parser::ASTNodeType::Function ||
+            child->type == parser::ASTNodeType::Method) {
+            auto func = std::dynamic_pointer_cast<parser::FunctionNode>(child);
+            if (func && func->name == method_name) {
+                found_method = func;
+                break;
+            }
+        }
+    }
+
+    if (!found_method) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    lua_newtable(L);
+    size_t param_count =
+        std::min(found_method->parameter_types.size(), found_method->parameter_names.size());
+    for (size_t i = 0; i < param_count; i++) {
+        lua_pushinteger(L, i + 1);
+        lua_newtable(L);
+
+        lua_pushstring(L, "type");
+        lua_pushstring(L, found_method->parameter_types[i].c_str());
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "name");
+        lua_pushstring(L, found_method->parameter_names[i].c_str());
+        lua_settable(L, -3);
+
+        lua_settable(L, -3);
+    }
+
+    return 1;
+}
+
+int LuaBridge::lua_get_classes_in_namespace(lua_State* L) {
+    const char* namespace_name = luaL_checkstring(L, 1);
+
+    if (!g_bridge || !g_bridge->current_ast_) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    lua_newtable(L);
+    int index = 1;
+
+    // 指定されたnamespace内のクラスを収集
+    std::function<void(std::shared_ptr<parser::ASTNode>, const std::string&)> collect;
+    collect = [&](std::shared_ptr<parser::ASTNode> node, const std::string& current_ns) {
+        if (!node)
+            return;
+
+        std::string ns = current_ns;
+        if (node->type == parser::ASTNodeType::Namespace) {
+            auto ns_node = std::dynamic_pointer_cast<parser::NamespaceNode>(node);
+            if (ns_node) {
+                ns = current_ns.empty() ? ns_node->name : current_ns + "::" + ns_node->name;
+            }
+        }
+
+        if (node->type == parser::ASTNodeType::Class && ns == namespace_name) {
+            auto class_node = std::dynamic_pointer_cast<parser::ClassNode>(node);
+            if (class_node) {
+                lua_pushinteger(L, index++);
+                lua_newtable(L);
+
+                lua_pushstring(L, "name");
+                lua_pushstring(L, class_node->name.c_str());
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "line");
+                lua_pushinteger(L, class_node->position.line);
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "is_struct");
+                lua_pushboolean(L, class_node->is_struct);
+                lua_settable(L, -3);
+
+                lua_settable(L, -3);
+            }
+        }
+
+        for (const auto& child : node->children) {
+            collect(child, ns);
+        }
+    };
+
+    collect(g_bridge->current_ast_, "");
+    return 1;
+}
+
+int LuaBridge::lua_get_functions_in_namespace(lua_State* L) {
+    const char* namespace_name = luaL_checkstring(L, 1);
+
+    if (!g_bridge || !g_bridge->current_ast_) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    lua_newtable(L);
+    int index = 1;
+
+    // 指定されたnamespace内の関数を収集（クラスメソッドは除く）
+    std::function<void(std::shared_ptr<parser::ASTNode>, const std::string&, bool)> collect;
+    collect = [&](std::shared_ptr<parser::ASTNode> node, const std::string& current_ns,
+                  bool in_class) {
+        if (!node)
+            return;
+
+        std::string ns = current_ns;
+        bool is_in_class = in_class;
+
+        if (node->type == parser::ASTNodeType::Namespace) {
+            auto ns_node = std::dynamic_pointer_cast<parser::NamespaceNode>(node);
+            if (ns_node) {
+                ns = current_ns.empty() ? ns_node->name : current_ns + "::" + ns_node->name;
+            }
+        } else if (node->type == parser::ASTNodeType::Class) {
+            is_in_class = true;
+        }
+
+        if (node->type == parser::ASTNodeType::Function && !is_in_class && ns == namespace_name) {
+            auto func = std::dynamic_pointer_cast<parser::FunctionNode>(node);
+            if (func) {
+                lua_pushinteger(L, index++);
+                lua_newtable(L);
+
+                lua_pushstring(L, "name");
+                lua_pushstring(L, func->name.c_str());
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "return_type");
+                lua_pushstring(L, func->return_type.c_str());
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "line");
+                lua_pushinteger(L, func->position.line);
+                lua_settable(L, -3);
+
+                lua_settable(L, -3);
+            }
+        }
+
+        for (const auto& child : node->children) {
+            collect(child, ns, is_in_class);
+        }
+    };
+
+    collect(g_bridge->current_ast_, "", false);
+    return 1;
+}
+
+int LuaBridge::lua_get_include_details(lua_State* L) {
+    if (!g_bridge) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    std::ifstream file(g_bridge->current_file_);
+    if (!file.is_open()) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    lua_newtable(L);
+    int index = 1;
+    std::string line;
+    int line_num = 0;
+
+    while (std::getline(file, line)) {
+        line_num++;
+        // #include <...> or #include "..."
+        size_t include_pos = line.find("#include");
+        if (include_pos != std::string::npos) {
+            lua_pushinteger(L, index++);
+            lua_newtable(L);
+
+            lua_pushstring(L, "line");
+            lua_pushinteger(L, line_num);
+            lua_settable(L, -3);
+
+            lua_pushstring(L, "text");
+            lua_pushstring(L, line.c_str());
+            lua_settable(L, -3);
+
+            // Parse header name
+            std::string header_name;
+            bool is_system = false;
+
+            size_t angle_start = line.find('<');
+            size_t angle_end = line.find('>');
+            size_t quote_start = line.find('"');
+            size_t quote_end = line.rfind('"');
+
+            if (angle_start != std::string::npos && angle_end != std::string::npos &&
+                angle_start < angle_end) {
+                header_name = line.substr(angle_start + 1, angle_end - angle_start - 1);
+                is_system = true;
+            } else if (quote_start != std::string::npos && quote_end != std::string::npos &&
+                       quote_start < quote_end) {
+                header_name = line.substr(quote_start + 1, quote_end - quote_start - 1);
+                is_system = false;
+            }
+
+            lua_pushstring(L, "header");
+            lua_pushstring(L, header_name.c_str());
+            lua_settable(L, -3);
+
+            lua_pushstring(L, "is_system");
+            lua_pushboolean(L, is_system);
+            lua_settable(L, -3);
+
+            lua_settable(L, -3);
+        }
+    }
+
+    return 1;
+}
+
+int LuaBridge::lua_get_namespace_info(lua_State* L) {
+    const char* namespace_name = luaL_checkstring(L, 1);
+
+    if (!g_bridge || !g_bridge->current_ast_) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    // namespaceを検索
+    std::shared_ptr<parser::NamespaceNode> found_ns;
+    std::function<void(std::shared_ptr<parser::ASTNode>)> find_ns;
+    find_ns = [&](std::shared_ptr<parser::ASTNode> node) {
+        if (!node || found_ns)
+            return;
+
+        if (node->type == parser::ASTNodeType::Namespace) {
+            auto ns_node = std::dynamic_pointer_cast<parser::NamespaceNode>(node);
+            if (ns_node && ns_node->name == namespace_name) {
+                found_ns = ns_node;
+                return;
+            }
+        }
+
+        for (const auto& child : node->children) {
+            find_ns(child);
+        }
+    };
+
+    find_ns(g_bridge->current_ast_);
+
+    if (!found_ns) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    lua_newtable(L);
+
+    lua_pushstring(L, "name");
+    lua_pushstring(L, found_ns->name.c_str());
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "line");
+    lua_pushinteger(L, found_ns->position.line);
+    lua_settable(L, -3);
+
+    // Count classes
+    int class_count = 0;
+    int func_count = 0;
+    for (const auto& child : found_ns->children) {
+        if (child->type == parser::ASTNodeType::Class)
+            class_count++;
+        if (child->type == parser::ASTNodeType::Function)
+            func_count++;
+    }
+
+    lua_pushstring(L, "class_count");
+    lua_pushinteger(L, class_count);
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "function_count");
+    lua_pushinteger(L, func_count);
+    lua_settable(L, -3);
+
+    return 1;
+}
+
+int LuaBridge::lua_get_class_methods_by_access(lua_State* L) {
+    const char* class_name = luaL_checkstring(L, 1);
+    const char* access_filter = luaL_checkstring(L, 2);  // "public", "protected", "private"
+
+    if (!g_bridge || !g_bridge->current_ast_) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    parser::AccessSpecifier target_access = parser::AccessSpecifier::None;
+    if (strcmp(access_filter, "public") == 0)
+        target_access = parser::AccessSpecifier::Public;
+    else if (strcmp(access_filter, "protected") == 0)
+        target_access = parser::AccessSpecifier::Protected;
+    else if (strcmp(access_filter, "private") == 0)
+        target_access = parser::AccessSpecifier::Private;
+
+    // クラスを検索
+    std::shared_ptr<parser::ClassNode> found_class;
+    std::function<void(std::shared_ptr<parser::ASTNode>)> find_class;
+    find_class = [&](std::shared_ptr<parser::ASTNode> node) {
+        if (!node || found_class)
+            return;
+
+        if (node->type == parser::ASTNodeType::Class) {
+            auto class_node = std::dynamic_pointer_cast<parser::ClassNode>(node);
+            if (class_node && class_node->name == class_name) {
+                found_class = class_node;
+                return;
+            }
+        }
+
+        for (const auto& child : node->children) {
+            find_class(child);
+        }
+    };
+
+    find_class(g_bridge->current_ast_);
+
+    if (!found_class) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    lua_newtable(L);
+    int index = 1;
+
+    for (const auto& child : found_class->children) {
+        if (child->type == parser::ASTNodeType::Function ||
+            child->type == parser::ASTNodeType::Method) {
+            auto func = std::dynamic_pointer_cast<parser::FunctionNode>(child);
+            if (func && func->access == target_access) {
+                lua_pushinteger(L, index++);
+                lua_newtable(L);
+
+                lua_pushstring(L, "name");
+                lua_pushstring(L, func->name.c_str());
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "return_type");
+                lua_pushstring(L, func->return_type.c_str());
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "line");
+                lua_pushinteger(L, func->position.line);
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "is_const");
+                lua_pushboolean(L, func->is_const);
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "is_static");
+                lua_pushboolean(L, func->is_static);
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "is_virtual");
+                lua_pushboolean(L, func->is_virtual);
+                lua_settable(L, -3);
+
+                // Parameters
+                lua_pushstring(L, "parameters");
+                lua_newtable(L);
+                size_t param_count =
+                    std::min(func->parameter_types.size(), func->parameter_names.size());
+                for (size_t i = 0; i < param_count; i++) {
+                    lua_pushinteger(L, i + 1);
+                    lua_newtable(L);
+                    lua_pushstring(L, "type");
+                    lua_pushstring(L, func->parameter_types[i].c_str());
+                    lua_settable(L, -3);
+                    lua_pushstring(L, "name");
+                    lua_pushstring(L, func->parameter_names[i].c_str());
+                    lua_settable(L, -3);
+                    lua_settable(L, -3);
+                }
+                lua_settable(L, -3);
+
+                lua_settable(L, -3);
+            }
+        }
+    }
+
+    return 1;
+}
+
+int LuaBridge::lua_get_class_fields_by_access(lua_State* L) {
+    const char* class_name = luaL_checkstring(L, 1);
+    const char* access_filter = luaL_checkstring(L, 2);
+
+    if (!g_bridge || !g_bridge->current_ast_) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    parser::AccessSpecifier target_access = parser::AccessSpecifier::None;
+    if (strcmp(access_filter, "public") == 0)
+        target_access = parser::AccessSpecifier::Public;
+    else if (strcmp(access_filter, "protected") == 0)
+        target_access = parser::AccessSpecifier::Protected;
+    else if (strcmp(access_filter, "private") == 0)
+        target_access = parser::AccessSpecifier::Private;
+
+    // クラスを検索
+    std::shared_ptr<parser::ClassNode> found_class;
+    std::function<void(std::shared_ptr<parser::ASTNode>)> find_class;
+    find_class = [&](std::shared_ptr<parser::ASTNode> node) {
+        if (!node || found_class)
+            return;
+
+        if (node->type == parser::ASTNodeType::Class) {
+            auto class_node = std::dynamic_pointer_cast<parser::ClassNode>(node);
+            if (class_node && class_node->name == class_name) {
+                found_class = class_node;
+                return;
+            }
+        }
+
+        for (const auto& child : node->children) {
+            find_class(child);
+        }
+    };
+
+    find_class(g_bridge->current_ast_);
+
+    if (!found_class) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    lua_newtable(L);
+    int index = 1;
+
+    for (const auto& child : found_class->children) {
+        if (child->type == parser::ASTNodeType::Field) {
+            auto field = std::dynamic_pointer_cast<parser::FieldNode>(child);
+            if (field && field->access == target_access) {
+                lua_pushinteger(L, index++);
+                lua_newtable(L);
+
+                lua_pushstring(L, "name");
+                lua_pushstring(L, field->name.c_str());
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "type");
+                lua_pushstring(L, field->type_name.c_str());
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "line");
+                lua_pushinteger(L, field->position.line);
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "is_const");
+                lua_pushboolean(L, field->is_const);
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "is_static");
+                lua_pushboolean(L, field->is_static);
+                lua_settable(L, -3);
+
+                lua_pushstring(L, "is_mutable");
+                lua_pushboolean(L, field->is_mutable);
+                lua_settable(L, -3);
+
+                lua_settable(L, -3);
+            }
+        }
+    }
+
+    return 1;
+}
+
+int LuaBridge::lua_is_call_allowed(lua_State* L) {
+    const char* caller_func = luaL_checkstring(L, 1);
+    const char* called_func = luaL_checkstring(L, 2);
+
+    if (!g_bridge || !g_bridge->current_ast_) {
+        lua_pushboolean(L, 1);  // 呼び出しを許可（デフォルト）
+        return 1;
+    }
+
+    // caller_funcからcalled_funcへの呼び出しが存在するか確認
+    bool call_exists = false;
+    std::function<void(std::shared_ptr<parser::ASTNode>)> check_calls;
+    check_calls = [&](std::shared_ptr<parser::ASTNode> node) {
+        if (!node || call_exists)
+            return;
+
+        if (node->type == parser::ASTNodeType::CallExpression) {
+            auto call = std::static_pointer_cast<parser::CallExpressionNode>(node);
+            if (call->caller_function == caller_func && call->function_name == called_func) {
+                call_exists = true;
+                return;
+            }
+        }
+
+        for (auto& child : node->children) {
+            check_calls(child);
+        }
+    };
+
+    check_calls(g_bridge->current_ast_);
+
+    lua_pushboolean(L, call_exists ? 1 : 0);
+    return 1;
+}
+
+int LuaBridge::lua_get_all_using_declarations(lua_State* L) {
+    if (!g_bridge || !g_bridge->current_ast_) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    lua_newtable(L);
+    int index = 1;
+
+    std::function<void(std::shared_ptr<parser::ASTNode>, const std::string&, bool)> collect;
+    collect = [&](std::shared_ptr<parser::ASTNode> node, const std::string& scope, bool is_global) {
+        if (!node)
+            return;
+
+        std::string current_scope = scope;
+        bool in_global = is_global;
+
+        if (node->type == parser::ASTNodeType::Namespace) {
+            auto ns = std::dynamic_pointer_cast<parser::NamespaceNode>(node);
+            if (ns) {
+                current_scope = scope.empty() ? ns->name : scope + "::" + ns->name;
+                in_global = false;
+            }
+        } else if (node->type == parser::ASTNodeType::Class ||
+                   node->type == parser::ASTNodeType::Function) {
+            in_global = false;
+        }
+
+        if (node->type == parser::ASTNodeType::Using) {
+            auto using_node = std::static_pointer_cast<parser::UsingNode>(node);
+            lua_pushinteger(L, index++);
+            lua_newtable(L);
+
+            lua_pushstring(L, "line");
+            lua_pushinteger(L, using_node->position.line);
+            lua_settable(L, -3);
+
+            lua_pushstring(L, "target");
+            lua_pushstring(L, using_node->target.c_str());
+            lua_settable(L, -3);
+
+            lua_pushstring(L, "alias");
+            lua_pushstring(L, using_node->alias.c_str());
+            lua_settable(L, -3);
+
+            lua_pushstring(L, "scope");
+            lua_pushstring(L, current_scope.c_str());
+            lua_settable(L, -3);
+
+            lua_pushstring(L, "is_global");
+            lua_pushboolean(L, in_global);
+            lua_settable(L, -3);
+
+            const char* kind_str = "namespace";
+            if (using_node->kind == parser::UsingNode::UsingKind::TypeAlias)
+                kind_str = "type_alias";
+            else if (using_node->kind == parser::UsingNode::UsingKind::Declaration)
+                kind_str = "declaration";
+            lua_pushstring(L, "kind");
+            lua_pushstring(L, kind_str);
+            lua_settable(L, -3);
+
+            lua_settable(L, -3);
+        }
+
+        for (auto& child : node->children) {
+            collect(child, current_scope, in_global);
+        }
+    };
+
+    collect(g_bridge->current_ast_, "", true);
+    return 1;
+}
+
+int LuaBridge::lua_get_base_classes(lua_State* L) {
+    const char* class_name = luaL_checkstring(L, 1);
+
+    if (!g_bridge || !g_bridge->current_ast_) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    // クラスを検索
+    std::shared_ptr<parser::ClassNode> found_class;
+    std::function<void(std::shared_ptr<parser::ASTNode>)> find_class;
+    find_class = [&](std::shared_ptr<parser::ASTNode> node) {
+        if (!node || found_class)
+            return;
+
+        if (node->type == parser::ASTNodeType::Class) {
+            auto class_node = std::dynamic_pointer_cast<parser::ClassNode>(node);
+            if (class_node && class_node->name == class_name) {
+                found_class = class_node;
+                return;
+            }
+        }
+
+        for (const auto& child : node->children) {
+            find_class(child);
+        }
+    };
+
+    find_class(g_bridge->current_ast_);
+
+    if (!found_class) {
+        lua_newtable(L);
+        return 1;
+    }
+
+    lua_newtable(L);
+    int index = 1;
+
+    for (const auto& base : found_class->base_classes) {
+        lua_pushinteger(L, index++);
+        lua_newtable(L);
+
+        lua_pushstring(L, "name");
+        lua_pushstring(L, base.base_class_name.c_str());
+        lua_settable(L, -3);
+
+        const char* access_str = "public";
+        switch (base.access) {
+            case parser::AccessSpecifier::Protected:
+                access_str = "protected";
+                break;
+            case parser::AccessSpecifier::Private:
+                access_str = "private";
+                break;
+            default:
+                break;
+        }
+        lua_pushstring(L, "access");
+        lua_pushstring(L, access_str);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "is_virtual");
+        lua_pushboolean(L, base.is_virtual);
+        lua_settable(L, -3);
+
+        lua_settable(L, -3);
+    }
+
+    return 1;
+}
+
 #else  // HAVE_LUAJIT が定義されていない場合（スタブ実装）
 
 LuaBridge::LuaBridge(std::shared_ptr<LuaEngine> lua_engine) : lua_engine_(lua_engine) {}
@@ -3256,6 +4476,177 @@ int LuaBridge::lua_get_try_statements(lua_State* L) {
 }
 
 int LuaBridge::lua_get_comments(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_constructors(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_constructor_info(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_destructors(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_destructor_info(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_operators(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_operator_info(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_templates(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_template_info(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_lambdas(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_lambda_info(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_friends(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_static_asserts(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_call_graph(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_function_calls(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_callers(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_callees(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_return_statements(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_inheritance_tree(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_attributes(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+// Enhanced AST APIs stubs
+int LuaBridge::lua_get_classes_with_info(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_methods_with_info(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_all_methods(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_function_info(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_function_parameters(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_classes_in_namespace(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_functions_in_namespace(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_include_details(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_namespace_info(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_class_methods_by_access(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_class_fields_by_access(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_is_call_allowed(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_all_using_declarations(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_get_base_classes(lua_State* L) {
+    (void)L;
+    return 0;
+}
+
+int LuaBridge::lua_print(lua_State* L) {
     (void)L;
     return 0;
 }

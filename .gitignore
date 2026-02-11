@@ -34,6 +34,7 @@
 
 # Executables
 cclint
+/test
 *.exe
 *.out
 *.app
@@ -45,6 +46,8 @@ cclint
 build/
 build-*/
 cmake-build-*/
+_codeql_build_dir/
+_codeql_detected_source_root
 
 # CMake
 CMakeCache.txt
@@ -92,3 +95,7 @@ gmon.out
 # Third-party (if not using submodules properly)
 third_party/*/
 !third_party/README.md
+
+# CodeQL build artifacts
+_codeql_build_dir/
+_codeql_detected_source_root
