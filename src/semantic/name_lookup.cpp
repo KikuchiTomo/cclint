@@ -105,5 +105,84 @@ std::string NameLookup::get_namespace_of_type(const std::shared_ptr<Type>& type)
     return "";
 }
 
+std::shared_ptr<Symbol> NameLookup::resolve_overload(
+    const std::vector<std::shared_ptr<Symbol>>& candidates,
+    const std::vector<std::shared_ptr<Type>>& argument_types) {
+
+    if (candidates.empty()) {
+        return nullptr;
+    }
+
+    // 単一候補の場合はそれを返す
+    if (candidates.size() == 1) {
+        return candidates[0];
+    }
+
+    // 各候補の適合度を計算
+    std::shared_ptr<Symbol> best_candidate = nullptr;
+    int best_score = 0;
+
+    for (const auto& candidate : candidates) {
+        if (!candidate || candidate->kind != SymbolKind::Function) {
+            continue;
+        }
+
+        int score = calculate_match_score(candidate, argument_types);
+
+        if (score > best_score) {
+            best_score = score;
+            best_candidate = candidate;
+        }
+    }
+
+    return best_candidate;
+}
+
+int NameLookup::calculate_match_score(const std::shared_ptr<Symbol>& function_symbol,
+                                        const std::vector<std::shared_ptr<Type>>& argument_types) {
+
+    if (!function_symbol || function_symbol->kind != SymbolKind::Function) {
+        return 0;  // 不適合
+    }
+
+    // パラメータ数が一致しない場合は不適合
+    if (function_symbol->parameters.size() != argument_types.size()) {
+        return 0;
+    }
+
+    int total_score = 0;
+
+    // 各引数の適合度を計算
+    for (size_t i = 0; i < argument_types.size(); ++i) {
+        if (!argument_types[i]) {
+            continue;
+        }
+
+        // パラメータの型を取得
+        std::string param_type_name = function_symbol->parameters[i];
+        auto param_type = type_system_->resolve_type(param_type_name);
+
+        if (!param_type) {
+            // 型が解決できない場合はスキップ
+            continue;
+        }
+
+        // 完全一致
+        if (param_type->equals(*argument_types[i])) {
+            total_score += 2;  // 完全一致は高スコア
+        }
+        // 型変換可能
+        else if (argument_types[i]->convertible_to(*param_type)) {
+            total_score += 1;  // 型変換可能は中スコア
+        }
+        // 不適合
+        else {
+            return 0;  // 1つでも不適合なら全体が不適合
+        }
+    }
+
+    return total_score;
+}
+
 }  // namespace semantic
 }  // namespace cclint

@@ -35,6 +35,20 @@ public:
     /// @return 名前空間名（グローバルスコープの場合は空文字列）
     std::string get_namespace_of_type(const std::shared_ptr<Type>& type);
 
+    /// Overload resolution - 複数の関数候補から最適なものを選択
+    /// @param candidates 関数候補のリスト
+    /// @param argument_types 引数の型リスト
+    /// @return 最適な関数シンボル（見つからない場合はnullptr）
+    std::shared_ptr<Symbol> resolve_overload(const std::vector<std::shared_ptr<Symbol>>& candidates,
+                                              const std::vector<std::shared_ptr<Type>>& argument_types);
+
+    /// 関数シグネチャと引数の型の適合度を計算
+    /// @param function_symbol 関数シンボル
+    /// @param argument_types 引数の型リスト
+    /// @return 適合度（0:不適合、1:型変換必要、2:完全一致）
+    int calculate_match_score(const std::shared_ptr<Symbol>& function_symbol,
+                               const std::vector<std::shared_ptr<Type>>& argument_types);
+
 private:
     std::shared_ptr<SymbolTable> symbol_table_;
     std::shared_ptr<TypeSystem> type_system_;

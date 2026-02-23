@@ -226,7 +226,7 @@
 
 #### Semantic Analysis Enhancement
 - [x] ADL (Argument-Dependent Lookup) 実装（基本機能）
-- [ ] Overload resolution 実装（TODO）
+- [x] Overload resolution 実装（基本機能）
 - [ ] Template instantiation 実装（TODO）
 - [ ] SFINAE implementation（TODO）
 - [x] Constexpr evaluator 実装（semantic_analyzer.cpp:197 TODO）
