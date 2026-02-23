@@ -56,6 +56,7 @@ set(CCLINT_LIB_SOURCES
     ${CMAKE_SOURCE_DIR}/src/semantic/symbol_table.cpp
     ${CMAKE_SOURCE_DIR}/src/semantic/type_system.cpp
     ${CMAKE_SOURCE_DIR}/src/semantic/semantic_analyzer.cpp
+    ${CMAKE_SOURCE_DIR}/src/semantic/constexpr_evaluator.cpp
     ${CMAKE_SOURCE_DIR}/src/diagnostic/diagnostic.cpp
     ${CMAKE_SOURCE_DIR}/src/diagnostic/fixer.cpp
     ${CMAKE_SOURCE_DIR}/src/output/formatter.cpp

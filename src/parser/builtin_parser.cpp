@@ -414,11 +414,11 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_class_or_struct() {
                     ctor->class_name = node->name;
                     ctor->position = func->position;
                     ctor->access = current_access_;
-                    ctor->is_explicit = false;  // TODO: detect explicit keyword
-                    ctor->is_default = false;
-                    ctor->is_delete = false;
-                    ctor->is_constexpr = false;
-                    ctor->is_noexcept = false;
+                    ctor->is_explicit = func->is_explicit;  // Detect explicit keyword
+                    ctor->is_default = func->is_default;
+                    ctor->is_delete = func->is_delete;
+                    ctor->is_constexpr = func->is_constexpr;
+                    ctor->is_noexcept = func->is_noexcept;
                     node->children.push_back(ctor);
                     continue;
                 }
@@ -499,6 +499,7 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_function_or_variable() {
     bool is_const = false;
     bool is_virtual = false;
     bool is_constexpr = false;
+    bool is_explicit = false;
 
     // 修飾子
     while (true) {
@@ -508,6 +509,8 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_function_or_variable() {
             is_virtual = true;
         } else if (match(TokenType::Constexpr)) {
             is_constexpr = true;
+        } else if (match(TokenType::Explicit)) {
+            is_explicit = true;
         } else if (match(TokenType::Const) && !is_const) {
             is_const = true;
         } else {
@@ -554,6 +557,8 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_function_or_variable() {
         func->return_type = type_name;
         func->is_static = is_static;
         func->is_virtual = is_virtual;
+        func->is_explicit = is_explicit;
+        func->is_constexpr = is_constexpr;
         func->position = pos;
 
         // パラメータをスキップ

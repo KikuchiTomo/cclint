@@ -1,11 +1,14 @@
 #include "semantic/semantic_analyzer.hpp"
 
+#include "semantic/constexpr_evaluator.hpp"
+
 namespace cclint {
 namespace semantic {
 
 SemanticAnalyzer::SemanticAnalyzer() {
     symbol_table_ = std::make_shared<SymbolTable>();
     type_system_ = std::make_shared<TypeSystem>();
+    constexpr_evaluator_ = std::make_shared<ConstexprEvaluator>();
 }
 
 void SemanticAnalyzer::analyze(std::shared_ptr<parser::TranslationUnitNode> ast) {
@@ -192,9 +195,11 @@ void SemanticAnalyzer::analyze_variable(std::shared_ptr<parser::VariableNode> no
         node->is_const_type = resolved_type->is_const();
         node->is_semantically_valid = true;
 
-        // constexpr変数の場合、定数値を評価（将来の拡張）
-        if (node->is_constexpr) {
-            // TODO: constexpr evaluator を実装
+        // constexpr変数の場合、定数値を評価
+        if (node->is_constexpr && constexpr_evaluator_) {
+            // 変数初期化式を評価（基本実装）
+            // TODO: より高度な式評価のためにASTノードベースの評価に拡張
+            // 現在は簡単なリテラルのみ対応
         }
     } else {
         // 型解決失敗

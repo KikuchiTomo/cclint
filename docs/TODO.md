@@ -212,6 +212,48 @@
 
 注: LLVM/Clangに依存しない完全な独自パーサー（~6200行実装）
 
+### 4.5. Parser Enhancement - AST完全実装 (緊急対応)
+
+**問題**: PARSER_IMPLEMENTATION_PLAN.mdのチェックリストが未更新、多くの機能が未実装
+
+#### C++17/20/23 Modern Features
+- [ ] Structured bindings (C++17) - `auto [a, b] = pair;`
+- [ ] Designated initializers (C++20) - `Point{.x=1, .y=2}`
+- [ ] Concepts and requires clauses (C++20)
+- [ ] Coroutines (C++20) - co_await, co_return, co_yield
+- [ ] Modules (C++20) - import/export
+- [ ] Ranges (C++20) - views and algorithms
+
+#### Semantic Analysis Enhancement
+- [ ] ADL (Argument-Dependent Lookup) 実装
+- [ ] Overload resolution 実装
+- [ ] Template instantiation 実装
+- [ ] SFINAE implementation
+- [ ] Constexpr evaluator 実装（semantic_analyzer.cpp:197 TODO）
+
+#### Template Features
+- [ ] Template specialization (full, partial)
+- [ ] Variadic template expansion
+
+#### AST Enhancement
+- [ ] Control flow graph (CFG)
+- [ ] Data flow graph (DFG)
+- [ ] Complete type information propagation
+
+#### Code Quality Fixes
+- [ ] Qualified name lookup 完全実装（現在simplified - symbol_table.cpp:93-98）
+- [x] Constructor explicit keyword 検出（builtin_parser.cpp:417 TODO）
+- [x] Constexpr evaluator 基本実装（semantic_analyzer.cpp:197 TODO）
+- [ ] Fix-it hints 実装（error recovery）
+
+#### Documentation
+- [ ] PARSER_IMPLEMENTATION_PLAN.md チェックリスト更新
+  - [ ] Phase 1: 全項目を [x] に更新
+  - [ ] Phase 2: 全項目を [x] に更新
+  - [ ] Phase 3: 完了項目を [x]、未完了を [ ] に更新
+  - [ ] Phase 4: 完了項目を [x]、未完了を [ ] に更新
+  - [ ] Phase 5-8: 実装状況を反映
+
 ### 5. Diagnostic Module (src/diagnostic/)
 
 #### Diagnostic定義
