@@ -151,6 +151,40 @@ void BuiltinParser::parse_toplevel(TranslationUnitNode& root) {
         return;
     }
 
+    // concept (C++20)
+    if (check(TokenType::Concept)) {
+        auto concept_node = std::make_shared<ConceptNode>();
+        concept_node->position = get_position();
+        advance();  // consume 'concept'
+
+        // Concept name
+        if (check(TokenType::Identifier)) {
+            concept_node->name = advance().text;
+        }
+
+        // Template parameters (optional)
+        if (match(TokenType::Less)) {
+            int depth = 1;
+            while (depth > 0 && !check(TokenType::Eof)) {
+                if (match(TokenType::Less))
+                    depth++;
+                else if (match(TokenType::Greater))
+                    depth--;
+                else
+                    advance();
+            }
+        }
+
+        // Skip constraint expression (simplified)
+        if (match(TokenType::Equal)) {
+            skip_to_semicolon();
+        }
+        match(TokenType::Semicolon);
+
+        root.children.push_back(concept_node);
+        return;
+    }
+
     // template
     if (check(TokenType::Template)) {
         auto tmpl = std::make_shared<TemplateNode>();

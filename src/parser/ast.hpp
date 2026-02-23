@@ -99,6 +99,8 @@ enum class ASTNodeType {
     StaticAssert,            // static_assert
     Attribute,               // [[attribute]]
     StructuredBinding,       // 構造化束縛 (C++17) - auto [a, b] = expr;
+    Concept,                 // concept (C++20)
+    Requires,                // requires 式/句 (C++20)
     Unknown
 };
 
@@ -402,6 +404,24 @@ public:
     std::string specialized_name;               // 特殊化対象の名前
 
     TemplateNode() : ASTNode(ASTNodeType::Template) {}
+};
+
+/// Concept (C++20)
+class ConceptNode : public ASTNode {
+public:
+    std::vector<TemplateParameter> parameters;  // テンプレートパラメータ
+    std::string constraint_expression;          // 制約式
+
+    ConceptNode() : ASTNode(ASTNodeType::Concept) {}
+};
+
+/// Requires 式/句 (C++20)
+class RequiresNode : public ASTNode {
+public:
+    std::string expression;  // requires 式の内容
+    bool is_clause = false;  // requires 句（関数の後）か requires 式か
+
+    RequiresNode() : ASTNode(ASTNodeType::Requires) {}
 };
 
 /// コンストラクタ

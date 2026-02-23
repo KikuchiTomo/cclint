@@ -219,7 +219,7 @@
 #### C++17/20/23 Modern Features
 - [x] Structured bindings (C++17) - `auto [a, b] = pair;`
 - [ ] Designated initializers (C++20) - `Point{.x=1, .y=2}` (TODO)
-- [ ] Concepts and requires clauses (C++20) (TODO)
+- [x] Concepts and requires clauses (C++20) - 基本パース対応
 - [ ] Coroutines (C++20) - co_await, co_return, co_yield (TODO)
 - [ ] Modules (C++20) - import/export (TODO)
 - [ ] Ranges (C++20) - views and algorithms (TODO)
