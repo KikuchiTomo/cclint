@@ -225,11 +225,11 @@
 - [ ] Ranges (C++20) - views and algorithms (TODO)
 
 #### Semantic Analysis Enhancement
-- [ ] ADL (Argument-Dependent Lookup) 実装
-- [ ] Overload resolution 実装
-- [ ] Template instantiation 実装
-- [ ] SFINAE implementation
-- [ ] Constexpr evaluator 実装（semantic_analyzer.cpp:197 TODO）
+- [x] ADL (Argument-Dependent Lookup) 実装（基本機能）
+- [ ] Overload resolution 実装（TODO）
+- [ ] Template instantiation 実装（TODO）
+- [ ] SFINAE implementation（TODO）
+- [x] Constexpr evaluator 実装（semantic_analyzer.cpp:197 TODO）
 
 #### Template Features
 - [ ] Template specialization (full, partial)
