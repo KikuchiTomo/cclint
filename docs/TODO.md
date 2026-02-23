@@ -217,12 +217,12 @@
 **問題**: PARSER_IMPLEMENTATION_PLAN.mdのチェックリストが未更新、多くの機能が未実装
 
 #### C++17/20/23 Modern Features
-- [ ] Structured bindings (C++17) - `auto [a, b] = pair;`
-- [ ] Designated initializers (C++20) - `Point{.x=1, .y=2}`
-- [ ] Concepts and requires clauses (C++20)
-- [ ] Coroutines (C++20) - co_await, co_return, co_yield
-- [ ] Modules (C++20) - import/export
-- [ ] Ranges (C++20) - views and algorithms
+- [x] Structured bindings (C++17) - `auto [a, b] = pair;`
+- [ ] Designated initializers (C++20) - `Point{.x=1, .y=2}` (TODO)
+- [ ] Concepts and requires clauses (C++20) (TODO)
+- [ ] Coroutines (C++20) - co_await, co_return, co_yield (TODO)
+- [ ] Modules (C++20) - import/export (TODO)
+- [ ] Ranges (C++20) - views and algorithms (TODO)
 
 #### Semantic Analysis Enhancement
 - [ ] ADL (Argument-Dependent Lookup) 実装
@@ -247,12 +247,12 @@
 - [ ] Fix-it hints 実装（error recovery）
 
 #### Documentation
-- [ ] PARSER_IMPLEMENTATION_PLAN.md チェックリスト更新
-  - [ ] Phase 1: 全項目を [x] に更新
-  - [ ] Phase 2: 全項目を [x] に更新
-  - [ ] Phase 3: 完了項目を [x]、未完了を [ ] に更新
-  - [ ] Phase 4: 完了項目を [x]、未完了を [ ] に更新
-  - [ ] Phase 5-8: 実装状況を反映
+- [x] PARSER_IMPLEMENTATION_PLAN.md チェックリスト更新
+  - [x] Phase 1: 全項目を [x] に更新
+  - [x] Phase 2: 全項目を [x] に更新
+  - [x] Phase 3: 完了項目を [x]、未完了を [ ] に更新
+  - [x] Phase 4: 完了項目を [x]、未完了を [ ] に更新
+  - [x] Phase 5-8: 実装状況を反映
 
 ### 5. Diagnostic Module (src/diagnostic/)
 

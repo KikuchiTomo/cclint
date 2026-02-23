@@ -98,6 +98,7 @@ enum class ASTNodeType {
     Friend,                  // friend宣言
     StaticAssert,            // static_assert
     Attribute,               // [[attribute]]
+    StructuredBinding,       // 構造化束縛 (C++17) - auto [a, b] = expr;
     Unknown
 };
 
@@ -233,6 +234,20 @@ public:
     std::vector<AttributeInfo> attributes;  // 属性
 
     VariableNode() : ASTNode(ASTNodeType::Variable) {}
+};
+
+/// 構造化束縛 (C++17) - auto [a, b, c] = expr;
+class StructuredBindingNode : public ASTNode {
+public:
+    std::vector<std::string> identifiers;  // 束縛される識別子リスト [a, b, c]
+    std::string initializer;               // 初期化式
+    bool is_const = false;                 // const auto [a, b] = ...
+    bool is_ref = false;                   // auto& [a, b] = ...
+    bool is_rvalue_ref = false;            // auto&& [a, b] = ...
+
+    TypeInfo type_info;  // 推論された型情報
+
+    StructuredBindingNode() : ASTNode(ASTNodeType::StructuredBinding) {}
 };
 
 /// フィールド（クラスメンバ変数）

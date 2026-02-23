@@ -531,6 +531,56 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_function_or_variable() {
         type_name = parse_type();
     }
 
+    // Structured binding (C++17) - auto [a, b] = expr;
+    if (type_name == "auto" && check(TokenType::LeftBracket)) {
+        auto sb = std::make_shared<StructuredBindingNode>();
+        sb->position = pos;
+        sb->is_const = is_const;
+
+        advance();  // consume '['
+
+        // Parse identifier list: a, b, c
+        while (!check(TokenType::RightBracket) && !check(TokenType::Eof)) {
+            if (check(TokenType::Identifier)) {
+                sb->identifiers.push_back(advance().text);
+            }
+            if (match(TokenType::Comma)) {
+                continue;
+            } else if (!check(TokenType::RightBracket)) {
+                advance();  // skip unexpected token
+            }
+        }
+        match(TokenType::RightBracket);
+
+        // Check for & or &&
+        if (current_token().text == "&") {
+            // Check next token for second '&'
+            if (current_ + 1 < tokens_.size() && tokens_[current_ + 1].text == "&") {
+                sb->is_rvalue_ref = true;
+                advance();  // consume first '&'
+                advance();  // consume second '&'
+            } else {
+                sb->is_ref = true;
+                advance();  // consume '&'
+            }
+        }
+
+        // Parse initializer: = expr;
+        if (match(TokenType::Equal)) {
+            size_t init_start = current_;
+            skip_to_semicolon();
+            // Collect initializer tokens
+            for (size_t i = init_start; i < current_; ++i) {
+                sb->initializer += tokens_[i].text;
+                if (i + 1 < current_)
+                    sb->initializer += " ";
+            }
+        }
+        match(TokenType::Semicolon);
+
+        return sb;
+    }
+
     // 名前
     std::string name;
     if (check(TokenType::Identifier)) {
