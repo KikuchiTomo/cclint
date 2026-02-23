@@ -153,4 +153,17 @@ size_t DiagnosticEngine::info_count() const {
     return count;
 }
 
+void DiagnosticEngine::add_diagnostic_with_fixit(Severity severity, const std::string& rule_name,
+                                                   const std::string& message,
+                                                   const SourceLocation& location,
+                                                   const std::vector<FixItHint>& fix_hints) {
+    Diagnostic diag;
+    diag.severity = severity;
+    diag.rule_name = rule_name;
+    diag.message = message;
+    diag.location = location;
+    diag.fix_hints = fix_hints;
+    add_diagnostic(diag);
+}
+
 }  // namespace diagnostic

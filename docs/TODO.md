@@ -244,7 +244,7 @@
 - [x] Qualified name lookup 完全実装（現在simplified - symbol_table.cpp:93-98）
 - [x] Constructor explicit keyword 検出（builtin_parser.cpp:417 TODO）
 - [x] Constexpr evaluator 基本実装（semantic_analyzer.cpp:197 TODO）
-- [ ] Fix-it hints 実装（error recovery）
+- [x] Fix-it hints 実装（DiagnosticEngine に追加）
 
 #### Documentation
 - [x] PARSER_IMPLEMENTATION_PLAN.md チェックリスト更新
