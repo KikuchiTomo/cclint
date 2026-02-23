@@ -241,7 +241,7 @@
 - [ ] Complete type information propagation
 
 #### Code Quality Fixes
-- [ ] Qualified name lookup 完全実装（現在simplified - symbol_table.cpp:93-98）
+- [x] Qualified name lookup 完全実装（現在simplified - symbol_table.cpp:93-98）
 - [x] Constructor explicit keyword 検出（builtin_parser.cpp:417 TODO）
 - [x] Constexpr evaluator 基本実装（semantic_analyzer.cpp:197 TODO）
 - [ ] Fix-it hints 実装（error recovery）

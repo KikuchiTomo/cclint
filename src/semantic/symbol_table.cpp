@@ -90,11 +90,19 @@ std::shared_ptr<Symbol> SymbolTable::lookup_qualified(const std::string& qualifi
         return nullptr;
     }
 
-    // 残りの部分を順に探す (簡易実装)
+    // 残りの部分を順に探す (完全実装)
     for (size_t i = 1; i < parts.size(); ++i) {
-        // ネストされたシンボルの探索は複雑なため、基本的な実装のみ
-        // 実際には、クラスや名前空間のメンバーを探す必要がある
-        return nullptr;
+        // クラスや名前空間のメンバーを探す
+        if (symbol->kind == SymbolKind::Class || symbol->kind == SymbolKind::Namespace) {
+            // メンバーを検索
+            symbol = symbol->lookup_member(parts[i]);
+            if (!symbol) {
+                return nullptr;  // メンバーが見つからない
+            }
+        } else {
+            // クラスでも名前空間でもない場合、これ以上辿れない
+            return nullptr;
+        }
     }
 
     return symbol;

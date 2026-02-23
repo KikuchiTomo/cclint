@@ -80,6 +80,12 @@ void SemanticAnalyzer::analyze_namespace(std::shared_ptr<parser::NamespaceNode> 
         analyze_node(child);
     }
 
+    // 現在のスコープのシンボルをメンバーとして登録
+    auto current_scope = symbol_table_->current_scope();
+    for (const auto& [name, member_symbol] : current_scope->symbols()) {
+        symbol->add_member(name, member_symbol);
+    }
+
     // スコープから出る
     symbol_table_->exit_scope();
 }
@@ -127,6 +133,12 @@ void SemanticAnalyzer::analyze_class(std::shared_ptr<parser::ClassNode> node) {
     // メンバを解析
     for (const auto& child : node->children) {
         analyze_node(child);
+    }
+
+    // 現在のスコープのシンボルをメンバーとして登録
+    auto current_scope = symbol_table_->current_scope();
+    for (const auto& [name, member_symbol] : current_scope->symbols()) {
+        symbol->add_member(name, member_symbol);
     }
 
     // スコープから出る
