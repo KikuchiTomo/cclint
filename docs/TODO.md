@@ -232,8 +232,8 @@
 - [x] Constexpr evaluator 実装（semantic_analyzer.cpp:197 TODO）
 
 #### Template Features
-- [ ] Template specialization (full, partial)
-- [ ] Variadic template expansion
+- [x] Template specialization (full, partial) - 基本検出機能
+- [ ] Variadic template expansion（TODO）
 
 #### AST Enhancement
 - [ ] Control flow graph (CFG)

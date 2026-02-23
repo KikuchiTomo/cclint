@@ -160,6 +160,8 @@ void BuiltinParser::parse_toplevel(TranslationUnitNode& root) {
         // Parse template parameters <...>
         if (match(TokenType::Less)) {
             int depth = 1;
+            bool has_params = false;
+
             while (depth > 0 && !check(TokenType::Eof)) {
                 if (match(TokenType::Less))
                     depth++;
@@ -168,14 +170,27 @@ void BuiltinParser::parse_toplevel(TranslationUnitNode& root) {
                 else {
                     // Simple parameter extraction
                     if (check(TokenType::Identifier)) {
+                        has_params = true;
                         TemplateParameter param;
                         param.kind = TemplateParameter::Kind::Type;
                         param.name = advance().text;
                         tmpl->parameters.push_back(param);
                     } else {
+                        if (depth > 0 && !check(TokenType::Greater)) {
+                            has_params = true;  // Non-empty parameter list
+                        }
                         advance();
                     }
                 }
+            }
+
+            // Detect template specialization: template <>
+            if (!has_params) {
+                tmpl->is_specialization = true;  // Full specialization
+            } else if (tmpl->parameters.size() > 0) {
+                // Check if this is a partial specialization by looking for specialized types
+                // (This is a simplified check - full implementation would parse the specialized type)
+                tmpl->is_partial_specialization = true;  // Potentially partial specialization
             }
         }
 
