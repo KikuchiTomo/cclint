@@ -7,16 +7,18 @@ rule_category = "readability"
 local MAX_LINES = 1500
 
 function check_ast()
-    -- Get all functions
+    -- Get all functions (returns array of tables with function info)
     local functions = cclint.get_functions()
 
     if functions then
-        for _, func_name in ipairs(functions) do
-            local func_info = cclint.get_function_info(func_name)
-            if func_info then
-                local line_start = func_info.line or 1
-                local line_end = func_info.line_end or func_info.end_line or line_start
+        for _, func_info in ipairs(functions) do
+            local func_name = func_info.name
+            local line_start = func_info.line or 1
 
+            -- Get detailed function info to get end line
+            local detail_info = cclint.get_function_info(func_name)
+            if detail_info then
+                local line_end = detail_info.line_end or detail_info.end_line or line_start
                 local line_count = line_end - line_start + 1
 
                 if line_count > MAX_LINES then
