@@ -151,6 +151,40 @@ void BuiltinParser::parse_toplevel(TranslationUnitNode& root) {
         return;
     }
 
+    // concept (C++20)
+    if (check(TokenType::Concept)) {
+        auto concept_node = std::make_shared<ConceptNode>();
+        concept_node->position = get_position();
+        advance();  // consume 'concept'
+
+        // Concept name
+        if (check(TokenType::Identifier)) {
+            concept_node->name = advance().text;
+        }
+
+        // Template parameters (optional)
+        if (match(TokenType::Less)) {
+            int depth = 1;
+            while (depth > 0 && !check(TokenType::Eof)) {
+                if (match(TokenType::Less))
+                    depth++;
+                else if (match(TokenType::Greater))
+                    depth--;
+                else
+                    advance();
+            }
+        }
+
+        // Skip constraint expression (simplified)
+        if (match(TokenType::Equal)) {
+            skip_to_semicolon();
+        }
+        match(TokenType::Semicolon);
+
+        root.children.push_back(concept_node);
+        return;
+    }
+
     // template
     if (check(TokenType::Template)) {
         auto tmpl = std::make_shared<TemplateNode>();
@@ -160,6 +194,8 @@ void BuiltinParser::parse_toplevel(TranslationUnitNode& root) {
         // Parse template parameters <...>
         if (match(TokenType::Less)) {
             int depth = 1;
+            bool has_params = false;
+
             while (depth > 0 && !check(TokenType::Eof)) {
                 if (match(TokenType::Less))
                     depth++;
@@ -168,14 +204,28 @@ void BuiltinParser::parse_toplevel(TranslationUnitNode& root) {
                 else {
                     // Simple parameter extraction
                     if (check(TokenType::Identifier)) {
+                        has_params = true;
                         TemplateParameter param;
                         param.kind = TemplateParameter::Kind::Type;
                         param.name = advance().text;
                         tmpl->parameters.push_back(param);
                     } else {
+                        if (depth > 0 && !check(TokenType::Greater)) {
+                            has_params = true;  // Non-empty parameter list
+                        }
                         advance();
                     }
                 }
+            }
+
+            // Detect template specialization: template <>
+            if (!has_params) {
+                tmpl->is_specialization = true;  // Full specialization
+            } else if (tmpl->parameters.size() > 0) {
+                // Check if this is a partial specialization by looking for specialized types
+                // (This is a simplified check - full implementation would parse the specialized
+                // type)
+                tmpl->is_partial_specialization = true;  // Potentially partial specialization
             }
         }
 
@@ -414,11 +464,11 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_class_or_struct() {
                     ctor->class_name = node->name;
                     ctor->position = func->position;
                     ctor->access = current_access_;
-                    ctor->is_explicit = false;  // TODO: detect explicit keyword
-                    ctor->is_default = false;
-                    ctor->is_delete = false;
-                    ctor->is_constexpr = false;
-                    ctor->is_noexcept = false;
+                    ctor->is_explicit = func->is_explicit;  // Detect explicit keyword
+                    ctor->is_default = func->is_default;
+                    ctor->is_delete = func->is_delete;
+                    ctor->is_constexpr = func->is_constexpr;
+                    ctor->is_noexcept = func->is_noexcept;
                     node->children.push_back(ctor);
                     continue;
                 }
@@ -499,6 +549,7 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_function_or_variable() {
     bool is_const = false;
     bool is_virtual = false;
     bool is_constexpr = false;
+    bool is_explicit = false;
 
     // 修飾子
     while (true) {
@@ -508,6 +559,8 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_function_or_variable() {
             is_virtual = true;
         } else if (match(TokenType::Constexpr)) {
             is_constexpr = true;
+        } else if (match(TokenType::Explicit)) {
+            is_explicit = true;
         } else if (match(TokenType::Const) && !is_const) {
             is_const = true;
         } else {
@@ -526,6 +579,56 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_function_or_variable() {
     std::string type_name;
     if (!is_destructor) {
         type_name = parse_type();
+    }
+
+    // Structured binding (C++17) - auto [a, b] = expr;
+    if (type_name == "auto" && check(TokenType::LeftBracket)) {
+        auto sb = std::make_shared<StructuredBindingNode>();
+        sb->position = pos;
+        sb->is_const = is_const;
+
+        advance();  // consume '['
+
+        // Parse identifier list: a, b, c
+        while (!check(TokenType::RightBracket) && !check(TokenType::Eof)) {
+            if (check(TokenType::Identifier)) {
+                sb->identifiers.push_back(advance().text);
+            }
+            if (match(TokenType::Comma)) {
+                continue;
+            } else if (!check(TokenType::RightBracket)) {
+                advance();  // skip unexpected token
+            }
+        }
+        match(TokenType::RightBracket);
+
+        // Check for & or &&
+        if (current_token().text == "&") {
+            // Check next token for second '&'
+            if (current_ + 1 < tokens_.size() && tokens_[current_ + 1].text == "&") {
+                sb->is_rvalue_ref = true;
+                advance();  // consume first '&'
+                advance();  // consume second '&'
+            } else {
+                sb->is_ref = true;
+                advance();  // consume '&'
+            }
+        }
+
+        // Parse initializer: = expr;
+        if (match(TokenType::Equal)) {
+            size_t init_start = current_;
+            skip_to_semicolon();
+            // Collect initializer tokens
+            for (size_t i = init_start; i < current_; ++i) {
+                sb->initializer += tokens_[i].text;
+                if (i + 1 < current_)
+                    sb->initializer += " ";
+            }
+        }
+        match(TokenType::Semicolon);
+
+        return sb;
     }
 
     // 名前
@@ -554,6 +657,8 @@ std::shared_ptr<ASTNode> BuiltinParser::parse_function_or_variable() {
         func->return_type = type_name;
         func->is_static = is_static;
         func->is_virtual = is_virtual;
+        func->is_explicit = is_explicit;
+        func->is_constexpr = is_constexpr;
         func->position = pos;
 
         // パラメータをスキップ

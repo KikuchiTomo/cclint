@@ -16,6 +16,8 @@ set(CCLINT_SOURCES
     semantic/symbol_table.cpp
     semantic/type_system.cpp
     semantic/semantic_analyzer.cpp
+    semantic/constexpr_evaluator.cpp
+    semantic/name_lookup.cpp
     diagnostic/diagnostic.cpp
     diagnostic/fixer.cpp
     output/formatter.cpp
@@ -66,6 +68,8 @@ set(CCLINT_LSP_SOURCES
     semantic/symbol_table.cpp
     semantic/type_system.cpp
     semantic/semantic_analyzer.cpp
+    semantic/constexpr_evaluator.cpp
+    semantic/name_lookup.cpp
     parser/error_recovery.cpp
     parser/parser_performance.cpp
     rules/rule_base.cpp

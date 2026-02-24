@@ -39,7 +39,24 @@ struct Symbol {
     // クラスの場合
     std::vector<std::string> base_classes;
 
+    // 名前空間やクラスの場合のメンバーシンボル
+    std::unordered_map<std::string, std::shared_ptr<Symbol>> members;
+
     Symbol(const std::string& n, SymbolKind k) : name(n), kind(k) {}
+
+    /// メンバーを追加 (クラスや名前空間の場合)
+    void add_member(const std::string& member_name, std::shared_ptr<Symbol> member_symbol) {
+        members[member_name] = member_symbol;
+    }
+
+    /// メンバーを検索 (クラスや名前空間の場合)
+    std::shared_ptr<Symbol> lookup_member(const std::string& member_name) const {
+        auto it = members.find(member_name);
+        if (it != members.end()) {
+            return it->second;
+        }
+        return nullptr;
+    }
 };
 
 /// スコープ (名前空間、クラス、関数などのスコープ)

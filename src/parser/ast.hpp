@@ -98,6 +98,9 @@ enum class ASTNodeType {
     Friend,                  // friend宣言
     StaticAssert,            // static_assert
     Attribute,               // [[attribute]]
+    StructuredBinding,       // 構造化束縛 (C++17) - auto [a, b] = expr;
+    Concept,                 // concept (C++20)
+    Requires,                // requires 式/句 (C++20)
     Unknown
 };
 
@@ -233,6 +236,20 @@ public:
     std::vector<AttributeInfo> attributes;  // 属性
 
     VariableNode() : ASTNode(ASTNodeType::Variable) {}
+};
+
+/// 構造化束縛 (C++17) - auto [a, b, c] = expr;
+class StructuredBindingNode : public ASTNode {
+public:
+    std::vector<std::string> identifiers;  // 束縛される識別子リスト [a, b, c]
+    std::string initializer;               // 初期化式
+    bool is_const = false;                 // const auto [a, b] = ...
+    bool is_ref = false;                   // auto& [a, b] = ...
+    bool is_rvalue_ref = false;            // auto&& [a, b] = ...
+
+    TypeInfo type_info;  // 推論された型情報
+
+    StructuredBindingNode() : ASTNode(ASTNodeType::StructuredBinding) {}
 };
 
 /// フィールド（クラスメンバ変数）
@@ -387,6 +404,24 @@ public:
     std::string specialized_name;               // 特殊化対象の名前
 
     TemplateNode() : ASTNode(ASTNodeType::Template) {}
+};
+
+/// Concept (C++20)
+class ConceptNode : public ASTNode {
+public:
+    std::vector<TemplateParameter> parameters;  // テンプレートパラメータ
+    std::string constraint_expression;          // 制約式
+
+    ConceptNode() : ASTNode(ASTNodeType::Concept) {}
+};
+
+/// Requires 式/句 (C++20)
+class RequiresNode : public ASTNode {
+public:
+    std::string expression;  // requires 式の内容
+    bool is_clause = false;  // requires 句（関数の後）か requires 式か
+
+    RequiresNode() : ASTNode(ASTNodeType::Requires) {}
 };
 
 /// コンストラクタ

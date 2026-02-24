@@ -9,6 +9,8 @@
 namespace cclint {
 namespace semantic {
 
+class ConstexprEvaluator;
+
 /// セマンティック解析器
 /// ASTを走査してシンボルテーブルと型情報を構築する
 class SemanticAnalyzer {
@@ -34,6 +36,7 @@ public:
 private:
     std::shared_ptr<SymbolTable> symbol_table_;
     std::shared_ptr<TypeSystem> type_system_;
+    std::shared_ptr<ConstexprEvaluator> constexpr_evaluator_;
     std::vector<std::string> errors_;
 
     // AST走査
