@@ -1,0 +1,87 @@
+# cclint Configuration for Sample Project
+version: "1.0"
+
+# C++ Standard
+cpp_standard: "c++17"
+
+# File Patterns - match any C++ file
+include_patterns:
+  - "*.cpp"
+  - "*.hpp"
+  - "**/*.cpp"
+  - "**/*.hpp"
+
+exclude_patterns:
+  - "build/**"
+
+# Output Configuration
+output_format: "text"
+max_errors: 0
+show_compiler_output: false
+
+# Performance Settings
+num_threads: 1
+enable_cache: false
+
+# Custom Lua Rules
+lua_scripts:
+  # Rule 1: One class per file
+  - path: .cclint/rules/one_class_per_file.lua
+    enabled: true
+    severity: error
+    priority: 100
+
+  # Rule 2: Filename matches class name
+  - path: .cclint/rules/filename_matches_class.lua
+    enabled: true
+    severity: error
+    priority: 90
+
+  # Rule 3: Functions should only be called from main
+  - path: .cclint/rules/called_only_from_main.lua
+    enabled: true
+    severity: error
+    priority: 80
+
+  # Rule 4: Private methods must start with '__'
+  - path: .cclint/rules/private_method_prefix.lua
+    enabled: true
+    severity: error
+    priority: 70
+
+  # Rule 5: Private methods must use lower_snake_case
+  - path: .cclint/rules/private_method_snake_case.lua
+    enabled: true
+    severity: error
+    priority: 70
+
+  # Rule 6: Public methods must use lower_snake_case
+  - path: .cclint/rules/public_method_snake_case.lua
+    enabled: true
+    severity: error
+    priority: 70
+
+  # Rule 7: Member variables must use lower_snake_case
+  - path: .cclint/rules/member_variable_snake_case.lua
+    enabled: true
+    severity: error
+    priority: 60
+
+  # Rule 8: Member variables must end with '_'
+  - path: .cclint/rules/member_variable_suffix.lua
+    enabled: true
+    severity: error
+    priority: 60
+
+  # Rule 9: Function length must not exceed 1500 lines
+  - path: .cclint/rules/function_max_lines.lua
+    enabled: true
+    severity: error
+    priority: 50
+
+# Built-in C++ Rules (not used for this example)
+rules: []
+
+# Rule Execution Settings
+parallel_rules: false
+fail_fast: false
