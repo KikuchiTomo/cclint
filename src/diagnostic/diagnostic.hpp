@@ -79,8 +79,8 @@ public:
 
     // Fix-itヒント付きの診断を追加
     void add_diagnostic_with_fixit(Severity severity, const std::string& rule_name,
-                                    const std::string& message, const SourceLocation& location,
-                                    const std::vector<FixItHint>& fix_hints);
+                                   const std::string& message, const SourceLocation& location,
+                                   const std::vector<FixItHint>& fix_hints);
 
     // 全ての診断メッセージを取得
     const std::vector<Diagnostic>& get_diagnostics() const { return diagnostics_; }

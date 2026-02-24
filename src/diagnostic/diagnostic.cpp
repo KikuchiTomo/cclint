@@ -154,9 +154,9 @@ size_t DiagnosticEngine::info_count() const {
 }
 
 void DiagnosticEngine::add_diagnostic_with_fixit(Severity severity, const std::string& rule_name,
-                                                   const std::string& message,
-                                                   const SourceLocation& location,
-                                                   const std::vector<FixItHint>& fix_hints) {
+                                                 const std::string& message,
+                                                 const SourceLocation& location,
+                                                 const std::vector<FixItHint>& fix_hints) {
     Diagnostic diag;
     diag.severity = severity;
     diag.rule_name = rule_name;

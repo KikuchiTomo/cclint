@@ -10,9 +10,9 @@ NameLookup::NameLookup(std::shared_ptr<SymbolTable> symbol_table,
                        std::shared_ptr<TypeSystem> type_system)
     : symbol_table_(symbol_table), type_system_(type_system) {}
 
-std::shared_ptr<Symbol> NameLookup::lookup_with_adl(
-    const std::string& function_name, const std::vector<std::shared_ptr<Type>>& argument_types) {
-
+std::shared_ptr<Symbol>
+NameLookup::lookup_with_adl(const std::string& function_name,
+                            const std::vector<std::shared_ptr<Type>>& argument_types) {
     // 1. 通常の名前検索を試みる
     auto symbol = symbol_table_->lookup(function_name);
     if (symbol && symbol->kind == SymbolKind::Function) {
@@ -42,9 +42,8 @@ std::shared_ptr<Symbol> NameLookup::lookup_with_adl(
     return nullptr;
 }
 
-std::vector<std::string> NameLookup::get_associated_namespaces(
-    const std::vector<std::shared_ptr<Type>>& argument_types) {
-
+std::vector<std::string>
+NameLookup::get_associated_namespaces(const std::vector<std::shared_ptr<Type>>& argument_types) {
     std::unordered_set<std::string> namespaces;
 
     for (const auto& type : argument_types) {
@@ -105,10 +104,9 @@ std::string NameLookup::get_namespace_of_type(const std::shared_ptr<Type>& type)
     return "";
 }
 
-std::shared_ptr<Symbol> NameLookup::resolve_overload(
-    const std::vector<std::shared_ptr<Symbol>>& candidates,
-    const std::vector<std::shared_ptr<Type>>& argument_types) {
-
+std::shared_ptr<Symbol>
+NameLookup::resolve_overload(const std::vector<std::shared_ptr<Symbol>>& candidates,
+                             const std::vector<std::shared_ptr<Type>>& argument_types) {
     if (candidates.empty()) {
         return nullptr;
     }
@@ -139,8 +137,7 @@ std::shared_ptr<Symbol> NameLookup::resolve_overload(
 }
 
 int NameLookup::calculate_match_score(const std::shared_ptr<Symbol>& function_symbol,
-                                        const std::vector<std::shared_ptr<Type>>& argument_types) {
-
+                                      const std::vector<std::shared_ptr<Type>>& argument_types) {
     if (!function_symbol || function_symbol->kind != SymbolKind::Function) {
         return 0;  // 不適合
     }

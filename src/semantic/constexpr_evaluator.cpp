@@ -180,8 +180,8 @@ std::optional<int64_t> ConstexprEvaluator::get_integer(const ConstexprValue& val
 }
 
 ConstexprValue ConstexprEvaluator::evaluate_binary_op(const std::string& op,
-                                                        const ConstexprValue& left,
-                                                        const ConstexprValue& right) {
+                                                      const ConstexprValue& left,
+                                                      const ConstexprValue& right) {
     // 整数演算
     auto left_int = get_integer(left);
     auto right_int = get_integer(right);
@@ -240,7 +240,7 @@ ConstexprValue ConstexprEvaluator::evaluate_binary_op(const std::string& op,
 }
 
 ConstexprValue ConstexprEvaluator::evaluate_unary_op(const std::string& op,
-                                                       const ConstexprValue& operand) {
+                                                     const ConstexprValue& operand) {
     auto int_val = get_integer(operand);
     if (int_val) {
         if (op == "+")

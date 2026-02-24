@@ -13,13 +13,12 @@ class ASTNode;
 namespace semantic {
 
 /// Constexpr評価結果の値型
-using ConstexprValue = std::variant<
-    std::monostate,  // 評価不可
-    int64_t,         // 整数値
-    double,          // 浮動小数点数値
-    bool,            // 真偽値
-    std::string      // 文字列リテラル
->;
+using ConstexprValue = std::variant<std::monostate,  // 評価不可
+                                    int64_t,         // 整数値
+                                    double,          // 浮動小数点数値
+                                    bool,            // 真偽値
+                                    std::string      // 文字列リテラル
+                                    >;
 
 /// Constexpr評価器
 /// C++のconstexpr式を評価して定数値を計算する
@@ -59,7 +58,7 @@ public:
 private:
     /// 単純な2項演算を評価
     ConstexprValue evaluate_binary_op(const std::string& op, const ConstexprValue& left,
-                                       const ConstexprValue& right);
+                                      const ConstexprValue& right);
 
     /// 単純な単項演算を評価
     ConstexprValue evaluate_unary_op(const std::string& op, const ConstexprValue& operand);

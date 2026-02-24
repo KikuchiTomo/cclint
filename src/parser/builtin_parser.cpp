@@ -223,7 +223,8 @@ void BuiltinParser::parse_toplevel(TranslationUnitNode& root) {
                 tmpl->is_specialization = true;  // Full specialization
             } else if (tmpl->parameters.size() > 0) {
                 // Check if this is a partial specialization by looking for specialized types
-                // (This is a simplified check - full implementation would parse the specialized type)
+                // (This is a simplified check - full implementation would parse the specialized
+                // type)
                 tmpl->is_partial_specialization = true;  // Potentially partial specialization
             }
         }
