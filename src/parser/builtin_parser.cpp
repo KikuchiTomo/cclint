@@ -46,20 +46,20 @@ const Token& BuiltinParser::current_token() const {
     if (current_ < tokens_.size()) {
         return tokens_[current_];
     }
-    static Token eof_token;
-    eof_token.type = TokenType::Eof;
-    eof_token.text = "";
+    static const Token eof_token;
     return eof_token;
 }
 
 const Token& BuiltinParser::peek_token(int offset) const {
-    size_t pos = current_ + offset;
+    if (offset < 0 && static_cast<size_t>(-offset) > current_) {
+        static const Token eof_token;
+        return eof_token;
+    }
+    size_t pos = current_ + static_cast<size_t>(offset);
     if (pos < tokens_.size()) {
         return tokens_[pos];
     }
-    static Token eof_token;
-    eof_token.type = TokenType::Eof;
-    eof_token.text = "";
+    static const Token eof_token;
     return eof_token;
 }
 

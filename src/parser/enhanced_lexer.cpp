@@ -52,7 +52,10 @@ char EnhancedLexer::current() const {
 }
 
 char EnhancedLexer::peek(int offset) const {
-    size_t pos = pos_ + offset;
+    if (offset < 0 && static_cast<size_t>(-offset) > pos_) {
+        return '\0';
+    }
+    size_t pos = pos_ + static_cast<size_t>(offset);
     if (pos < source_.size()) {
         return source_[pos];
     }
@@ -148,9 +151,6 @@ Token EnhancedLexer::lex_token() {
         return make_token(TokenType::Eof, "");
     }
 
-    int start_line = line_;
-    int start_column = column_;
-
     char c = current();
 
     // Comments
@@ -228,8 +228,6 @@ Token EnhancedLexer::lex_token() {
 // ========== Identifiers and keywords ==========
 
 Token EnhancedLexer::lex_identifier() {
-    int start_line = line_;
-    int start_column = column_;
     std::string text;
 
     while (is_identifier_continue(current())) {

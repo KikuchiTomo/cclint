@@ -48,11 +48,15 @@ void LSPServer::run(std::istream& input_stream, std::ostream& output_stream) {
         std::string empty_line;
         std::getline(input_stream, empty_line);
 
+        if (content_length == 0) {
+            continue;
+        }
+
         // Read content
         std::string content(content_length, '\0');
         input_stream.read(&content[0], content_length);
 
-        if (content_length > 0) {
+        if (input_stream.good()) {
             // Parse and handle message
             LSPMessage message = parse_message(content);
             LSPResponse response = handle_message(message);

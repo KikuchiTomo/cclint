@@ -46,7 +46,8 @@ ConstexprValue ConstexprEvaluator::evaluate_expression(const std::string& expr) 
     return std::monostate{};
 }
 
-ConstexprValue ConstexprEvaluator::evaluate_node(const std::shared_ptr<parser::ASTNode>& node) {
+ConstexprValue ConstexprEvaluator::evaluate_node(
+    const std::shared_ptr<parser::ASTNode>& /* node */) {
     // 基本実装: VariableNodeの初期化式を評価
     // TODO: より多くのノードタイプに対応
     return std::monostate{};
