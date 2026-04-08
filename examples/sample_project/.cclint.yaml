@@ -1,0 +1,28 @@
+# sample_project 設定 (日本語ルール使用)
+
+lua_scripts:
+  # 命名規則
+  - path: ../../rules/ja/class_name_pascal_case.lua
+  - path: ../../rules/ja/function_name_snake_case.lua
+  - path: ../../rules/ja/enum_name_pascal_case.lua
+  - path: ../../rules/ja/private_member_trailing_underscore.lua
+
+  # 安全性
+  - path: ../../rules/ja/destructor_virtual.lua
+  - path: ../../rules/ja/constructor_explicit.lua
+  - path: ../../rules/ja/no_throw_in_destructor.lua
+
+  # スタイル
+  - path: ../../rules/ja/max_line_length.lua
+    params:
+      max_length: 120
+  - path: ../../rules/ja/no_trailing_whitespace.lua
+  - path: ../../rules/ja/indent_spaces_only.lua
+
+  # 制限
+  - path: ../../rules/ja/no_global_using_namespace.lua
+  - path: ../../rules/ja/no_malloc_in_class.lua
+
+  # 構造
+  - path: ../../rules/ja/header_guard_required.lua
+  - path: ../../rules/ja/one_class_per_file.lua

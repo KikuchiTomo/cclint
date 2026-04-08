@@ -1,8 +1,10 @@
 #include "engine/incremental.hpp"
 
+#include <algorithm>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <memory>
 #include <sstream>
 
 #include "utils/logger.hpp"
@@ -49,9 +51,21 @@ std::vector<std::string>
 IncrementalAnalyzer::get_git_modified_files(const std::string& base_ref) const {
     std::vector<std::string> modified_files;
 
+    // Validate base_ref to prevent command injection
+    auto is_safe_ref_char = [](char c) {
+        return std::isalnum(static_cast<unsigned char>(c)) ||
+               c == '/' || c == '.' || c == '-' || c == '_' || c == '~' || c == '^';
+    };
+    if (base_ref.empty() ||
+        !std::all_of(base_ref.begin(), base_ref.end(), is_safe_ref_char)) {
+        utils::Logger::instance().warning(
+            "Invalid git ref '" + base_ref + "', falling back to full analysis");
+        return modified_files;
+    }
+
     // git diff --name-only を実行
     std::string cmd = "git diff --name-only " + base_ref + " 2>&1";
-    FILE* pipe = popen(cmd.c_str(), "r");
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
 
     if (!pipe) {
         utils::Logger::instance().warning(
@@ -59,8 +73,8 @@ IncrementalAnalyzer::get_git_modified_files(const std::string& base_ref) const {
         return modified_files;
     }
 
-    char buffer[256];
-    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+    char buffer[4096];
+    while (fgets(buffer, sizeof(buffer), pipe.get()) != nullptr) {
         std::string line(buffer);
         // 改行を削除
         if (!line.empty() && line.back() == '\n') {
@@ -74,8 +88,6 @@ IncrementalAnalyzer::get_git_modified_files(const std::string& base_ref) const {
             modified_files.push_back(line);
         }
     }
-
-    pclose(pipe);
 
     utils::Logger::instance().info("Found " + std::to_string(modified_files.size()) +
                                    " modified files via git diff");

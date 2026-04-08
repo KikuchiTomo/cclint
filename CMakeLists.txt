@@ -178,6 +178,6 @@ endif()
 install(TARGETS cclint DESTINATION bin)
 
 # 標準Luaスクリプトのインストール
-install(DIRECTORY scripts/rules
-        DESTINATION share/cclint/scripts
+install(DIRECTORY rules
+        DESTINATION share/cclint
         FILES_MATCHING PATTERN "*.lua")

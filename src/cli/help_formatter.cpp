@@ -40,16 +40,20 @@ std::string HelpFormatter::format_options() {
     oss << "  --help              Show this help message\n";
     oss << "  --version           Show version information\n";
     oss << "  --config=FILE       Specify configuration file\n";
-    oss << "  --format=FORMAT     Output format: text, json, xml (default: "
-           "text)\n";
-    oss << "  -v, --verbose       Verbose output\n";
-    oss << "  -q, --quiet         Quiet mode (errors only)\n";
+    oss << "  --format=FORMAT     Output format: text, json, xml (default: text)\n";
     oss << "  --max-errors=N      Stop after N errors (default: unlimited)\n";
     oss << "  -j, --jobs=N        Number of parallel jobs (default: auto)\n";
     oss << "  --no-cache          Disable caching\n";
-    oss << "  --profile           Enable profiling mode (show detailed performance stats)\n";
-    oss << "  --fix               Enable auto-fix mode (apply automatic fixes)\n";
-    oss << "  --fix-preview       Show fix preview without applying changes\n";
+    oss << "  --fix               Enable auto-fix mode\n";
+    oss << "  --fix-preview       Show fix preview without applying\n";
+    oss << "  --profile           Show detailed performance stats\n";
+    oss << "\n";
+    oss << "Verbosity:\n";
+    oss << "  --vc, --verbose-compiler   Show compiler warnings/errors\n";
+    oss << "  --vr, --verbose-rules      Show rule loading info\n";
+    oss << "  --vp, --verbose-progress   Show analysis progress/stats\n";
+    oss << "  --va, --verbose-all        Enable all verbose output\n";
+    oss << "  -d,  --debug               Debug mode (all output + internals)\n";
     return oss.str();
 }
 
@@ -67,7 +71,7 @@ std::string HelpFormatter::format_configuration() {
     oss << "Configuration:\n";
     oss << "  Create a cclint.yaml file in your project root with:\n";
     oss << "  - lua_scripts: paths to Lua rule scripts\n";
-    oss << "  - Standard scripts available in: ${CCLINT_HOME}/scripts/rules/\n";
+    oss << "  - Standard scripts available in: ${CCLINT_HOME}/rules/\n";
     return oss.str();
 }
 

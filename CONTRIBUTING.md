@@ -93,7 +93,7 @@ function check_ast()
 end
 ```
 
-Place in `samples/rules/` or configure in `.cclint.yaml`.
+Place in `rules/` or configure in `.cclint.yaml`.
 
 ## Pull Requests
 

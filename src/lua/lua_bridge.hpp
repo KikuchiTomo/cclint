@@ -32,6 +32,9 @@ public:
     /// @param file_path ファイルパス
     void set_current_file(const std::string& file_path);
 
+    /// 現在のルール名を設定
+    void set_current_rule_name(const std::string& rule_name);
+
     /// 現在のASTを設定
     /// @param ast AST
     void set_current_ast(std::shared_ptr<parser::TranslationUnitNode> ast);
@@ -49,6 +52,7 @@ private:
     std::shared_ptr<LuaEngine> lua_engine_;
     diagnostic::DiagnosticEngine* diag_engine_ = nullptr;
     std::string current_file_;
+    std::string current_rule_name_;
     std::shared_ptr<parser::TranslationUnitNode> current_ast_;
 
     // Luaから呼び出されるC++関数（static）

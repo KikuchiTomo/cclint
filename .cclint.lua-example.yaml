@@ -34,7 +34,7 @@ cache_directory: ".cclint_cache"
 
 lua_scripts:
   # Style: Maximum Line Length
-  - path: scripts/rules/builtin/max_line_length.lua
+  - path: rules/max_line_length.lua
     enabled: true
     severity: warning
     priority: 50
@@ -42,7 +42,7 @@ lua_scripts:
       max_length: 100  # Maximum characters per line
 
   # Structure: Header Guard Check
-  - path: scripts/rules/builtin/header_guard.lua
+  - path: rules/header_guard.lua
     enabled: true
     severity: warning
     priority: 90
@@ -52,14 +52,14 @@ lua_scripts:
   # Note: BuiltinParser now supports comprehensive AST analysis
   # - All C++ entities are properly detected with EnhancedLexer
   # - AST-based rules fully functional
-  - path: scripts/rules/builtin/naming_convention.lua
+  - path: rules/naming_convention.lua
     enabled: true  # Now fully functional with BuiltinParser
     severity: warning
     priority: 70
 
   # Readability: Function Complexity
   # Note: Now works with BuiltinParser
-  - path: scripts/rules/builtin/function_complexity.lua
+  - path: rules/function_complexity.lua
     enabled: true  # Now fully functional
     severity: warning
     priority: 60
@@ -88,5 +88,5 @@ fail_fast: false
 # - Create custom rules in Lua with full control
 # - Text-based rules (check_file) work perfectly
 # - AST-based rules (check_ast) fully functional with BuiltinParser + EnhancedLexer
-# - See scripts/rules/ for rule examples
+# - See rules/ for rule examples
 # - See docs/lua_api.md for API documentation

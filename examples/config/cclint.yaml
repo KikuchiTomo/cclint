@@ -1,0 +1,29 @@
+# cclint configuration example (English rules)
+# Copy this file to your project root as .cclint.yaml
+
+lua_scripts:
+  # Naming
+  - path: rules/en/class_name_pascal_case.lua
+  - path: rules/en/function_name_snake_case.lua
+  - path: rules/en/enum_name_pascal_case.lua
+  - path: rules/en/private_member_trailing_underscore.lua
+
+  # Safety
+  - path: rules/en/destructor_virtual.lua
+  - path: rules/en/constructor_explicit.lua
+  - path: rules/en/no_throw_in_destructor.lua
+
+  # Style
+  - path: rules/en/max_line_length.lua
+    params:
+      max_length: 120
+  - path: rules/en/no_trailing_whitespace.lua
+  - path: rules/en/indent_spaces_only.lua
+
+  # Restrictions
+  - path: rules/en/no_global_using_namespace.lua
+  - path: rules/en/no_malloc_in_class.lua
+
+  # Structure
+  - path: rules/en/header_guard_required.lua
+  - path: rules/en/one_class_per_file.lua

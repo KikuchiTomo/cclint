@@ -1,8 +1,0 @@
----
-version: "1.0"
-
-lua_scripts:
-  - path: "rules/test_templates.lua"
-    priority: 100
-
-output_format: "text"

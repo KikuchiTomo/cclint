@@ -6,6 +6,7 @@
 #include <memory>
 #include <sstream>
 #include <stdexcept>
+#include <sys/wait.h>
 
 namespace compiler {
 
@@ -26,11 +27,27 @@ CompileResult CompilerWrapper::execute() {
         if (i > 0) {
             cmd_stream << " ";
         }
-        // 引数にスペースが含まれる場合はクォート
-        if (command_[i].find(' ') != std::string::npos) {
-            cmd_stream << "\"" << command_[i] << "\"";
+        // シェルメタ文字をエスケープしてダブルクォートで囲む
+        const auto& arg = command_[i];
+        bool needs_quoting = false;
+        const std::string shell_special = " \t`$\\\"!#&|;(){}[]<>?*~'";
+        for (char c : arg) {
+            if (shell_special.find(c) != std::string::npos) {
+                needs_quoting = true;
+                break;
+            }
+        }
+        if (needs_quoting) {
+            std::string escaped;
+            for (char c : arg) {
+                if (c == '`' || c == '$' || c == '\\' || c == '"' || c == '!') {
+                    escaped += '\\';
+                }
+                escaped += c;
+            }
+            cmd_stream << "\"" << escaped << "\"";
         } else {
-            cmd_stream << command_[i];
+            cmd_stream << arg;
         }
     }
 
@@ -52,7 +69,8 @@ CompileResult CompilerWrapper::execute() {
     }
 
     // 終了コードを取得
-    result.exit_code = pclose(pipe.release()) / 256;
+    int status = pclose(pipe.release());
+    result.exit_code = WIFEXITED(status) ? WEXITSTATUS(status) : -1;
 
     // ソースファイルとフラグを抽出
     result.source_files = parse_source_files();

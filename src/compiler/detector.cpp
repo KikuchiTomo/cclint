@@ -6,6 +6,8 @@
 #include <memory>
 #include <regex>
 
+#include "utils/logger.hpp"
+
 namespace compiler {
 
 namespace fs = std::filesystem;
@@ -33,8 +35,12 @@ CompilerInfo CompilerDetector::detect(const std::vector<std::string>& command) {
         if (detailed_info.type != CompilerType::Unknown) {
             info.type = detailed_info.type;
         }
+    } catch (const std::exception& e) {
+        utils::Logger::instance().debug("Compiler version detection failed: " +
+                                        std::string(e.what()));
+        info.version = "unknown";
     } catch (...) {
-        // バージョン取得に失敗してもエラーにしない
+        utils::Logger::instance().debug("Unknown exception caught during compiler version detection");
         info.version = "unknown";
     }
 

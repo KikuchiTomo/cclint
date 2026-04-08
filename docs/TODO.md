@@ -381,7 +381,7 @@
   - [x] テスト実行
   - [x] コードカバレッジ
 
-### 10. Lua Rule Scripts (scripts/rules/)
+### 10. Lua Rule Scripts (rules/)
 
 #### 標準ルールライブラリ
 - [x] **102個の標準Luaルールスクリプト作成完了**
@@ -593,22 +593,22 @@
 
 ### 5. Sample Lua Rules
 
-- [x] サイクロマティック複雑度チェック（examples/rules/complexity.lua）
-- [x] TODOコメント検出（examples/rules/todo_detector.lua）
-- [x] 使用例ルール（examples/rules/example_rule.lua）
-- [x] アクセス指定子ごとのメソッド命名チェック（examples/rules/method_naming_by_access.lua）
-- [x] シンプルなクラス名チェック（examples/rules/simple_class_check.lua）
+- [x] サイクロマティック複雑度チェック（rules/complexity.lua）
+- [x] TODOコメント検出（rules/todo_detector.lua）
+- [x] 使用例ルール（example_rule.lua - 削除済み）
+- [x] アクセス指定子ごとのメソッド命名チェック（examples/rules/method_naming_by_access.lua - 旧パス）
+- [x] シンプルなクラス名チェック（examples/rules/simple_class_check.lua - 旧パス）
 - [x] テスト用サンプルコード（tests/samples/naming_test.cpp）
 - [x] Lua命名ルール設定例（examples/configs/lua_naming_rules.yaml）
 
 ### 6. Documentation
 
-- [x] サンプルルールREADME（examples/rules/README.md）
+- [x] サンプルルールREADME（examples/rules/README.md - 削除済み）
 - [x] Lua API リファレンス（docs/lua_api.md）
   - [x] AST アクセス API の説明追加
   - [x] check_ast() 関数の説明追加
   - [x] アクセス指定子ベースのチェック例追加
-- [x] Luaルール作成ガイド（examples/rules/README.mdに統合済み）
+- [x] Luaルール作成ガイド（旧examples/rules/README.mdに統合済み - 削除済み）
 
 ### 7. Testing
 
@@ -769,7 +769,7 @@
 
 - [ ] サンプルプロジェクトの作成（examples/sample_project/）
 - [ ] YAML設定サンプル集（examples/configs/）
-- [ ] Luaルールサンプル集（examples/rules/）
+- [ ] Luaルールサンプル集（rules/）
 - [ ] チュートリアルの作成（docs/tutorial.md）
 
 ### 3. Packaging

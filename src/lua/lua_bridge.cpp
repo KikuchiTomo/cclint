@@ -28,6 +28,10 @@ void LuaBridge::set_current_file(const std::string& file_path) {
     current_file_ = file_path;
 }
 
+void LuaBridge::set_current_rule_name(const std::string& rule_name) {
+    current_rule_name_ = rule_name;
+}
+
 void LuaBridge::set_current_ast(std::shared_ptr<parser::TranslationUnitNode> ast) {
     current_ast_ = ast;
     // Update g_bridge to this instance when AST is set
@@ -281,7 +285,7 @@ void LuaBridge::report_diagnostic(const std::string& file_path, int line, int co
 
     diagnostic::Diagnostic diag;
     diag.severity = severity;
-    diag.rule_name = "lua-rule";
+    diag.rule_name = current_rule_name_.empty() ? "lua-rule" : current_rule_name_;
     diag.message = message;
     diag.location.filename = file_path;
     diag.location.line = line;
@@ -4297,6 +4301,10 @@ void LuaBridge::set_diagnostic_engine(diagnostic::DiagnosticEngine* diag_engine)
 
 void LuaBridge::set_current_file(const std::string& file_path) {
     (void)file_path;
+}
+
+void LuaBridge::set_current_rule_name(const std::string& rule_name) {
+    (void)rule_name;
 }
 
 void LuaBridge::set_current_ast(std::shared_ptr<parser::TranslationUnitNode> ast) {

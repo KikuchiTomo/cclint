@@ -7,7 +7,7 @@
 ## ディレクトリ構成
 
 ```
-scripts/rules/
+rules/
 ├── naming/          # 命名規則
 ├── style/           # コーディングスタイル
 ├── structure/       # コード構造
@@ -44,7 +44,7 @@ rules:
 
 ```yaml
 lua_scripts:
-  - path: scripts/rules/naming/class_name_camelcase.lua
+  - path: rules/naming/class_name_camelcase.lua
     priority: 100
     parameters:
       allow_underscores: false

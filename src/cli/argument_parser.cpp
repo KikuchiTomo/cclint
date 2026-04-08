@@ -43,11 +43,22 @@ void ArgumentParser::parse_cclint_options(std::vector<std::string>& args, Parsed
         } else if (it->rfind("--format=", 0) == 0) {
             result.output_format = it->substr(9);
             it = args.erase(it);
-        } else if (*it == "-v" || *it == "--verbose") {
-            result.verbosity = 2;
+        // Verbose flags
+        } else if (*it == "--verbose-compiler" || *it == "--vc") {
+            result.verbose.compiler = true;
             it = args.erase(it);
-        } else if (*it == "-q" || *it == "--quiet") {
-            result.verbosity = 0;
+        } else if (*it == "--verbose-rules" || *it == "--vr") {
+            result.verbose.rules = true;
+            it = args.erase(it);
+        } else if (*it == "--verbose-progress" || *it == "--vp") {
+            result.verbose.progress = true;
+            it = args.erase(it);
+        } else if (*it == "--verbose-all" || *it == "--va") {
+            result.verbose.enable_all();
+            it = args.erase(it);
+        } else if (*it == "--debug" || *it == "-d") {
+            result.verbose.debug = true;
+            result.verbose.enable_all();
             it = args.erase(it);
         } else if (*it == "--help" || *it == "-h") {
             result.show_help = true;
@@ -61,7 +72,7 @@ void ArgumentParser::parse_cclint_options(std::vector<std::string>& args, Parsed
         } else if (it->rfind("--jobs=", 0) == 0) {
             result.num_threads = std::stoi(it->substr(7));
             it = args.erase(it);
-        } else if (it->rfind("-j", 0) == 0) {
+        } else if (it->rfind("-j", 0) == 0 && it->size() > 2) {
             result.num_threads = std::stoi(it->substr(2));
             it = args.erase(it);
         } else if (*it == "--no-cache") {
@@ -88,9 +99,11 @@ ArgumentParser::extract_compiler_command(const std::vector<std::string>& args) {
 }
 
 bool ArgumentParser::is_cclint_option(const std::string& arg) {
-    return arg.rfind("--config", 0) == 0 || arg.rfind("--format", 0) == 0 || arg == "-v" ||
-           arg == "--verbose" || arg == "-q" || arg == "--quiet" || arg == "--help" ||
-           arg == "-h" || arg == "--version";
+    return arg.rfind("--config", 0) == 0 || arg.rfind("--format", 0) == 0 ||
+           arg.rfind("--verbose", 0) == 0 || arg.rfind("--vc", 0) == 0 ||
+           arg.rfind("--vr", 0) == 0 || arg.rfind("--vp", 0) == 0 ||
+           arg.rfind("--va", 0) == 0 || arg == "--debug" || arg == "-d" ||
+           arg == "--help" || arg == "-h" || arg == "--version";
 }
 
 }  // namespace cli

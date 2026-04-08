@@ -82,23 +82,38 @@ LSPMessage LSPServer::parse_message(const std::string& content) {
     // ここではmethod, params, idを抽出する簡易実装
 
     // method を抽出
+    // "method" is 8 chars; find the colon separator, then the quoted value
     size_t method_pos = content.find("\"method\"");
     if (method_pos != std::string::npos) {
-        size_t value_start = content.find("\"", method_pos + 9);
-        size_t value_end = content.find("\"", value_start + 1);
-        if (value_start != std::string::npos && value_end != std::string::npos) {
-            message.method = content.substr(value_start + 1, value_end - value_start - 1);
+        size_t colon_pos = content.find(":", method_pos + 8);
+        if (colon_pos != std::string::npos) {
+            size_t value_start = content.find("\"", colon_pos + 1);
+            size_t value_end = (value_start != std::string::npos)
+                                   ? content.find("\"", value_start + 1)
+                                   : std::string::npos;
+            if (value_start != std::string::npos && value_end != std::string::npos) {
+                message.method =
+                    content.substr(value_start + 1, value_end - value_start - 1);
+            }
         }
     }
 
     // id を抽出
+    // "id" is 4 chars; find the colon separator, then the numeric value
     size_t id_pos = content.find("\"id\"");
     if (id_pos != std::string::npos) {
         size_t value_start = content.find(":", id_pos + 4);
-        size_t value_end = content.find_first_of(",}", value_start + 1);
-        if (value_start != std::string::npos && value_end != std::string::npos) {
-            std::string id_str = content.substr(value_start + 1, value_end - value_start - 1);
-            message.id = std::stoi(id_str);
+        if (value_start != std::string::npos) {
+            size_t value_end = content.find_first_of(",}", value_start + 1);
+            if (value_end != std::string::npos) {
+                std::string id_str =
+                    content.substr(value_start + 1, value_end - value_start - 1);
+                try {
+                    message.id = std::stoi(id_str);
+                } catch (const std::exception&) {
+                    // Invalid id value, leave default
+                }
+            }
         }
     }
 
@@ -208,14 +223,32 @@ std::string LSPServer::handle_text_document_did_open(const std::string& params) 
     size_t text_pos = params.find("\"text\"");
 
     if (uri_pos != std::string::npos && text_pos != std::string::npos) {
-        // Extract URI
-        size_t uri_start = params.find("\"", uri_pos + 5);
-        size_t uri_end = params.find("\"", uri_start + 1);
+        // Extract URI: "uri" is 5 chars, find colon then quoted value
+        size_t uri_colon = params.find(":", uri_pos + 5);
+        size_t uri_start = (uri_colon != std::string::npos)
+                               ? params.find("\"", uri_colon + 1)
+                               : std::string::npos;
+        size_t uri_end = (uri_start != std::string::npos)
+                             ? params.find("\"", uri_start + 1)
+                             : std::string::npos;
+        if (uri_start == std::string::npos || uri_end == std::string::npos) {
+            return "";
+        }
         std::string uri = params.substr(uri_start + 1, uri_end - uri_start - 1);
 
-        // Extract text
-        size_t text_start = params.find("\"", text_pos + 6);
-        size_t text_end = params.rfind("\"");
+        // Extract text: "text" is 6 chars, find colon then quoted value
+        size_t text_colon = params.find(":", text_pos + 6);
+        size_t text_start = (text_colon != std::string::npos)
+                                ? params.find("\"", text_colon + 1)
+                                : std::string::npos;
+        // Use rfind to find the last quote (end of text value)
+        size_t text_end = (text_start != std::string::npos)
+                              ? params.rfind("\"")
+                              : std::string::npos;
+        if (text_start == std::string::npos || text_end == std::string::npos ||
+            text_end <= text_start) {
+            return "";
+        }
         std::string text = params.substr(text_start + 1, text_end - text_start - 1);
 
         documents_[uri] = text;
@@ -229,19 +262,37 @@ std::string LSPServer::handle_text_document_did_change(const std::string& params
     // URI と contentChanges を抽出（簡易実装）
     size_t uri_pos = params.find("\"uri\"");
     if (uri_pos != std::string::npos) {
-        size_t uri_start = params.find("\"", uri_pos + 5);
-        size_t uri_end = params.find("\"", uri_start + 1);
+        // "uri" is 5 chars, find colon then quoted value
+        size_t uri_colon = params.find(":", uri_pos + 5);
+        size_t uri_start = (uri_colon != std::string::npos)
+                               ? params.find("\"", uri_colon + 1)
+                               : std::string::npos;
+        size_t uri_end = (uri_start != std::string::npos)
+                             ? params.find("\"", uri_start + 1)
+                             : std::string::npos;
+        if (uri_start == std::string::npos || uri_end == std::string::npos) {
+            return "";
+        }
         std::string uri = params.substr(uri_start + 1, uri_end - uri_start - 1);
 
         // Full document update (simplification)
         size_t text_pos = params.find("\"text\"");
         if (text_pos != std::string::npos) {
-            size_t text_start = params.find("\"", text_pos + 6);
-            size_t text_end = params.rfind("\"");
-            std::string text = params.substr(text_start + 1, text_end - text_start - 1);
+            size_t text_colon = params.find(":", text_pos + 6);
+            size_t text_start = (text_colon != std::string::npos)
+                                    ? params.find("\"", text_colon + 1)
+                                    : std::string::npos;
+            size_t text_end = (text_start != std::string::npos)
+                                  ? params.rfind("\"")
+                                  : std::string::npos;
+            if (text_start != std::string::npos && text_end != std::string::npos &&
+                text_end > text_start) {
+                std::string text =
+                    params.substr(text_start + 1, text_end - text_start - 1);
 
-            documents_[uri] = text;
-            analyze_document(uri);
+                documents_[uri] = text;
+                analyze_document(uri);
+            }
         }
     }
 
@@ -251,11 +302,17 @@ std::string LSPServer::handle_text_document_did_change(const std::string& params
 std::string LSPServer::handle_text_document_did_save(const std::string& params) {
     size_t uri_pos = params.find("\"uri\"");
     if (uri_pos != std::string::npos) {
-        size_t uri_start = params.find("\"", uri_pos + 5);
-        size_t uri_end = params.find("\"", uri_start + 1);
-        std::string uri = params.substr(uri_start + 1, uri_end - uri_start - 1);
-
-        analyze_document(uri);
+        size_t uri_colon = params.find(":", uri_pos + 5);
+        size_t uri_start = (uri_colon != std::string::npos)
+                               ? params.find("\"", uri_colon + 1)
+                               : std::string::npos;
+        size_t uri_end = (uri_start != std::string::npos)
+                             ? params.find("\"", uri_start + 1)
+                             : std::string::npos;
+        if (uri_start != std::string::npos && uri_end != std::string::npos) {
+            std::string uri = params.substr(uri_start + 1, uri_end - uri_start - 1);
+            analyze_document(uri);
+        }
     }
 
     return "";
@@ -264,11 +321,17 @@ std::string LSPServer::handle_text_document_did_save(const std::string& params) 
 std::string LSPServer::handle_text_document_did_close(const std::string& params) {
     size_t uri_pos = params.find("\"uri\"");
     if (uri_pos != std::string::npos) {
-        size_t uri_start = params.find("\"", uri_pos + 5);
-        size_t uri_end = params.find("\"", uri_start + 1);
-        std::string uri = params.substr(uri_start + 1, uri_end - uri_start - 1);
-
-        documents_.erase(uri);
+        size_t uri_colon = params.find(":", uri_pos + 5);
+        size_t uri_start = (uri_colon != std::string::npos)
+                               ? params.find("\"", uri_colon + 1)
+                               : std::string::npos;
+        size_t uri_end = (uri_start != std::string::npos)
+                             ? params.find("\"", uri_start + 1)
+                             : std::string::npos;
+        if (uri_start != std::string::npos && uri_end != std::string::npos) {
+            std::string uri = params.substr(uri_start + 1, uri_end - uri_start - 1);
+            documents_.erase(uri);
+        }
     }
 
     return "";

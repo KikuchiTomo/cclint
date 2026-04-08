@@ -92,7 +92,10 @@ size_t Fixer::location_to_offset(const std::string& content, int line, int colum
     int current_line = 1;
 
     // 指定された行まで移動
-    while (current_line < line && offset < content.size()) {
+    while (current_line < line) {
+        if (offset >= content.size()) {
+            return content.size();
+        }
         if (content[offset] == '\n') {
             current_line++;
         }
@@ -106,7 +109,7 @@ size_t Fixer::location_to_offset(const std::string& content, int line, int colum
         current_column++;
     }
 
-    return offset;
+    return std::min(offset, content.size());
 }
 
 std::string Fixer::get_fixed_content(const std::string& filename) const {

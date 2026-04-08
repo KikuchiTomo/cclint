@@ -64,9 +64,10 @@ void LuaRule::check_file(const std::string& file_path, const std::string& conten
     }
 
 #ifdef HAVE_LUAJIT
-    // 診断エンジンとファイルパスを設定
+    // 診断エンジン、ファイルパス、ルール名を設定
     lua_bridge_->set_diagnostic_engine(&diag_engine);
     lua_bridge_->set_current_file(file_path);
+    lua_bridge_->set_current_rule_name(rule_name_);
 
     // ファイル内容をLuaに渡す
     push_file_content_to_lua(file_path, content);
@@ -122,9 +123,10 @@ void LuaRule::check_ast(const std::string& file_path,
 #ifdef HAVE_LUAJIT
     utils::Logger::instance().debug("LuaRule::check_ast - setting up Lua bridge");
 
-    // 診断エンジン、ファイルパス、ASTを設定
+    // 診断エンジン、ファイルパス、ルール名、ASTを設定
     lua_bridge_->set_diagnostic_engine(&diag_engine);
     lua_bridge_->set_current_file(file_path);
+    lua_bridge_->set_current_rule_name(rule_name_);
     lua_bridge_->set_current_ast(ast);
 
     // check_ast 関数を呼び出す

@@ -6,10 +6,12 @@
 #include <sstream>
 
 #include "utils/file_utils.hpp"
+#include "utils/logger.hpp"
 #include "utils/string_utils.hpp"
 
 // SHA256計算用（簡易版 - 本来は専用ライブラリを使うべき）
 #include <cstring>
+#include <functional>
 
 namespace cclint {
 namespace cache {
@@ -21,22 +23,37 @@ FileCache::FileCache(const std::string& cache_dir) : cache_dir_(cache_dir) {
 }
 
 std::string FileCache::calculate_file_hash(const std::string& file_path) const {
-    // 簡易的なハッシュ計算
-    // 本来はSHA256を使うべきだが、ここではファイルサイズ+更新時刻のハッシュで代用
+    // コンテンツベースのハッシュを試みる（より信頼性が高い）
+    try {
+        std::string content = utils::FileUtils::read_file(file_path);
+        auto content_hash = std::hash<std::string>{}(content);
+
+        auto file_size = fs::file_size(file_path);
+
+        std::ostringstream oss;
+        oss << std::hex << file_size << "_" << content_hash;
+        return oss.str();
+
+    } catch (const std::exception& e) {
+        utils::Logger::instance().debug("Content hash failed for " + file_path + ": " +
+                                        e.what() + ", falling back to size+time");
+    }
+
+    // フォールバック: ファイルサイズ+更新時刻のハッシュで代用
     try {
         auto file_size = fs::file_size(file_path);
         auto last_write = fs::last_write_time(file_path);
 
-        // Convert file_time_type to system_clock time_point for consistent hashing
-        auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
-            last_write - fs::file_time_type::clock::now() + std::chrono::system_clock::now());
-        auto time_count = sctp.time_since_epoch().count();
+        // file_time_typeから直接time_since_epochを使用（クロックドメイン変換を回避）
+        auto time_count = static_cast<long long>(last_write.time_since_epoch().count());
 
         std::ostringstream oss;
         oss << std::hex << file_size << "_" << time_count;
         return oss.str();
 
-    } catch (const std::exception&) {
+    } catch (const std::exception& e) {
+        utils::Logger::instance().debug("File hash computation failed for " + file_path +
+                                        ": " + e.what());
         return "";
     }
 }
@@ -78,7 +95,8 @@ std::optional<CacheEntry> FileCache::get(const std::string& file_path,
 
         return entry;
 
-    } catch (const std::exception&) {
+    } catch (const std::exception& e) {
+        utils::Logger::instance().debug("Cache read failed for " + file_path + ": " + e.what());
         return std::nullopt;
     }
 }
@@ -111,8 +129,8 @@ void FileCache::put(const std::string& file_path, const std::string& file_hash,
             ofs << diag.location.column << "\n";
         }
 
-    } catch (const std::exception&) {
-        // キャッシュ保存失敗は致命的ではない
+    } catch (const std::exception& e) {
+        utils::Logger::instance().debug("Cache save failed for " + file_path + ": " + e.what());
     }
 }
 
@@ -122,8 +140,8 @@ void FileCache::clear() {
             fs::remove_all(cache_dir_);
             ensure_cache_dir_exists();
         }
-    } catch (const std::exception&) {
-        // 失敗しても継続
+    } catch (const std::exception& e) {
+        utils::Logger::instance().debug("Cache clear failed: " + std::string(e.what()));
     }
 }
 
@@ -133,7 +151,8 @@ void FileCache::cleanup(int max_age_days) {
             return;
         }
 
-        auto cutoff_time = std::chrono::system_clock::now() - std::chrono::hours(24 * max_age_days);
+        auto max_age = std::chrono::hours(24 * max_age_days);
+        auto now_file_time = fs::file_time_type::clock::now();
 
         for (const auto& entry : fs::directory_iterator(cache_dir_)) {
             if (!entry.is_regular_file()) {
@@ -141,15 +160,12 @@ void FileCache::cleanup(int max_age_days) {
             }
 
             auto last_write = entry.last_write_time();
-            auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
-                last_write - fs::file_time_type::clock::now() + std::chrono::system_clock::now());
-
-            if (sctp < cutoff_time) {
+            if ((now_file_time - last_write) > max_age) {
                 fs::remove(entry.path());
             }
         }
-    } catch (const std::exception&) {
-        // クリーンアップ失敗は致命的ではない
+    } catch (const std::exception& e) {
+        utils::Logger::instance().debug("Cache cleanup failed: " + std::string(e.what()));
     }
 }
 
@@ -172,8 +188,8 @@ void FileCache::ensure_cache_dir_exists() const {
         if (!fs::exists(cache_dir_)) {
             fs::create_directories(cache_dir_);
         }
-    } catch (const std::exception&) {
-        // ディレクトリ作成失敗は致命的ではない
+    } catch (const std::exception& e) {
+        utils::Logger::instance().debug("Cache directory creation failed: " + std::string(e.what()));
     }
 }
 
