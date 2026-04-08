@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "cli/argument_parser.hpp"
-#include "cli/help_formatter.hpp"
 #include "compiler/detector.hpp"
 #include "compiler/wrapper.hpp"
 #include "config/config_loader.hpp"
@@ -22,13 +21,13 @@ int main(int argc, char** argv) {
 
         // --help
         if (args.show_help || (argc == 1)) {
-            std::cout << cli::HelpFormatter::format_help();
+            std::cout << args.help_text;
             return 0;
         }
 
         // --version
         if (args.show_version) {
-            std::cout << cli::HelpFormatter::format_version();
+            std::cout << args.version_text;
             return 0;
         }
 

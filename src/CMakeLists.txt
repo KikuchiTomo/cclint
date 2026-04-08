@@ -2,7 +2,7 @@
 set(CCLINT_SOURCES
     main.cpp
     cli/argument_parser.cpp
-    cli/help_formatter.cpp
+    cli/option_parser.cpp
     config/config_loader.cpp
     config/yaml_config.cpp
     compiler/wrapper.cpp

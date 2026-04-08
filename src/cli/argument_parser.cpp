@@ -1,109 +1,60 @@
 #include "argument_parser.hpp"
 
-#include <algorithm>
-#include <stdexcept>
+#include "option_parser.hpp"
 
 namespace cli {
 
 ParsedArguments ArgumentParser::parse(int argc, char** argv) {
-    ParsedArguments result;
-    std::vector<std::string> args(argv + 1, argv + argc);
+    ParsedArguments args;
 
-    if (args.empty()) {
-        return result;
+    // Temporary flags for verbose-all and debug (which set multiple flags)
+    bool verbose_all = false;
+    bool debug_mode = false;
+    bool no_cache = false;
+
+    OptionParser opts;
+    opts.set_program("cclint", "0.1.0-alpha");
+
+    opts.group("General");
+    opts.flag(args.show_help, {"--help", "-h"}, "Show this help message");
+    opts.flag(args.show_version, {"--version"}, "Show version information");
+    opts.option(args.config_file, {"--config"}, "Configuration file", "FILE");
+    opts.option(args.output_format, {"--format"}, "Output format: text, json, xml", "FORMAT");
+    opts.option(args.max_errors, {"--max-errors"}, "Stop after N errors (default: unlimited)", "N");
+    opts.option(args.num_threads, {"--jobs", "-j"}, "Number of parallel jobs (default: auto)", "N");
+    opts.flag(no_cache, {"--no-cache"}, "Disable caching");
+    opts.flag(args.enable_fix, {"--fix"}, "Enable auto-fix mode");
+    opts.flag(args.fix_preview, {"--fix-preview"}, "Show fix preview without applying");
+    opts.flag(args.enable_profile, {"--profile"}, "Show detailed performance stats");
+
+    opts.group("Verbosity");
+    opts.flag(args.verbose.compiler, {"--verbose-compiler", "--vc"},
+              "Show compiler warnings/errors");
+    opts.flag(args.verbose.rules, {"--verbose-rules", "--vr"}, "Show rule loading info");
+    opts.flag(args.verbose.progress, {"--verbose-progress", "--vp"},
+              "Show analysis progress/stats");
+    opts.flag(verbose_all, {"--verbose-all", "--va"}, "Enable all verbose output");
+    opts.flag(debug_mode, {"--debug", "-d"}, "Debug mode (all output + internals)");
+
+    args.compiler_command = opts.parse(argc, argv);
+
+    // Post-parse: handle composite flags
+    if (no_cache) {
+        args.enable_cache = false;
+    }
+    if (verbose_all) {
+        args.verbose.enable_all();
+    }
+    if (debug_mode) {
+        args.verbose.debug = true;
+        args.verbose.enable_all();
     }
 
-    // cclintオプションを抽出
-    parse_cclint_options(args, result);
+    // Store generated help/version text
+    args.help_text = opts.help("A customizable C++ linter with LuaJIT scripting support.");
+    args.version_text = opts.version_string();
 
-    // 残りをコンパイラコマンドとして扱う
-    result.compiler_command = extract_compiler_command(args);
-
-    return result;
-}
-
-void ArgumentParser::parse_cclint_options(std::vector<std::string>& args, ParsedArguments& result) {
-    auto it = args.begin();
-    while (it != args.end()) {
-        if (*it == "--config") {
-            if (++it == args.end()) {
-                throw std::runtime_error("--config requires an argument");
-            }
-            result.config_file = *it;
-            it = args.erase(--it, ++it);
-        } else if (it->rfind("--config=", 0) == 0) {
-            result.config_file = it->substr(9);
-            it = args.erase(it);
-        } else if (*it == "--format") {
-            if (++it == args.end()) {
-                throw std::runtime_error("--format requires an argument");
-            }
-            result.output_format = *it;
-            it = args.erase(--it, ++it);
-        } else if (it->rfind("--format=", 0) == 0) {
-            result.output_format = it->substr(9);
-            it = args.erase(it);
-        // Verbose flags
-        } else if (*it == "--verbose-compiler" || *it == "--vc") {
-            result.verbose.compiler = true;
-            it = args.erase(it);
-        } else if (*it == "--verbose-rules" || *it == "--vr") {
-            result.verbose.rules = true;
-            it = args.erase(it);
-        } else if (*it == "--verbose-progress" || *it == "--vp") {
-            result.verbose.progress = true;
-            it = args.erase(it);
-        } else if (*it == "--verbose-all" || *it == "--va") {
-            result.verbose.enable_all();
-            it = args.erase(it);
-        } else if (*it == "--debug" || *it == "-d") {
-            result.verbose.debug = true;
-            result.verbose.enable_all();
-            it = args.erase(it);
-        } else if (*it == "--help" || *it == "-h") {
-            result.show_help = true;
-            it = args.erase(it);
-        } else if (*it == "--version") {
-            result.show_version = true;
-            it = args.erase(it);
-        } else if (it->rfind("--max-errors=", 0) == 0) {
-            result.max_errors = std::stoi(it->substr(13));
-            it = args.erase(it);
-        } else if (it->rfind("--jobs=", 0) == 0) {
-            result.num_threads = std::stoi(it->substr(7));
-            it = args.erase(it);
-        } else if (it->rfind("-j", 0) == 0 && it->size() > 2) {
-            result.num_threads = std::stoi(it->substr(2));
-            it = args.erase(it);
-        } else if (*it == "--no-cache") {
-            result.enable_cache = false;
-            it = args.erase(it);
-        } else if (*it == "--profile") {
-            result.enable_profile = true;
-            it = args.erase(it);
-        } else if (*it == "--fix") {
-            result.enable_fix = true;
-            it = args.erase(it);
-        } else if (*it == "--fix-preview") {
-            result.fix_preview = true;
-            it = args.erase(it);
-        } else {
-            ++it;
-        }
-    }
-}
-
-std::vector<std::string>
-ArgumentParser::extract_compiler_command(const std::vector<std::string>& args) {
-    return args;  // 残りの引数がすべてコンパイラコマンド
-}
-
-bool ArgumentParser::is_cclint_option(const std::string& arg) {
-    return arg.rfind("--config", 0) == 0 || arg.rfind("--format", 0) == 0 ||
-           arg.rfind("--verbose", 0) == 0 || arg.rfind("--vc", 0) == 0 ||
-           arg.rfind("--vr", 0) == 0 || arg.rfind("--vp", 0) == 0 ||
-           arg.rfind("--va", 0) == 0 || arg == "--debug" || arg == "-d" ||
-           arg == "--help" || arg == "-h" || arg == "--version";
+    return args;
 }
 
 }  // namespace cli
