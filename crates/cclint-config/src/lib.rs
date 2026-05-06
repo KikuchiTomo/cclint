@@ -47,13 +47,19 @@ pub struct Config {
 pub struct CompileCommandsOptions {
     /// false で compile_commands.json を一切使わない (extra_args のみ)．
     pub enabled: bool,
-    /// 明示パス．指定すれば search_paths より優先される．
+    /// 明示パス (単一)．後方互換用．
     pub path: Option<PathBuf>,
+    /// 明示パス (複数)．compile_commands.json か含むディレクトリのいずれかを並べる．
+    /// プロジェクトをモジュールに分割していて DB が複数ある場合に使う．
+    pub paths: Vec<PathBuf>,
     /// 検索するディレクトリ (このディレクトリ直下の compile_commands.json を試す)．
-    /// 空なら標準的な候補 (build, cmake-build-*, out など) を自動で試す．
+    /// 空なら標準的な候補 (build, cmake-build-*, out など) + ツリー walk を自動で試す．
     pub search_paths: Vec<PathBuf>,
     /// 親ディレクトリへ何階層さかのぼって探索するか (0 = ルートのみ)．
     pub search_parents: u32,
+    /// ルートからツリーを walk して compile_commands.json を全部見つける際の最大深さ．
+    /// 0 で自動 walk 無効．
+    pub walk_depth: u32,
 }
 
 impl Default for CompileCommandsOptions {
@@ -61,8 +67,10 @@ impl Default for CompileCommandsOptions {
         Self {
             enabled: true,
             path: None,
+            paths: vec![],
             search_paths: vec![],
             search_parents: 4,
+            walk_depth: 6,
         }
     }
 }

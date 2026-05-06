@@ -60,10 +60,14 @@ struct Args {
     #[arg(long, default_value_t = false)]
     no_subprocess: bool,
 
-    /// compile_commands.json のパスを明示指定する．
-    /// 環境変数 CCLINT_COMPILE_COMMANDS でも指定可能．
-    #[arg(long = "compile-commands", env = "CCLINT_COMPILE_COMMANDS")]
-    compile_commands_path: Option<PathBuf>,
+    /// compile_commands.json のパスを明示指定する (繰り返し可)．
+    /// 環境変数 CCLINT_COMPILE_COMMANDS にコロン区切りで列挙可能．
+    #[arg(
+        long = "compile-commands",
+        env = "CCLINT_COMPILE_COMMANDS",
+        value_delimiter = ':'
+    )]
+    compile_commands_paths: Vec<PathBuf>,
 }
 
 #[derive(clap::ValueEnum, Clone, Debug)]
@@ -136,63 +140,139 @@ fn setup_bundled_libclang() {
 }
 
 /// .cclint.toml の [cdb] と CLI 引数を統合して compile_commands.json を解決する．
+/// 複数ヒットすれば全部マージする．
 fn resolve_compile_db(
     args: &Args,
     cfg: &Config,
     root: &std::path::Path,
 ) -> Option<CompilationDatabase> {
-    // 1. enabled = false なら使わない
     if !cfg.cdb.enabled {
         return None;
     }
 
-    // 2. 優先度: CLI --compile-commands > [cdb].path > 旧 compile_commands
-    let explicit: Option<std::path::PathBuf> = args
-        .compile_commands_path
-        .clone()
-        .or_else(|| cfg.cdb.path.clone())
-        .or_else(|| cfg.compile_commands.clone())
-        .map(|p| if p.is_absolute() { p } else { root.join(p) });
+    let mut json_paths: Vec<std::path::PathBuf> = Vec::new();
 
-    let mut candidates: Vec<std::path::PathBuf> = Vec::new();
-    if let Some(p) = explicit {
-        candidates.push(p);
-    } else {
-        // 3. search_paths が設定されてるならそれだけを試す．
-        //    空ならデフォルトの広い候補リストを root + 親方向に展開．
+    // 1. CLI --compile-commands (繰り返し可) と環境変数
+    for p in &args.compile_commands_paths {
+        json_paths.push(absolutize(p, root));
+    }
+
+    // 2. [cdb].path / paths
+    if let Some(p) = &cfg.cdb.path {
+        json_paths.push(absolutize(p, root));
+    }
+    for p in &cfg.cdb.paths {
+        // ディレクトリ指定なら compile_commands.json を append
+        let abs = absolutize(p, root);
+        if abs.is_dir() {
+            json_paths.push(abs.join("compile_commands.json"));
+        } else {
+            json_paths.push(abs);
+        }
+    }
+
+    // 旧形式
+    if json_paths.is_empty() {
+        if let Some(p) = &cfg.compile_commands {
+            json_paths.push(absolutize(p, root));
+        }
+    }
+
+    // 3. 明示パスが無ければ自動検出: 標準的なディレクトリ候補 + ツリー walk
+    if json_paths.is_empty() {
         let dirs: Vec<std::path::PathBuf> = if !cfg.cdb.search_paths.is_empty() {
             cfg.cdb
                 .search_paths
                 .iter()
-                .map(|p| {
-                    if p.is_absolute() {
-                        p.clone()
-                    } else {
-                        root.join(p)
-                    }
-                })
+                .map(|p| absolutize(p, root))
                 .collect()
         } else {
             default_cdb_dirs(root, cfg.cdb.search_parents)
         };
         for d in dirs {
-            candidates.push(d.join("compile_commands.json"));
+            let cand = d.join("compile_commands.json");
+            if cand.is_file() {
+                json_paths.push(cand);
+            }
         }
-    }
-
-    for cand in &candidates {
-        if cand.is_file() {
-            let dir = cand.parent().unwrap_or(root);
-            match CompilationDatabase::open(dir) {
-                Ok(db) => {
-                    eprintln!("==> compile_commands: {}", cand.display());
-                    return Some(db);
+        // ツリー walk による検出 (モジュール毎に compile_commands.json が散らばっているケース)
+        if cfg.cdb.walk_depth > 0 {
+            for found in walk_compile_commands(root, cfg.cdb.walk_depth) {
+                if !json_paths.contains(&found) {
+                    json_paths.push(found);
                 }
-                Err(e) => eprintln!("warning: {e}"),
             }
         }
     }
-    None
+
+    // 重複除去
+    json_paths.sort();
+    json_paths.dedup();
+    let json_paths: Vec<std::path::PathBuf> =
+        json_paths.into_iter().filter(|p| p.is_file()).collect();
+
+    if json_paths.is_empty() {
+        return None;
+    }
+
+    for p in &json_paths {
+        eprintln!("==> compile_commands: {}", p.display());
+    }
+    match CompilationDatabase::from_files(&json_paths) {
+        Ok(db) => {
+            eprintln!(
+                "==> compile_commands: {} 件のエントリを統合",
+                db.entry_count()
+            );
+            Some(db)
+        }
+        Err(e) => {
+            eprintln!("warning: compile_commands.json 読込失敗: {e}");
+            None
+        }
+    }
+}
+
+fn absolutize(p: &std::path::Path, root: &std::path::Path) -> std::path::PathBuf {
+    if p.is_absolute() {
+        p.to_path_buf()
+    } else {
+        root.join(p)
+    }
+}
+
+/// `root` 以下を walk して compile_commands.json を見つけて返す．
+/// build/target/.git などは除外．
+fn walk_compile_commands(root: &std::path::Path, max_depth: u32) -> Vec<std::path::PathBuf> {
+    let mut out = Vec::new();
+    let walker = walkdir::WalkDir::new(root)
+        .max_depth(max_depth as usize)
+        .follow_links(false)
+        .into_iter()
+        .filter_entry(|e| {
+            // ノイズになる定番ディレクトリをスキップ
+            if !e.file_type().is_dir() {
+                return true;
+            }
+            let name = e.file_name().to_string_lossy();
+            !matches!(
+                name.as_ref(),
+                ".git"
+                    | ".hg"
+                    | ".svn"
+                    | "node_modules"
+                    | "target"
+                    | ".cclint_cache"
+                    | ".vscode"
+                    | ".idea"
+            )
+        });
+    for entry in walker.flatten() {
+        if entry.file_name() == "compile_commands.json" && entry.file_type().is_file() {
+            out.push(entry.path().to_path_buf());
+        }
+    }
+    out
 }
 
 fn default_cdb_dirs(root: &std::path::Path, parents: u32) -> Vec<std::path::PathBuf> {

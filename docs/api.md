@@ -130,14 +130,23 @@ C++ ヘッダ (`<atomic>`, `<vector>`, ...) や独自ヘッダ (`my.hpp`) が見
   `out/`，`out/Default/`，`target/` (各ディレクトリ直下)
 - 親ディレクトリへ最大 4 階層さかのぼって同じ場所を試す
 
+複数の `compile_commands.json` を自動でマージします (例: モジュール毎に
+`src/modules/*/compile_commands.json` を生成するプロジェクト)．
+
 明示指定や挙動の調整は `.cclint.toml` の `[cdb]` セクションで:
 
 ```toml
 [cdb]
 enabled = true                                 # false で完全に無効化
-path = "build-debug/compile_commands.json"     # 明示パス (相対 or 絶対)
+path = "build-debug/compile_commands.json"     # 明示パス (単一)
+paths = [                                      # 明示パス (複数: モジュール毎に DB がある場合)
+  "src/agv/compile_commands.json",
+  "src/modules/foo",                           # ディレクトリ指定なら ./compile_commands.json
+  "src/modules/bar",
+]
 search_paths = ["build", "out", "my-build"]    # 探索ディレクトリ (空ならデフォルト)
 search_parents = 4                              # 親ディレクトリ何階層まで
+walk_depth = 6                                  # ツリー walk 最大深さ (0 で walk 無効)
 ```
 
 CLI でも指定可:

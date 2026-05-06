@@ -32,14 +32,38 @@ struct CCEntry {
 }
 
 impl CompilationDatabase {
+    /// 単一の compile_commands.json ファイルを読み込む。
+    pub fn from_file(json_path: &Path) -> Result<Self> {
+        let mut db = Self {
+            by_file: std::collections::HashMap::new(),
+        };
+        db.add_file(json_path)?;
+        Ok(db)
+    }
+
     /// `<dir>/compile_commands.json` を読み込む。
     pub fn open(dir: &Path) -> Result<Self> {
-        let p = dir.join("compile_commands.json");
+        Self::from_file(&dir.join("compile_commands.json"))
+    }
+
+    /// 複数の compile_commands.json をマージして読み込む．後勝ち．
+    pub fn from_files(json_paths: &[PathBuf]) -> Result<Self> {
+        let mut db = Self {
+            by_file: std::collections::HashMap::new(),
+        };
+        for p in json_paths {
+            if let Err(e) = db.add_file(p) {
+                eprintln!("warning: compile_commands {} 読込失敗: {e}", p.display());
+            }
+        }
+        Ok(db)
+    }
+
+    fn add_file(&mut self, p: &Path) -> Result<()> {
         let text =
-            std::fs::read_to_string(&p).with_context(|| format!("読込失敗: {}", p.display()))?;
+            std::fs::read_to_string(p).with_context(|| format!("読込失敗: {}", p.display()))?;
         let entries: Vec<CCEntry> = serde_json::from_str(&text)
             .with_context(|| format!("JSON parse 失敗: {}", p.display()))?;
-        let mut by_file = std::collections::HashMap::new();
         for e in entries {
             let dir = PathBuf::from(&e.directory);
             let file_path = if Path::new(&e.file).is_absolute() {
@@ -54,18 +78,22 @@ impl CompilationDatabase {
             } else {
                 continue;
             };
-            by_file.insert(
+            self.by_file.insert(
                 file_path.canonicalize().unwrap_or(file_path),
                 filter_args(&raw_args, &PathBuf::from(&e.file)),
             );
         }
-        Ok(Self { by_file })
+        Ok(())
     }
 
     /// 与えられたソースファイルに対するコンパイラ引数を取り出す。
     pub fn arguments_for(&self, file: &Path) -> Option<Vec<String>> {
         let canon = file.canonicalize().unwrap_or(file.to_path_buf());
         self.by_file.get(&canon).cloned()
+    }
+
+    pub fn entry_count(&self) -> usize {
+        self.by_file.len()
     }
 }
 
