@@ -13,6 +13,9 @@ on:
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     name: ${{ matrix.target }}
@@ -29,10 +32,6 @@ jobs:
             runner: ubuntu-22.04-arm
             os: linux
             arch: aarch64
-          - target: x86_64-apple-darwin
-            runner: macos-13
-            os: darwin
-            arch: x86_64
           - target: aarch64-apple-darwin
             runner: macos-14
             os: darwin
