@@ -107,7 +107,7 @@ dependencies = [
 
 [[package]]
 name = "cclint-ast"
-version = "0.2.7"
+version = "0.2.8"
 dependencies = [
  "anyhow",
  "cclint-diagnostic",
@@ -119,7 +119,7 @@ dependencies = [
 
 [[package]]
 name = "cclint-cli"
-version = "0.2.7"
+version = "0.2.8"
 dependencies = [
  "anyhow",
  "cclint-ast",
@@ -136,7 +136,7 @@ dependencies = [
 
 [[package]]
 name = "cclint-config"
-version = "0.2.7"
+version = "0.2.8"
 dependencies = [
  "anyhow",
  "glob",
@@ -148,7 +148,7 @@ dependencies = [
 
 [[package]]
 name = "cclint-diagnostic"
-version = "0.2.7"
+version = "0.2.8"
 dependencies = [
  "codespan-reporting",
  "serde",
@@ -158,7 +158,7 @@ dependencies = [
 
 [[package]]
 name = "cclint-script"
-version = "0.2.7"
+version = "0.2.8"
 dependencies = [
  "anyhow",
  "cclint-ast",

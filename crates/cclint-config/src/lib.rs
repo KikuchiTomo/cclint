@@ -20,8 +20,14 @@ pub struct Config {
     #[serde(default)]
     pub exclude_patterns: Vec<String>,
 
+    /// 旧形式: compile_commands.json への直接パス (互換のため残す)
     #[serde(default)]
     pub compile_commands: Option<PathBuf>,
+
+    /// 新形式: 詳細な compile_commands.json 制御
+    /// TOML 上では `[cdb]` セクションで書く．
+    #[serde(default)]
+    pub cdb: CompileCommandsOptions,
 
     /// libclang に渡すコンパイラ引数 (compile_commands.json が無いときの代替)．
     /// 例: ["-I", "include", "-DDEBUG=1"]
@@ -33,6 +39,32 @@ pub struct Config {
 
     #[serde(default)]
     pub suppressions: Vec<Suppression>,
+}
+
+/// `[compile_commands]` セクションの設定．
+#[derive(Debug, Clone, Deserialize)]
+#[serde(default, deny_unknown_fields, rename_all = "snake_case")]
+pub struct CompileCommandsOptions {
+    /// false で compile_commands.json を一切使わない (extra_args のみ)．
+    pub enabled: bool,
+    /// 明示パス．指定すれば search_paths より優先される．
+    pub path: Option<PathBuf>,
+    /// 検索するディレクトリ (このディレクトリ直下の compile_commands.json を試す)．
+    /// 空なら標準的な候補 (build, cmake-build-*, out など) を自動で試す．
+    pub search_paths: Vec<PathBuf>,
+    /// 親ディレクトリへ何階層さかのぼって探索するか (0 = ルートのみ)．
+    pub search_parents: u32,
+}
+
+impl Default for CompileCommandsOptions {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            path: None,
+            search_paths: vec![],
+            search_parents: 4,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -124,6 +156,7 @@ impl Default for Config {
             include_patterns: default_includes(),
             exclude_patterns: vec![],
             compile_commands: None,
+            cdb: CompileCommandsOptions::default(),
             extra_args: vec![],
             rules: vec![],
             suppressions: vec![],

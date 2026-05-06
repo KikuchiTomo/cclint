@@ -59,6 +59,11 @@ struct Args {
     /// サブプロセス隔離を無効化 (デバッグ用)．通常 ON．
     #[arg(long, default_value_t = false)]
     no_subprocess: bool,
+
+    /// compile_commands.json のパスを明示指定する．
+    /// 環境変数 CCLINT_COMPILE_COMMANDS でも指定可能．
+    #[arg(long = "compile-commands", env = "CCLINT_COMPILE_COMMANDS")]
+    compile_commands_path: Option<PathBuf>,
 }
 
 #[derive(clap::ValueEnum, Clone, Debug)]
@@ -128,6 +133,96 @@ fn setup_bundled_libclang() {
             }
         }
     }
+}
+
+/// .cclint.toml の [cdb] と CLI 引数を統合して compile_commands.json を解決する．
+fn resolve_compile_db(
+    args: &Args,
+    cfg: &Config,
+    root: &std::path::Path,
+) -> Option<CompilationDatabase> {
+    // 1. enabled = false なら使わない
+    if !cfg.cdb.enabled {
+        return None;
+    }
+
+    // 2. 優先度: CLI --compile-commands > [cdb].path > 旧 compile_commands
+    let explicit: Option<std::path::PathBuf> = args
+        .compile_commands_path
+        .clone()
+        .or_else(|| cfg.cdb.path.clone())
+        .or_else(|| cfg.compile_commands.clone())
+        .map(|p| if p.is_absolute() { p } else { root.join(p) });
+
+    let mut candidates: Vec<std::path::PathBuf> = Vec::new();
+    if let Some(p) = explicit {
+        candidates.push(p);
+    } else {
+        // 3. search_paths が設定されてるならそれだけを試す．
+        //    空ならデフォルトの広い候補リストを root + 親方向に展開．
+        let dirs: Vec<std::path::PathBuf> = if !cfg.cdb.search_paths.is_empty() {
+            cfg.cdb
+                .search_paths
+                .iter()
+                .map(|p| {
+                    if p.is_absolute() {
+                        p.clone()
+                    } else {
+                        root.join(p)
+                    }
+                })
+                .collect()
+        } else {
+            default_cdb_dirs(root, cfg.cdb.search_parents)
+        };
+        for d in dirs {
+            candidates.push(d.join("compile_commands.json"));
+        }
+    }
+
+    for cand in &candidates {
+        if cand.is_file() {
+            let dir = cand.parent().unwrap_or(root);
+            match CompilationDatabase::open(dir) {
+                Ok(db) => {
+                    eprintln!("==> compile_commands: {}", cand.display());
+                    return Some(db);
+                }
+                Err(e) => eprintln!("warning: {e}"),
+            }
+        }
+    }
+    None
+}
+
+fn default_cdb_dirs(root: &std::path::Path, parents: u32) -> Vec<std::path::PathBuf> {
+    let subs = [
+        ".",
+        "build",
+        "build-debug",
+        "build-release",
+        "build-Debug",
+        "build-Release",
+        "cmake-build-debug",
+        "cmake-build-release",
+        "out",
+        "out/Default",
+        "target",
+    ];
+    let mut dirs = Vec::new();
+    let mut cur: Option<&std::path::Path> = Some(root);
+    let mut depth = 0;
+    while let Some(d) = cur {
+        for s in subs {
+            dirs.push(d.join(s));
+        }
+        if depth >= parents {
+            break;
+        }
+        cur = d.parent();
+        depth += 1;
+    }
+    dirs
 }
 
 fn atty_stderr() -> bool {
@@ -221,38 +316,14 @@ fn run() -> Result<ExitCode> {
 
     let mut all: Vec<Diagnostic> = Vec::new();
 
-    // compile_commands.json を解決する．
-    // 1. cfg.compile_commands で明示指定があればそれ
-    // 2. <root>/compile_commands.json
-    // 3. <root>/build/compile_commands.json
-    let compile_db: Option<CompilationDatabase> = {
-        let mut found = None;
-        let candidates: Vec<std::path::PathBuf> = match &cfg.compile_commands {
-            Some(p) => vec![if p.is_absolute() {
-                p.clone()
-            } else {
-                root.join(p)
-            }],
-            None => vec![
-                root.join("compile_commands.json"),
-                root.join("build").join("compile_commands.json"),
-            ],
-        };
-        for cand in candidates {
-            if cand.is_file() {
-                let dir = cand.parent().unwrap_or(&root);
-                match CompilationDatabase::open(dir) {
-                    Ok(db) => {
-                        eprintln!("==> compile_commands: {}", cand.display());
-                        found = Some(db);
-                        break;
-                    }
-                    Err(e) => eprintln!("warning: {e}"),
-                }
-            }
-        }
-        found
-    };
+    let compile_db: Option<CompilationDatabase> = resolve_compile_db(&args, &cfg, &root);
+    if compile_db.is_none() && cfg.extra_args.is_empty() && !files.is_empty() {
+        eprintln!(
+            "cclint: ヒント: compile_commands.json が見つかりません． \
+             --compile-commands <path>，[cdb] セクション，または extra_args で \
+             include パス等を指定してください．"
+        );
+    }
 
     // フェーズ 1: 全ファイルを parse し，AST を保持．
     // libclang が SEGV することがあるので，デフォルトでサブプロセス隔離して

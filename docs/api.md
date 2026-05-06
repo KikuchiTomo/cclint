@@ -123,14 +123,31 @@ C++ ヘッダ (`<atomic>`, `<vector>`, ...) や独自ヘッダ (`my.hpp`) が見
 
 ### 1. `compile_commands.json` を使う (推奨)
 
-CMake / Bazel / Bear などが生成するこのファイルが下記のいずれかにあれば
-自動的に検出して使います．
+デフォルトで以下の場所を自動検出します:
 
 - `<root>/compile_commands.json`
-- `<root>/build/compile_commands.json`
-- `.cclint.toml` の `compile_commands = "path/to/file"` で明示指定
+- `<root>/build/`，`build-debug/`，`build-release/`，`cmake-build-*/`，
+  `out/`，`out/Default/`，`target/` (各ディレクトリ直下)
+- 親ディレクトリへ最大 4 階層さかのぼって同じ場所を試す
 
-CMake なら `cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..` で生成．
+明示指定や挙動の調整は `.cclint.toml` の `[cdb]` セクションで:
+
+```toml
+[cdb]
+enabled = true                                 # false で完全に無効化
+path = "build-debug/compile_commands.json"     # 明示パス (相対 or 絶対)
+search_paths = ["build", "out", "my-build"]    # 探索ディレクトリ (空ならデフォルト)
+search_parents = 4                              # 親ディレクトリ何階層まで
+```
+
+CLI でも指定可:
+```bash
+cclint . --compile-commands path/to/compile_commands.json
+# 環境変数でも可
+CCLINT_COMPILE_COMMANDS=path/... cclint .
+```
+
+CMake で生成するなら: `cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..`
 
 ### 2. `.cclint.toml` の `extra_args` で手動指定
 
