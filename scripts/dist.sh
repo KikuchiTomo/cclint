@@ -21,7 +21,12 @@ mkdir -p "$OUT_DIR"
 
 VERSION="$(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)"
 OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
-ARCH="$(uname -m)"
+ARCH_RAW="$(uname -m)"
+case "$ARCH_RAW" in
+  arm64|aarch64) ARCH=aarch64 ;;
+  x86_64|amd64)  ARCH=x86_64 ;;
+  *) echo "unsupported arch: $ARCH_RAW" >&2; exit 1 ;;
+esac
 
 case "$OS" in
   darwin) DYLIB_EXT="dylib" ;;
