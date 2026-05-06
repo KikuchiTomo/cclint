@@ -8,7 +8,7 @@ use std::rc::Rc;
 
 use anyhow::{Context, Result};
 use cclint_diagnostic::{Diagnostic, Severity, Span};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 /// libclang の Clang/Index/TranslationUnit を保持する解析セッション。
 pub struct Session {
@@ -107,7 +107,7 @@ impl Session {
 /// libclang から取れる情報を可能な限り保持した値型ノード。
 /// 別エンティティへの参照は USR 文字列で持つ (Lua から project index 経由で
 /// 引ける形にする)。
-#[derive(Debug, Clone, Serialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct OwnedNode {
     // ---- 基本 ----
     pub kind: String,

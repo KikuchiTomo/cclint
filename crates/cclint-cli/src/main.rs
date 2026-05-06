@@ -39,6 +39,16 @@ struct Args {
     /// 進捗を表示する (どのファイルを parse 中か stderr に出す)
     #[arg(short = 'v', long)]
     verbose: bool,
+
+    /// 内部用: 1 ファイルだけ parse し AST+診断を JSON で stdout に書き出す。
+    /// 親プロセスが各ファイルをサブプロセスで parse することで，libclang が
+    /// SEGV してもプロジェクト全体の lint が止まらないようにする．
+    #[arg(long = "internal-parse", hide = true)]
+    internal_parse: Option<PathBuf>,
+
+    /// サブプロセス隔離を無効化 (デバッグ用)．通常 ON．
+    #[arg(long, default_value_t = false)]
+    no_subprocess: bool,
 }
 
 #[derive(clap::ValueEnum, Clone, Debug)]
@@ -110,8 +120,60 @@ fn setup_bundled_libclang() {
     }
 }
 
+#[cfg(unix)]
+fn signal_of(status: &std::process::ExitStatus) -> Option<i32> {
+    use std::os::unix::process::ExitStatusExt;
+    status.signal()
+}
+#[cfg(not(unix))]
+fn signal_of(_: &std::process::ExitStatus) -> Option<i32> {
+    None
+}
+
+/// 子プロセスとして cclint --internal-parse を起動して 1 ファイル parse させ，
+/// JSON 結果を読む．SEGV 等で異常終了したら Err を返す．
+fn parse_in_subprocess(
+    exe: &std::path::Path,
+    file: &std::path::Path,
+    config: &std::path::Path,
+) -> Result<(cclint_ast::OwnedNode, Vec<Diagnostic>)> {
+    let output = std::process::Command::new(exe)
+        .arg("--internal-parse")
+        .arg(file)
+        .arg("-c")
+        .arg(config)
+        .output()
+        .with_context(|| format!("サブプロセス起動失敗: {}", file.display()))?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let signal_info = signal_of(&output.status);
+        anyhow::bail!(
+            "exit={:?} signal={:?}: {}",
+            output.status.code(),
+            signal_info,
+            stderr.lines().last().unwrap_or("(no stderr)")
+        );
+    }
+    let payload: serde_json::Value =
+        serde_json::from_slice(&output.stdout).with_context(|| "JSON parse 失敗")?;
+    let ast: cclint_ast::OwnedNode = serde_json::from_value(payload["ast"].clone())?;
+    let diags: Vec<Diagnostic> = serde_json::from_value(payload["diags"].clone())?;
+    Ok((ast, diags))
+}
+
 fn run() -> Result<ExitCode> {
     let args = Args::parse();
+
+    // 内部モード: 1 ファイル parse だけして JSON を吐く．SEGV 隔離用．
+    if let Some(path) = &args.internal_parse {
+        let cfg = Config::load(&args.config).unwrap_or_default();
+        let session = Session::new()?;
+        let (ast, diags) = session.parse_file(path, &cfg.cpp_standard, &[])?;
+        let payload = serde_json::json!({ "ast": ast, "diags": diags });
+        println!("{}", serde_json::to_string(&payload)?);
+        return Ok(ExitCode::SUCCESS);
+    }
+
     let config_path = args.config.clone();
     let cfg = Config::load(&config_path).with_context(|| "設定読込失敗")?;
 
@@ -140,21 +202,33 @@ fn run() -> Result<ExitCode> {
         );
     }
 
-    let session = Session::new()?;
     let mut all: Vec<Diagnostic> = Vec::new();
 
-    // フェーズ 1: 全ファイルを parse し，AST を一旦保持しつつプロジェクト
-    // インデックスを構築する．
-    // clang が fatal error を出した TU は AST が壊れていて libclang 側で
-    // SEGV する可能性があるためスキップする．
+    // フェーズ 1: 全ファイルを parse し，AST を保持．
+    // libclang が SEGV することがあるので，デフォルトでサブプロセス隔離して
+    // parse する (--no-subprocess で同一プロセスにフォールバック)．
+    let exe = std::env::current_exe().context("自プロセスの実行ファイル特定失敗")?;
     let mut parsed: Vec<(std::path::PathBuf, cclint_ast::OwnedNode)> = Vec::new();
+
+    let session_inproc = if args.no_subprocess {
+        Some(Session::new()?)
+    } else {
+        None
+    };
+
     for f in &files {
         if args.verbose {
             use std::io::Write;
             let _ = writeln!(std::io::stderr(), "==> parse: {}", f.display());
             let _ = std::io::stderr().flush();
         }
-        match session.parse_file(f, &cfg.cpp_standard, &[]) {
+        let result: Result<(cclint_ast::OwnedNode, Vec<Diagnostic>)> =
+            if let Some(s) = &session_inproc {
+                s.parse_file(f, &cfg.cpp_standard, &[])
+            } else {
+                parse_in_subprocess(&exe, f, &args.config)
+            };
+        match result {
             Ok((ast, mut diags)) => {
                 let has_fatal = diags
                     .iter()
@@ -177,8 +251,8 @@ fn run() -> Result<ExitCode> {
             Err(e) => {
                 all.push(Diagnostic::new(
                     "cclint",
-                    Severity::Error,
-                    format!("解析失敗: {}: {e}", f.display()),
+                    Severity::Warning,
+                    format!("parse 異常終了 (SEGV 等): {}: {e}", f.display()),
                 ));
             }
         }

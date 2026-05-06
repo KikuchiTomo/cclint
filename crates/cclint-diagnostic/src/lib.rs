@@ -6,9 +6,9 @@ use codespan_reporting::diagnostic::{Diagnostic as CDiag, Label};
 use codespan_reporting::files::SimpleFiles;
 use codespan_reporting::term;
 use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum Severity {
     Error,
@@ -17,7 +17,7 @@ pub enum Severity {
     Hint,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Span {
     pub file: PathBuf,
     pub byte_start: usize,
@@ -26,7 +26,7 @@ pub struct Span {
     pub column: u32,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Diagnostic {
     pub rule: String,
     pub severity: Severity,
