@@ -50,11 +50,12 @@ need tar
 # バージョン解決
 if [ "$VERSION" = "latest" ]; then
   info "最新リリースを取得"
-  VERSION="$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" \
-              | grep -m1 '"tag_name"' \
-              | sed -E 's/.*"tag_name":[[:space:]]*"([^"]+)".*/\1/')"
+  RESP="$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null || true)"
+  VERSION="$(echo "$RESP" | grep -m1 '"tag_name"' | sed -E 's/.*"tag_name":[[:space:]]*"([^"]+)".*/\1/' || true)"
   if [ -z "$VERSION" ]; then
-    red "latest バージョンの取得失敗．CCLINT_VERSION で指定してください．"
+    red "リリースが見つかりません．"
+    red "  リリース一覧: https://github.com/$REPO/releases"
+    red "  バージョン指定: CCLINT_VERSION=v0.1.0 ... | bash"
     exit 1
   fi
 fi
