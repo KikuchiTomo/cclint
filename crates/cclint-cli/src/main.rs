@@ -321,6 +321,80 @@ fn collect_inclusions(node: &cclint_ast::OwnedNode, out: &mut Vec<std::path::Pat
     }
 }
 
+/// システムの clang/g++ を呼び出して，C++ の include 検索パスを抽出する．
+/// libclang を ~/.local 等に bundle した場合，自分の resource-dir / libstdc++
+/// の場所を知らないため <atomic> 等の system header が見つからない．
+/// system clang/g++ の `-E -x c++ -v < /dev/null` 出力からパスを取り出して
+/// `-isystem <path>` で渡せば解決する．
+fn detect_system_includes() -> Vec<String> {
+    // macOS の Xcode libclang は自分で stdlib を見つける (むしろ -isystem で
+    // 同じパスを再渡しすると Xcode 26 系で SEGV する個体差があるためスキップ)．
+    if cfg!(target_os = "macos") {
+        return Vec::new();
+    }
+    let cands: &[&[&str]] = &[
+        &["clang", "-E", "-x", "c++", "-v", "-"],
+        &["clang++", "-E", "-x", "c++", "-v", "-"],
+        &["g++", "-E", "-x", "c++", "-v", "-"],
+        &["c++", "-E", "-x", "c++", "-v", "-"],
+    ];
+    for cmd in cands {
+        let mut child = match std::process::Command::new(cmd[0])
+            .args(&cmd[1..])
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+        {
+            Ok(c) => c,
+            Err(_) => continue,
+        };
+        if let Some(mut stdin) = child.stdin.take() {
+            use std::io::Write;
+            let _ = stdin.write_all(b"");
+        }
+        let out = match child.wait_with_output() {
+            Ok(o) => o,
+            Err(_) => continue,
+        };
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        let paths = parse_include_paths(&stderr);
+        if !paths.is_empty() {
+            let mut result = Vec::new();
+            for p in paths {
+                result.push("-isystem".to_string());
+                result.push(p);
+            }
+            return result;
+        }
+    }
+    Vec::new()
+}
+
+/// `g++ -E -v` 形式のスタンダードな出力から system include 検索パスを取り出す．
+fn parse_include_paths(text: &str) -> Vec<String> {
+    let mut paths = Vec::new();
+    let mut in_search = false;
+    for line in text.lines() {
+        if line.starts_with("#include <...> search starts here:") {
+            in_search = true;
+            continue;
+        }
+        if line.starts_with("End of search list.") {
+            break;
+        }
+        if in_search {
+            let p = line.trim();
+            // "(framework directory)" suffix を削る
+            let p = p.trim_end_matches(" (framework directory)");
+            if !p.is_empty() {
+                paths.push(p.to_string());
+            }
+        }
+    }
+    paths
+}
+
 fn atty_stderr() -> bool {
     use std::io::IsTerminal;
     std::io::stderr().is_terminal()
@@ -411,6 +485,14 @@ fn run() -> Result<ExitCode> {
     }
 
     let mut all: Vec<Diagnostic> = Vec::new();
+
+    // システムの C++ include 検索パスを自動検出して全 parse に prepend する．
+    // bundled libclang は自分の resource-dir / libstdc++ の場所を知らないため，
+    // 我々が g++/clang から取って -isystem で渡してやる必要がある．
+    let system_includes = detect_system_includes();
+    if !system_includes.is_empty() && args.verbose {
+        eprintln!("==> system includes 検出: {} 件", system_includes.len() / 2);
+    }
 
     let mut compile_db: Option<CompilationDatabase> = resolve_compile_db(&args, &cfg, &root);
     if compile_db.is_none() && cfg.extra_args.is_empty() && !files.is_empty() {
@@ -508,7 +590,8 @@ fn run() -> Result<ExitCode> {
                             f.file_name().unwrap_or_default().to_string_lossy()
                         ));
                     }
-                    let extra = db.arguments_for(f).unwrap_or_default();
+                    let mut extra = system_includes.clone();
+                    extra.extend(db.arguments_for(f).unwrap_or_default());
                     let r = s.parse_file(f, &cpp_std, &extra);
                     if let Some(pb) = progress_ref {
                         pb.inc(1);
@@ -528,7 +611,8 @@ fn run() -> Result<ExitCode> {
                                 f.file_name().unwrap_or_default().to_string_lossy()
                             ));
                         }
-                        let extra = db.arguments_for(f).unwrap_or_default();
+                        let mut extra = system_includes.clone();
+                        extra.extend(db.arguments_for(f).unwrap_or_default());
                         let r = parse_in_subprocess(exe_ref, f, &cfg_path, &extra);
                         if let Some(pb) = progress_ref {
                             pb.inc(1);
@@ -585,10 +669,13 @@ fn run() -> Result<ExitCode> {
                         .unwrap_or_default();
                     pb.set_message(name);
                 }
-                let extra: Vec<String> = compile_db
-                    .as_ref()
-                    .and_then(|db| db.arguments_for(f))
-                    .unwrap_or_else(|| extra_args_default.clone());
+                let mut extra: Vec<String> = system_includes.clone();
+                extra.extend(
+                    compile_db
+                        .as_ref()
+                        .and_then(|db| db.arguments_for(f))
+                        .unwrap_or_else(|| extra_args_default.clone()),
+                );
                 let res = if inproc {
                     // session_inproc は Send でないため，--no-subprocess かつ
                     // 並列モードのときはここに来ない (jobs=1 強制)．
@@ -608,10 +695,13 @@ fn run() -> Result<ExitCode> {
     let parse_results = if let Some(s) = &session_inproc {
         let mut out = Vec::new();
         for f in &pending {
-            let extra: Vec<String> = compile_db
-                .as_ref()
-                .and_then(|db| db.arguments_for(f))
-                .unwrap_or_else(|| extra_args_default.clone());
+            let mut extra: Vec<String> = system_includes.clone();
+            extra.extend(
+                compile_db
+                    .as_ref()
+                    .and_then(|db| db.arguments_for(f))
+                    .unwrap_or_else(|| extra_args_default.clone()),
+            );
             let res = s.parse_file(f, &cpp_std, &extra);
             if let Some(pb) = &progress {
                 pb.inc(1);
