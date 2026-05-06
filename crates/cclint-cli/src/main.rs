@@ -68,6 +68,10 @@ struct Args {
         value_delimiter = ':'
     )]
     compile_commands_paths: Vec<PathBuf>,
+
+    /// 並列 parse のジョブ数 (0 = 論理 CPU 数)．サブプロセス parse でのみ有効．
+    #[arg(short = 'j', long, default_value_t = 0)]
+    jobs: usize,
 }
 
 #[derive(clap::ValueEnum, Clone, Debug)]
@@ -480,37 +484,101 @@ fn run() -> Result<ExitCode> {
 
     let already_parsed: std::collections::HashSet<std::path::PathBuf> =
         parsed.iter().map(|(p, _)| p.clone()).collect();
-    for f in &files {
-        if already_parsed.contains(f) {
+
+    // 残ファイル: 直接 parse 済み以外 + ヘッダ等
+    let pending: Vec<std::path::PathBuf> = files
+        .iter()
+        .filter(|f| !already_parsed.contains(*f))
+        .cloned()
+        .collect();
+
+    // jobs を rayon に設定．--no-subprocess の場合は libclang が
+    // 同一プロセス内で並列に動かないため強制 1．
+    let jobs = if args.no_subprocess {
+        1
+    } else if args.jobs == 0 {
+        std::thread::available_parallelism()
+            .map(|n| n.get())
+            .unwrap_or(1)
+    } else {
+        args.jobs
+    };
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(jobs)
+        .build()
+        .context("rayon thread pool 構築失敗")?;
+    if args.verbose {
+        eprintln!("==> 並列 parse: jobs={jobs}");
+    }
+
+    // 並列 parse．compile_db は内部で Mutex なし HashMap だが ProjectIndex 経由
+    // で書き戻す訳ではないので &CompilationDatabase は単に共有して読むだけ．
+    let extra_args_default = cfg.extra_args.clone();
+    let cpp_std = cfg.cpp_standard.clone();
+    let progress_ref = &progress;
+    let exe_ref = &exe;
+    let cfg_path = args.config.clone();
+    let inproc = session_inproc.is_some();
+    let parse_results: Vec<(
+        std::path::PathBuf,
+        Result<(cclint_ast::OwnedNode, Vec<Diagnostic>)>,
+    )> = pool.install(|| {
+        use rayon::prelude::*;
+        pending
+            .par_iter()
+            .map(|f| {
+                if args.verbose {
+                    use std::io::Write;
+                    let _ = writeln!(std::io::stderr(), "==> parse: {}", f.display());
+                    let _ = std::io::stderr().flush();
+                }
+                if let Some(pb) = progress_ref {
+                    let name = f
+                        .file_name()
+                        .map(|s| s.to_string_lossy().to_string())
+                        .unwrap_or_default();
+                    pb.set_message(name);
+                }
+                let extra: Vec<String> = compile_db
+                    .as_ref()
+                    .and_then(|db| db.arguments_for(f))
+                    .unwrap_or_else(|| extra_args_default.clone());
+                let res = if inproc {
+                    // session_inproc は Send でないため，--no-subprocess かつ
+                    // 並列モードのときはここに来ない (jobs=1 強制)．
+                    unreachable!("inproc parse should be sequential");
+                } else {
+                    parse_in_subprocess(exe_ref, f, &cfg_path, &extra)
+                };
+                if let Some(pb) = progress_ref {
+                    pb.inc(1);
+                }
+                (f.clone(), res)
+            })
+            .collect()
+    });
+
+    // セッションインプロセスケース (並列無効) のフォールバック
+    let parse_results = if let Some(s) = &session_inproc {
+        let mut out = Vec::new();
+        for f in &pending {
+            let extra: Vec<String> = compile_db
+                .as_ref()
+                .and_then(|db| db.arguments_for(f))
+                .unwrap_or_else(|| extra_args_default.clone());
+            let res = s.parse_file(f, &cpp_std, &extra);
             if let Some(pb) = &progress {
                 pb.inc(1);
             }
-            continue;
+            out.push((f.clone(), res));
         }
-        if args.verbose {
-            use std::io::Write;
-            let _ = writeln!(std::io::stderr(), "==> parse: {}", f.display());
-            let _ = std::io::stderr().flush();
-        }
-        if let Some(pb) = &progress {
-            let name = f
-                .file_name()
-                .map(|s| s.to_string_lossy().to_string())
-                .unwrap_or_default();
-            pb.set_message(name);
-        }
-        // compile_commands.json から該当ファイルの引数を引く．
-        // 引けなかったら .cclint.toml の extra_args を fallback で使う．
-        let extra: Vec<String> = compile_db
-            .as_ref()
-            .and_then(|db| db.arguments_for(f))
-            .unwrap_or_else(|| cfg.extra_args.clone());
-        let result: Result<(cclint_ast::OwnedNode, Vec<Diagnostic>)> =
-            if let Some(s) = &session_inproc {
-                s.parse_file(f, &cfg.cpp_standard, &extra)
-            } else {
-                parse_in_subprocess(&exe, f, &args.config, &extra)
-            };
+        out
+    } else {
+        parse_results
+    };
+
+    for (f, result) in parse_results {
+        let f_disp = f.display().to_string();
         match result {
             Ok((ast, mut diags)) => {
                 let has_fatal = diags
@@ -522,25 +590,21 @@ fn run() -> Result<ExitCode> {
                         "cclint",
                         Severity::Warning,
                         format!(
-                            "clang の致命的エラーがあるため `{}` のルール実行をスキップします",
-                            f.display()
+                            "clang の致命的エラーがあるため `{f_disp}` のルール実行をスキップします"
                         ),
                     ));
                     continue;
                 }
-                engine.add_project_root(f, &ast);
-                parsed.push((f.clone(), ast));
+                engine.add_project_root(&f, &ast);
+                parsed.push((f, ast));
             }
             Err(e) => {
                 all.push(Diagnostic::new(
                     "cclint",
                     Severity::Warning,
-                    format!("parse 異常終了 (SEGV 等): {}: {e}", f.display()),
+                    format!("parse 異常終了 (SEGV 等): {f_disp}: {e}"),
                 ));
             }
-        }
-        if let Some(pb) = &progress {
-            pb.inc(1);
         }
     }
     if let Some(pb) = progress {
