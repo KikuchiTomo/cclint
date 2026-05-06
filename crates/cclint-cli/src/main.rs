@@ -4,7 +4,7 @@ use std::process::ExitCode;
 use anyhow::{Context, Result};
 use clap::Parser;
 
-use cclint_ast::Session;
+use cclint_ast::{CompilationDatabase, Session};
 use cclint_config::Config;
 use cclint_diagnostic::{Diagnostic, Severity};
 use cclint_script::Engine;
@@ -51,6 +51,10 @@ struct Args {
     /// SEGV してもプロジェクト全体の lint が止まらないようにする．
     #[arg(long = "internal-parse", hide = true)]
     internal_parse: Option<PathBuf>,
+
+    /// 内部用: --internal-parse 時に追加するコンパイラ引数 (繰り返し可)
+    #[arg(long = "internal-extra-arg", hide = true, allow_hyphen_values = true)]
+    internal_extra_arg: Vec<String>,
 
     /// サブプロセス隔離を無効化 (デバッグ用)．通常 ON．
     #[arg(long, default_value_t = false)]
@@ -147,12 +151,14 @@ fn parse_in_subprocess(
     exe: &std::path::Path,
     file: &std::path::Path,
     config: &std::path::Path,
+    extra_args: &[String],
 ) -> Result<(cclint_ast::OwnedNode, Vec<Diagnostic>)> {
-    let output = std::process::Command::new(exe)
-        .arg("--internal-parse")
-        .arg(file)
-        .arg("-c")
-        .arg(config)
+    let mut cmd = std::process::Command::new(exe);
+    cmd.arg("--internal-parse").arg(file).arg("-c").arg(config);
+    for a in extra_args {
+        cmd.arg("--internal-extra-arg").arg(a);
+    }
+    let output = cmd
         .output()
         .with_context(|| format!("サブプロセス起動失敗: {}", file.display()))?;
     if !output.status.success() {
@@ -179,7 +185,7 @@ fn run() -> Result<ExitCode> {
     if let Some(path) = &args.internal_parse {
         let cfg = Config::load(&args.config).unwrap_or_default();
         let session = Session::new()?;
-        let (ast, diags) = session.parse_file(path, &cfg.cpp_standard, &[])?;
+        let (ast, diags) = session.parse_file(path, &cfg.cpp_standard, &args.internal_extra_arg)?;
         let payload = serde_json::json!({ "ast": ast, "diags": diags });
         println!("{}", serde_json::to_string(&payload)?);
         return Ok(ExitCode::SUCCESS);
@@ -214,6 +220,39 @@ fn run() -> Result<ExitCode> {
     }
 
     let mut all: Vec<Diagnostic> = Vec::new();
+
+    // compile_commands.json を解決する．
+    // 1. cfg.compile_commands で明示指定があればそれ
+    // 2. <root>/compile_commands.json
+    // 3. <root>/build/compile_commands.json
+    let compile_db: Option<CompilationDatabase> = {
+        let mut found = None;
+        let candidates: Vec<std::path::PathBuf> = match &cfg.compile_commands {
+            Some(p) => vec![if p.is_absolute() {
+                p.clone()
+            } else {
+                root.join(p)
+            }],
+            None => vec![
+                root.join("compile_commands.json"),
+                root.join("build").join("compile_commands.json"),
+            ],
+        };
+        for cand in candidates {
+            if cand.is_file() {
+                let dir = cand.parent().unwrap_or(&root);
+                match CompilationDatabase::open(dir) {
+                    Ok(db) => {
+                        eprintln!("==> compile_commands: {}", cand.display());
+                        found = Some(db);
+                        break;
+                    }
+                    Err(e) => eprintln!("warning: {e}"),
+                }
+            }
+        }
+        found
+    };
 
     // フェーズ 1: 全ファイルを parse し，AST を保持．
     // libclang が SEGV することがあるので，デフォルトでサブプロセス隔離して
@@ -255,11 +294,17 @@ fn run() -> Result<ExitCode> {
                 .unwrap_or_default();
             pb.set_message(name);
         }
+        // compile_commands.json から該当ファイルの引数を引く．
+        // 引けなかったら .cclint.toml の extra_args を fallback で使う．
+        let extra: Vec<String> = compile_db
+            .as_ref()
+            .and_then(|db| db.arguments_for(f))
+            .unwrap_or_else(|| cfg.extra_args.clone());
         let result: Result<(cclint_ast::OwnedNode, Vec<Diagnostic>)> =
             if let Some(s) = &session_inproc {
-                s.parse_file(f, &cfg.cpp_standard, &[])
+                s.parse_file(f, &cfg.cpp_standard, &extra)
             } else {
-                parse_in_subprocess(&exe, f, &args.config)
+                parse_in_subprocess(&exe, f, &args.config, &extra)
             };
         match result {
             Ok((ast, mut diags)) => {

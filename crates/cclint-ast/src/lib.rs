@@ -15,6 +15,126 @@ pub struct Session {
     _clang: Rc<clang::Clang>,
 }
 
+/// compile_commands.json から各ファイルのコンパイラ引数を引くためのラッパ。
+/// libclang の `CompilationDatabase` を使わず serde_json で自前パースする。
+pub struct CompilationDatabase {
+    by_file: std::collections::HashMap<PathBuf, Vec<String>>,
+}
+
+#[derive(serde::Deserialize)]
+struct CCEntry {
+    directory: String,
+    file: String,
+    #[serde(default)]
+    arguments: Option<Vec<String>>,
+    #[serde(default)]
+    command: Option<String>,
+}
+
+impl CompilationDatabase {
+    /// `<dir>/compile_commands.json` を読み込む。
+    pub fn open(dir: &Path) -> Result<Self> {
+        let p = dir.join("compile_commands.json");
+        let text =
+            std::fs::read_to_string(&p).with_context(|| format!("読込失敗: {}", p.display()))?;
+        let entries: Vec<CCEntry> = serde_json::from_str(&text)
+            .with_context(|| format!("JSON parse 失敗: {}", p.display()))?;
+        let mut by_file = std::collections::HashMap::new();
+        for e in entries {
+            let dir = PathBuf::from(&e.directory);
+            let file_path = if Path::new(&e.file).is_absolute() {
+                PathBuf::from(&e.file)
+            } else {
+                dir.join(&e.file)
+            };
+            let raw_args = if let Some(args) = e.arguments {
+                args
+            } else if let Some(cmd) = e.command {
+                shell_split(&cmd)
+            } else {
+                continue;
+            };
+            by_file.insert(
+                file_path.canonicalize().unwrap_or(file_path),
+                filter_args(&raw_args, &PathBuf::from(&e.file)),
+            );
+        }
+        Ok(Self { by_file })
+    }
+
+    /// 与えられたソースファイルに対するコンパイラ引数を取り出す。
+    pub fn arguments_for(&self, file: &Path) -> Option<Vec<String>> {
+        let canon = file.canonicalize().unwrap_or(file.to_path_buf());
+        self.by_file.get(&canon).cloned()
+    }
+}
+
+/// 簡易 shell split (空白区切り + ダブルクォート対応)
+fn shell_split(s: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut cur = String::new();
+    let mut in_quote = false;
+    let mut chars = s.chars().peekable();
+    while let Some(c) = chars.next() {
+        match c {
+            '"' => in_quote = !in_quote,
+            '\\' if in_quote => {
+                if let Some(next) = chars.next() {
+                    cur.push(next);
+                }
+            }
+            ' ' | '\t' if !in_quote => {
+                if !cur.is_empty() {
+                    out.push(std::mem::take(&mut cur));
+                }
+            }
+            _ => cur.push(c),
+        }
+    }
+    if !cur.is_empty() {
+        out.push(cur);
+    }
+    out
+}
+
+/// compile_commands.json のコマンドから linter に有用な引数だけ残す。
+fn filter_args(raw: &[String], target: &Path) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut iter = raw.iter().peekable();
+    // 最初の要素 (compiler 実行ファイル名) はスキップ
+    iter.next();
+    while let Some(a) = iter.next() {
+        match a.as_str() {
+            "-c" | "-o" => {
+                // -c file / -o foo.o の引数も飛ばす
+                iter.next();
+            }
+            // 出力依存の引数も除去
+            "-MD" | "-MMD" | "-MP" => {}
+            "-MF" | "-MT" | "-MQ" => {
+                iter.next();
+            }
+            s if s.ends_with(".cpp")
+                || s.ends_with(".cc")
+                || s.ends_with(".cxx")
+                || s.ends_with(".c")
+                || s.ends_with(".m")
+                || s.ends_with(".mm") =>
+            {
+                // 入力ソースファイル名は除く
+                if Path::new(s) == target
+                    || std::path::PathBuf::from(s).file_name() == target.file_name()
+                {
+                    continue;
+                }
+                out.push(a.clone());
+            }
+            _ => out.push(a.clone()),
+        }
+    }
+    out
+}
+
 impl Session {
     pub fn new() -> Result<Self> {
         let c = clang::Clang::new().map_err(|e| anyhow::anyhow!("libclang 初期化失敗: {e}"))?;
@@ -30,7 +150,20 @@ impl Session {
     ) -> Result<(OwnedNode, Vec<Diagnostic>)> {
         let index = clang::Index::new(&self._clang, false, false);
         let std_arg = format!("-std={}", cpp_standard);
-        let mut args: Vec<&str> = vec![&std_arg, "-x", "c++", "-Wno-pragma-once-outside-header"];
+        // extra_args が compile_commands.json から来てる場合は -std や -x が
+        // 既に含まれている．重複指定すると libclang が SEGV することがあるので
+        // extra にあるなら自分では追加しない．
+        let extra_has_std = extra_args.iter().any(|a| a.starts_with("-std="));
+        let extra_has_lang = extra_args.iter().any(|a| a == "-x");
+        let mut args: Vec<&str> = Vec::new();
+        if !extra_has_std {
+            args.push(&std_arg);
+        }
+        if !extra_has_lang {
+            args.push("-x");
+            args.push("c++");
+        }
+        args.push("-Wno-pragma-once-outside-header");
         for a in extra_args {
             args.push(a);
         }

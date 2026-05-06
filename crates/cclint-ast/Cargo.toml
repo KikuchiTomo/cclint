@@ -9,4 +9,5 @@ clang.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 cclint-diagnostic.workspace = true

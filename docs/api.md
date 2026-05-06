@@ -116,6 +116,35 @@ cclint.register("private-prefix-for-classA", {
 `examples/rules/include_restriction.lua` と `examples/rules/call_only_from_main.lua`
 が実装例です．
 
+## include パス・コンパイラ引数
+
+C++ ヘッダ (`<atomic>`, `<vector>`, ...) や独自ヘッダ (`my.hpp`) が見つからない
+場合，libclang にコンパイラ引数を渡す必要があります．方法は 2 つ．
+
+### 1. `compile_commands.json` を使う (推奨)
+
+CMake / Bazel / Bear などが生成するこのファイルが下記のいずれかにあれば
+自動的に検出して使います．
+
+- `<root>/compile_commands.json`
+- `<root>/build/compile_commands.json`
+- `.cclint.toml` の `compile_commands = "path/to/file"` で明示指定
+
+CMake なら `cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..` で生成．
+
+### 2. `.cclint.toml` の `extra_args` で手動指定
+
+```toml
+extra_args = [
+  "-I", "include",
+  "-I", "third_party/foo/include",
+  "-DENABLE_FEATURE_X=1",
+  "-isystem", "/usr/include/c++/11",
+]
+```
+
+`compile_commands.json` が無いファイルにのみ適用されます．
+
 ## 抑制 (suppression)
 
 特定のファイル・行・ルールだけ警告を抑えたいとき:

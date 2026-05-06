@@ -23,6 +23,11 @@ pub struct Config {
     #[serde(default)]
     pub compile_commands: Option<PathBuf>,
 
+    /// libclang に渡すコンパイラ引数 (compile_commands.json が無いときの代替)．
+    /// 例: ["-I", "include", "-DDEBUG=1"]
+    #[serde(default)]
+    pub extra_args: Vec<String>,
+
     #[serde(default)]
     pub rules: Vec<RuleEntry>,
 
@@ -119,6 +124,7 @@ impl Default for Config {
             include_patterns: default_includes(),
             exclude_patterns: vec![],
             compile_commands: None,
+            extra_args: vec![],
             rules: vec![],
             suppressions: vec![],
         }
