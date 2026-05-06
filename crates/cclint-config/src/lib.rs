@@ -25,6 +25,20 @@ pub struct Config {
 
     #[serde(default)]
     pub rules: Vec<RuleEntry>,
+
+    #[serde(default)]
+    pub suppressions: Vec<Suppression>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Suppression {
+    /// 対象ファイルの glob (相対 or 絶対) のリスト。空 = 全ファイル。
+    #[serde(default)]
+    pub files: Vec<String>,
+    /// 対象ルール名のリスト。空 or "*" を含む = 全ルール。
+    #[serde(default)]
+    pub rules: Vec<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -106,6 +120,7 @@ impl Default for Config {
             exclude_patterns: vec![],
             compile_commands: None,
             rules: vec![],
+            suppressions: vec![],
         }
     }
 }

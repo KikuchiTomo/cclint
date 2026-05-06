@@ -9,6 +9,8 @@ use cclint_config::Config;
 use cclint_diagnostic::{Diagnostic, Severity};
 use cclint_script::Engine;
 
+mod suppress;
+
 #[derive(Parser, Debug)]
 #[command(
     name = "cclint",
@@ -301,6 +303,10 @@ fn run() -> Result<ExitCode> {
         let mut rule_diags = engine.run(ast)?;
         all.append(&mut rule_diags);
     }
+
+    // suppression を適用 (インラインコメント + 設定)
+    let mut filter = suppress::SuppressionFilter::new(&cfg.suppressions);
+    all.retain(|d| !filter.is_suppressed(d));
 
     // (rule, file, line, column, message) で重複を削除
     let mut seen = std::collections::HashSet::new();

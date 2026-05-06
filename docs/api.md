@@ -116,6 +116,43 @@ cclint.register("private-prefix-for-classA", {
 `examples/rules/include_restriction.lua` と `examples/rules/call_only_from_main.lua`
 が実装例です．
 
+## 抑制 (suppression)
+
+特定のファイル・行・ルールだけ警告を抑えたいとき:
+
+### 1. ソースのコメントで指定
+
+```cpp
+int BadName1(int x); // cclint:disable=function-snake-case
+
+// cclint:disable-next-line=function-snake-case
+int BadName2(int x);
+
+// cclint:file-disable=class-pascal-case   ← ファイル全体で対象ルールを抑制
+class lower_case {};
+
+int BadName3(int x); // cclint:disable                 ← その行の全ルール抑制
+```
+
+カンマ区切りで複数指定可能 (`cclint:disable=rule-a,rule-b`)．`=` を省くと
+全ルール対象．
+
+### 2. 設定ファイルで指定
+
+`.cclint.toml`:
+
+```toml
+[[suppressions]]
+files = ["src/legacy/**", "src/generated/*.cpp"]
+rules = ["class-pascal-case", "function-snake-case"]
+
+[[suppressions]]
+files = ["**/_pb.cc"]
+rules = ["*"]   # 全ルール
+```
+
+`files` は glob．`rules` に `"*"` を含めると全ルール対象．
+
 ## 制限
 
 - 並列処理には対応していません．
