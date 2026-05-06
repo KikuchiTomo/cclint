@@ -87,14 +87,90 @@ impl CompilationDatabase {
     }
 
     /// 与えられたソースファイルに対するコンパイラ引数を取り出す。
+    /// 直接の登録が無ければ最近傍のソースファイルの引数で代用する
+    /// (ヘッダは compile_commands.json に通常含まれないため)。
     pub fn arguments_for(&self, file: &Path) -> Option<Vec<String>> {
         let canon = file.canonicalize().unwrap_or(file.to_path_buf());
-        self.by_file.get(&canon).cloned()
+        if let Some(args) = self.by_file.get(&canon) {
+            return Some(args.clone());
+        }
+        self.nearest_args(&canon)
+    }
+
+    /// ヘッダ用フォールバック: 同じディレクトリ → 兄弟 (include↔src) →
+    /// 親ディレクトリの順で最も近い登録済みソースを探す．clangd の挙動を模倣．
+    fn nearest_args(&self, file: &Path) -> Option<Vec<String>> {
+        // 1. 同一ディレクトリ
+        if let Some(parent) = file.parent() {
+            for (k, v) in &self.by_file {
+                if k.parent() == Some(parent) {
+                    return Some(v.clone());
+                }
+            }
+        }
+        // 2. 兄弟: include/<X> ⇄ src/<X> 等の典型パスを試す
+        for (k, v) in &self.by_file {
+            if same_module(file, k) {
+                return Some(v.clone());
+            }
+        }
+        // 3. 親方向: 上位ディレクトリで一番深く一致するエントリ
+        let mut cur = file.parent();
+        let mut best: Option<(usize, Vec<String>)> = None;
+        while let Some(d) = cur {
+            for (k, v) in &self.by_file {
+                if k.starts_with(d) {
+                    let depth = d.components().count();
+                    if best.as_ref().is_none_or(|(b, _)| depth > *b) {
+                        best = Some((depth, v.clone()));
+                    }
+                }
+            }
+            if best.is_some() {
+                return best.map(|(_, v)| v);
+            }
+            cur = d.parent();
+        }
+        // 4. 何でもいいので 1 個あれば返す (最後の砦)
+        self.by_file.values().next().cloned()
     }
 
     pub fn entry_count(&self) -> usize {
         self.by_file.len()
     }
+}
+
+/// ヘッダ A とソース B が同一モジュールに属するかの粗い判定．
+/// 例: foo/include/m/x.hpp と foo/src/m/x.cpp は true．
+fn same_module(header: &Path, source: &Path) -> bool {
+    let h_stem = match header.file_stem() {
+        Some(s) => s.to_string_lossy().to_string(),
+        None => return false,
+    };
+    let s_stem = match source.file_stem() {
+        Some(s) => s.to_string_lossy().to_string(),
+        None => return false,
+    };
+    if h_stem != s_stem {
+        return false;
+    }
+    // 共通の親ディレクトリを持つか
+    let h_parent = header.parent();
+    let s_parent = source.parent();
+    if h_parent == s_parent {
+        return true;
+    }
+    // include/ と src/ を相互置換して一致するか
+    if let (Some(hp), Some(sp)) = (h_parent, s_parent) {
+        let hp_str = hp.to_string_lossy().to_string();
+        let sp_str = sp.to_string_lossy().to_string();
+        if hp_str.replace("/include/", "/src/") == sp_str
+            || sp_str.replace("/src/", "/include/") == hp_str
+        {
+            return true;
+        }
+    }
+    false
 }
 
 /// 簡易 shell split (空白区切り + ダブルクォート対応)
