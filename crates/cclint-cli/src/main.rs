@@ -141,11 +141,27 @@ fn run() -> Result<ExitCode> {
 
     // フェーズ 1: 全ファイルを parse し，AST を一旦保持しつつプロジェクト
     // インデックスを構築する．
+    // clang が fatal error を出した TU は AST が壊れていて libclang 側で
+    // SEGV する可能性があるためスキップする．
     let mut parsed: Vec<(std::path::PathBuf, cclint_ast::OwnedNode)> = Vec::new();
     for f in &files {
         match session.parse_file(f, &cfg.cpp_standard, &[]) {
             Ok((ast, mut diags)) => {
+                let has_fatal = diags
+                    .iter()
+                    .any(|d| d.severity == Severity::Error && d.rule == "clang");
                 all.append(&mut diags);
+                if has_fatal {
+                    all.push(Diagnostic::new(
+                        "cclint",
+                        Severity::Warning,
+                        format!(
+                            "clang の致命的エラーがあるため `{}` のルール実行をスキップします",
+                            f.display()
+                        ),
+                    ));
+                    continue;
+                }
                 engine.add_project_root(f, &ast);
                 parsed.push((f.clone(), ast));
             }
