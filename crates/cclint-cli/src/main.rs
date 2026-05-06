@@ -405,9 +405,8 @@ fn run() -> Result<ExitCode> {
         );
     }
 
-    // フェーズ 1: 全ファイルを parse し，AST を保持．
-    // libclang が SEGV することがあるので，デフォルトでサブプロセス隔離して
-    // parse する (--no-subprocess で同一プロセスにフォールバック)．
+    // libclang が parse 中に SEGV することがあるので，デフォルトで
+    // サブプロセス隔離する．--no-subprocess は同一プロセス parse へ戻す．
     let exe = std::env::current_exe().context("自プロセスの実行ファイル特定失敗")?;
     let mut parsed: Vec<(std::path::PathBuf, cclint_ast::OwnedNode)> = Vec::new();
 
@@ -493,8 +492,7 @@ fn run() -> Result<ExitCode> {
         pb.finish_with_message("parse 完了");
     }
 
-    // フェーズ 2: 各 AST に対してルールを実行する．
-    // プロジェクトインデックスは Lua から `cclint.project_*` で参照可能．
+    // ルールを各 AST に流す．Lua からは cclint.project_* で他 TU の情報も引ける．
     for (_, ast) in &parsed {
         let mut rule_diags = engine.run(ast)?;
         all.append(&mut rule_diags);

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# 配布用 tarball を作る．cclint バイナリと libclang を同梱する．
+# Build a distribution tarball that bundles cclint and libclang.
 #
-# 使い方:
-#   scripts/dist.sh [<出力ディレクトリ>]
+# Usage:
+#   scripts/dist.sh [<output-dir>]
 #
-# 出力: dist/cclint-<version>-<os>-<arch>.tar.gz
+# Output: dist/cclint-<version>-<os>-<arch>.tar.gz
 #   bin/cclint
 #   lib/libclang.{dylib,so,so.X}
 #   LICENSE          (GPL-3.0)
@@ -44,7 +44,6 @@ cargo build --release --bin cclint
 
 cp target/release/cclint "$STAGE/bin/cclint"
 
-# libclang のソースを探す
 echo "==> locating libclang"
 LIBCLANG_SRC=""
 if [ "$OS" = "darwin" ]; then
@@ -74,34 +73,31 @@ else
 fi
 
 if [ -z "$LIBCLANG_SRC" ]; then
-  echo "ERROR: libclang が見つからない．" >&2
+  echo "ERROR: libclang not found." >&2
   exit 1
 fi
 echo "    using $LIBCLANG_SRC"
 
-# 実体をコピー (シンボリックリンクは辿る)．名前は同梱版の標準名にする．
+# Copy the real file (deref symlinks). Use the canonical bundled name.
 DEST_NAME="libclang.${DYLIB_EXT}"
 cp -L "$LIBCLANG_SRC" "$STAGE/lib/$DEST_NAME"
 
-# rpath を bin/../lib に向ける
 echo "==> patching rpath"
 if [ "$OS" = "darwin" ]; then
   install_name_tool -add_rpath "@executable_path/../lib" "$STAGE/bin/cclint" 2>/dev/null || true
-  # libclang.dylib 自体の install_name を相対化
   install_name_tool -id "@rpath/$DEST_NAME" "$STAGE/lib/$DEST_NAME" 2>/dev/null || true
 else
   if command -v patchelf >/dev/null 2>&1; then
     patchelf --set-rpath '$ORIGIN/../lib' "$STAGE/bin/cclint"
   else
-    echo "WARN: patchelf が無い．LIBCLANG_PATH 経由で自動設定されるが rpath は未設定．"
+    echo "WARN: patchelf missing; rpath unset (LIBCLANG_PATH fallback still works)."
   fi
 fi
 
-# ライセンスとドキュメント
 cp LICENSE "$STAGE/LICENSE"
 cp README.md "$STAGE/README.md"
 
-# LLVM ライセンス．同梱した libclang のバージョンに対応するものを置く．
+# LLVM license file matching the bundled libclang.
 LLVM_LICENSE_PATH=""
 if [ "$OS" = "darwin" ]; then
   for cand in \
@@ -136,12 +132,10 @@ Bundles libclang from the LLVM project (Apache-2.0 with LLVM Exceptions).
 See LICENSE for cclint, LICENSE-LLVM.txt for libclang.
 EOF
 
-# tar.gz
 TARBALL="$OUT_DIR/${NAME}.tar.gz"
 echo "==> packing $TARBALL"
 (cd "$OUT_DIR" && tar -czf "${NAME}.tar.gz" "$NAME")
 echo "==> done: $TARBALL"
 
-# 動作確認
 echo "==> smoke test"
 "$STAGE/bin/cclint" --version

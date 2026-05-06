@@ -1,31 +1,33 @@
 # cclint (customizable c++ linter)
 
-C++ 用の linter です．AST は libclang から取得し，ルールは Lua で書きます．
+A C++ linter. The AST is obtained from libclang, and rules are written in Lua.
 
-## 対応環境
+## Supported platforms
 
 - Linux x86_64 / aarch64
 - macOS aarch64 (Apple Silicon)
 
-Intel mac (x86_64) は事前ビルドバイナリを提供していません．`CONTRIBUTING.md` を参照してソースからビルドしてください．
+Pre-built binaries are not provided for Intel mac (x86_64). See `CONTRIBUTING.md`
+to build from source.
 
-## インストール
+## Install
 
 ```bash
 curl -fsSL https://github.com/KikuchiTomo/cclint/raw/main/scripts/install.sh | bash
 ```
 
-`$HOME/.local/bin/cclint` に入ります．インストール先を変えたいときは `CCLINT_PREFIX` で指定してください．
+The binary lands in `$HOME/.local/bin/cclint`. Override the install prefix with
+`CCLINT_PREFIX`.
 
 ```bash
 CCLINT_PREFIX=/usr/local curl -fsSL https://github.com/KikuchiTomo/cclint/raw/main/scripts/install.sh | sudo bash
 ```
 
-libclang は同梱されています．別途インストールは不要です．
+libclang is bundled. No separate install required.
 
-## 使い方
+## Usage
 
-`.cclint.toml` をプロジェクト直下に置いてください．
+Place `.cclint.toml` at the project root.
 
 ```toml
 cpp_standard = "c++17"
@@ -36,14 +38,14 @@ exclude_patterns = ["build/**"]
 path = "rules/private_prefix.lua"
 ```
 
-実行は `cclint .` です．`--format json` で機械可読出力になります．
+Run `cclint .`. Use `--format json` for machine-readable output.
 
-## ドキュメント
+## Documentation
 
-- `docs/api.md` — Lua API リファレンス
-- `docs/rules.md` — 同梱サンプルルール一覧
-- `CONTRIBUTING.md` — 開発者向け（ソースからのビルド方法など）
+- `docs/api.md` — Lua API reference
+- `docs/rules.md` — Bundled sample rules
+- `CONTRIBUTING.md` — Building from source
 
-## ライセンス
+## License
 
-GPL-3.0-or-later．詳細は `LICENSE` を確認してください．
+GPL-3.0-or-later. See `LICENSE`.

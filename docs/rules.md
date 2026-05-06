@@ -1,29 +1,30 @@
-# サンプルルール
+# Sample rules
 
-`examples/rules/` 以下に同梱しています．必要なものだけ `.cclint.toml` で
-有効化してください．デフォルトでは何も有効になっていません．
+Bundled under `examples/rules/`. Enable only what you need in `.cclint.toml`;
+nothing is on by default.
 
-| ファイル | 概要 |
+| File | Description |
 |---|---|
-| `private_prefix.lua`               | ClassA suffix のクラスの private メンバに `private_` を強制します |
-| `forbid_global_new.lua`            | 素の `new` を警告します |
-| `header_pragma_once.lua`           | ヘッダに `#pragma once` を要求します |
-| `lifo_new_delete.lua`              | `new`/`delete` の LIFO 順序チェックの雛形です |
-| `class_pascal_case.lua`            | クラス・構造体名を PascalCase にします |
-| `function_snake_case.lua`          | 自由関数を snake_case にします |
-| `no_using_namespace_in_header.lua` | ヘッダ内の `using namespace` を禁止します |
-| `no_c_style_cast.lua`              | C スタイルキャストを禁止します |
-| `forbid_plain_enum.lua`            | 素の `enum` を禁止し，`enum class` を要求します |
-| `explicit_single_arg_ctor.lua`     | 単一引数のコンストラクタに `explicit` を要求します |
-| `virtual_destructor.lua`           | 仮想関数を持つクラスに virtual デストラクタを要求します |
-| `max_function_params.lua`          | 関数の引数を 5 個までに制限します |
-| `no_global_variable.lua`           | グローバルなミュータブル変数を禁止します |
-| `no_typedef.lua`                   | `typedef` を禁止し，`using` を要求します |
-| `require_braces.lua`               | `if`/`else`/`for`/`while` の本体に `{}` を要求します |
-| `include_restriction.lua`          | `_internal.h` は対応する `_internal.cpp` からのみ include 可とします |
-| `call_only_from_main.lua`          | `init_secret` は main からのみ呼出し可とします |
+| `private_prefix.lua`               | Enforce `private_` prefix on private members of `ClassA`-suffix classes |
+| `forbid_global_new.lua`            | Warn on bare `new` |
+| `header_pragma_once.lua`           | Require `#pragma once` in headers |
+| `lifo_new_delete.lua`              | Skeleton check for LIFO order of `new`/`delete` |
+| `class_pascal_case.lua`            | Class / struct names must be PascalCase |
+| `function_snake_case.lua`          | Free functions must be snake_case |
+| `no_using_namespace_in_header.lua` | Forbid `using namespace` in headers |
+| `no_c_style_cast.lua`              | Forbid C-style casts |
+| `forbid_plain_enum.lua`            | Forbid plain `enum`; require `enum class` |
+| `explicit_single_arg_ctor.lua`     | Single-argument constructors must be `explicit` |
+| `virtual_destructor.lua`           | Classes with virtual functions must have a virtual destructor |
+| `max_function_params.lua`          | Limit function parameters to 5 |
+| `no_global_variable.lua`           | Forbid mutable global variables |
+| `no_typedef.lua`                   | Forbid `typedef`; require `using` |
+| `require_braces.lua`               | Require braces around `if`/`else`/`for`/`while` bodies |
+| `include_restriction.lua`          | `_internal.h` may only be included from the matching `_internal.cpp` |
+| `call_only_from_main.lua`          | `init_secret` may only be called from `main` |
+| `no_external_internal_ref.lua`    | Symbols whose name contains `_internal_` cannot be referenced outside their defining file |
 
-## 設定例
+## Configuration example
 
 ```toml
 cpp_standard = "c++17"

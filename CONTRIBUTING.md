@@ -1,12 +1,12 @@
-# cclint への貢献
+# Contributing to cclint
 
-## ソースからのビルド
+## Building from source
 
-### 必要なもの
+### Requirements
 
-- Rust stable (1.75 以上)
-- libclang (ビルド時にも実行時にも必要)
-- C 開発ツールチェーン
+- Rust stable (1.75 or later)
+- libclang (required at both build and run time)
+- A C toolchain
 
 ### Ubuntu / Debian
 
@@ -19,64 +19,65 @@ sudo apt install -y build-essential libclang-dev llvm-dev pkg-config
 
 ```bash
 xcode-select --install
-# または
+# or
 brew install llvm
 ```
 
-`make` が `LIBCLANG_PATH` を自動検出します．手動指定したい場合は環境変数で渡してください．
+`make` auto-detects `LIBCLANG_PATH`. Override it via the environment variable
+when needed.
 
-## 開発コマンド
+## Development commands
 
 ```
-make build           # リリースビルド
-make run             # tests/cpp_fixtures に対して example ルールを実行
-make test            # 全テスト
-make test-rust       # cargo test のみ
-make test-fixtures   # 違反検出 e2e
-make test-fixtures-clean  # 誤検出ゼロ確認
-make fmt             # cargo fmt
-make lint            # cargo clippy
-make dist            # 配布用 tarball を dist/ に作る
-make install         # /usr/local/bin にインストール
+make build               Release build
+make run                 Run on tests/cpp_fixtures with example rules
+make test                All tests
+make test-rust           cargo test only
+make test-fixtures       Violation detection (e2e)
+make test-fixtures-clean No-false-positive check
+make fmt                 cargo fmt
+make lint                cargo clippy
+make dist                Produce distribution tarball under dist/
+make install             Install to /usr/local/bin
 make clean
 ```
 
-## ディレクトリ構成
+## Layout
 
 ```
 crates/
-  cclint-cli/         バイナリ (clap)
-  cclint-config/      .cclint.toml ローダ
-  cclint-ast/         libclang ラッパ + OwnedNode
-  cclint-script/      Lua バインディング
-  cclint-diagnostic/  診断 + 整形出力
-examples/rules/       サンプル Lua ルール
-tests/cpp_fixtures/         違反コードでルールが発火するか確認する fixture
-tests/cpp_fixtures_clean/   誤検出が無いか確認する健全コード fixture
+  cclint-cli/         Binary (clap)
+  cclint-config/      .cclint.toml loader
+  cclint-ast/         libclang wrapper + OwnedNode
+  cclint-script/      Lua bindings
+  cclint-diagnostic/  Diagnostic types + formatting
+examples/rules/       Sample Lua rules
+tests/cpp_fixtures/         Violation fixtures (must trigger)
+tests/cpp_fixtures_clean/   Clean fixtures (must not trigger)
 scripts/
-  dist.sh             配布 tarball 作成
-  install.sh          curl 一発インストーラ
+  dist.sh             Distribution tarball builder
+  install.sh          curl-based installer
 .github/workflows/
-  ci.yml              ubuntu/macos マトリクスで test
-  release.yml         タグ push でリリースビルド
+  ci.yml              ubuntu/macos test matrix
+  release.yml         Release build on tag push
 ```
 
-## コミット
+## Commits
 
-Conventional Commits で書いてください．
+Follow Conventional Commits.
 
 ```
-feat: 〜
-fix: 〜
-docs: 〜
-refactor: 〜
-test: 〜
-chore: 〜
+feat: ...
+fix: ...
+docs: ...
+refactor: ...
+test: ...
+chore: ...
 ```
 
-破壊的変更は `feat!:` または footer に `BREAKING CHANGE:` を入れてください．
+Use `feat!:` or a `BREAKING CHANGE:` footer for breaking changes.
 
-## リリース
+## Releases
 
-`git tag v0.1.0 && git push --tags` で `release.yml` が起動し，4 プラットフォーム
-分の tarball を GitHub Release に publish します．
+`git tag v0.x.y && git push --tags` triggers `release.yml`, which produces
+per-platform tarballs and publishes a GitHub Release.
