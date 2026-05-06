@@ -61,4 +61,4 @@ path = "rules/private_prefix.lua"
 
 ## ライセンス
 
-Apache-2.0
+GPL-3.0-or-later．詳細は `LICENSE` を確認してください．
