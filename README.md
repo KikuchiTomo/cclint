@@ -12,13 +12,13 @@ Intel mac (x86_64) は事前ビルドバイナリを提供していません．`
 ## インストール
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/KikuchiTomo/cclint/main/scripts/install.sh | bash
+curl -fsSL https://github.com/KikuchiTomo/cclint/raw/main/scripts/install.sh | bash
 ```
 
 `$HOME/.local/bin/cclint` に入ります．インストール先を変えたいときは `CCLINT_PREFIX` で指定してください．
 
 ```bash
-CCLINT_PREFIX=/usr/local curl -fsSL https://raw.githubusercontent.com/KikuchiTomo/cclint/main/scripts/install.sh | sudo bash
+CCLINT_PREFIX=/usr/local curl -fsSL https://github.com/KikuchiTomo/cclint/raw/main/scripts/install.sh | sudo bash
 ```
 
 libclang は同梱されています．別途インストールは不要です．

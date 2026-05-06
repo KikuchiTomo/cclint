@@ -2,7 +2,7 @@
 # cclint インストーラ．curl 一発で入れるためのスクリプト．
 #
 # 使い方:
-#   curl -fsSL https://raw.githubusercontent.com/KikuchiTomo/cclint/main/scripts/install.sh | bash
+#   curl -fsSL https://github.com/KikuchiTomo/cclint/raw/main/scripts/install.sh | bash
 #
 # 環境変数:
 #   CCLINT_VERSION  インストールするバージョン (デフォルト: latest)
