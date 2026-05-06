@@ -43,11 +43,14 @@ impl Session {
             .with_context(|| format!("解析失敗: {}", path.display()))?;
 
         let mut diags = Vec::new();
+        let mut has_fatal = false;
         for d in tu.get_diagnostics() {
             let sev = match d.get_severity() {
-                clang::diagnostic::Severity::Fatal | clang::diagnostic::Severity::Error => {
+                clang::diagnostic::Severity::Fatal => {
+                    has_fatal = true;
                     Severity::Error
                 }
+                clang::diagnostic::Severity::Error => Severity::Error,
                 clang::diagnostic::Severity::Warning => Severity::Warning,
                 clang::diagnostic::Severity::Note => Severity::Info,
                 clang::diagnostic::Severity::Ignored => continue,
@@ -65,6 +68,25 @@ impl Session {
                 diag = diag.with_span(s);
             }
             diags.push(diag);
+        }
+
+        // fatal error 出てる時点で AST が壊れている．古い libclang で
+        // from_entity が SEGV することがあるため，AST 走査をスキップして
+        // ダミーの空 TU ノードを返す．
+        if has_fatal {
+            let root = OwnedNode {
+                kind: "TranslationUnit".to_string(),
+                name: path.display().to_string(),
+                span: Some(Span {
+                    file: path.to_path_buf(),
+                    byte_start: 0,
+                    byte_end: 0,
+                    line: 1,
+                    column: 1,
+                }),
+                ..Default::default()
+            };
+            return Ok((root, diags));
         }
 
         let mut root = OwnedNode::from_entity(&tu.get_entity(), path);
