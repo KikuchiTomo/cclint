@@ -1,7 +1,6 @@
 #pragma once
 
 // using namespace in header (no-using-namespace-in-header)
-#include <vector>
 namespace foo_bar { struct X {}; }
 using namespace foo_bar;
 

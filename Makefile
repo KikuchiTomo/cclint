@@ -78,8 +78,14 @@ test-rust:
 # tests/cpp_fixtures/expected.txt に grep パターンを 1 行 1 件で書いておく。
 test-fixtures: $(TARGET_BIN)
 	@echo "==> running cclint on $(FIXTURE_DIR)"
-	@OUT=$$($(TARGET_BIN) $(FIXTURE_DIR) -c $(FIXTURE_DIR)/.cclint.toml --format json 2>/dev/null || true); \
+	@OUT=$$($(TARGET_BIN) $(FIXTURE_DIR) -c $(FIXTURE_DIR)/.cclint.toml --format json 2>$(FIXTURE_DIR)/.last_run.err); \
+	EC=$$?; \
 	echo "$$OUT" > $(FIXTURE_DIR)/.last_run.json; \
+	if [ $$EC -ne 0 ] && [ $$EC -ne 1 ]; then \
+	  echo "ERROR: cclint exited with $$EC"; \
+	  echo "--- stderr ---"; cat $(FIXTURE_DIR)/.last_run.err; echo "---"; \
+	  exit 1; \
+	fi; \
 	FAIL=0; \
 	while IFS= read -r pat; do \
 	  case "$$pat" in ''|\#*) continue;; esac; \
@@ -89,19 +95,31 @@ test-fixtures: $(TARGET_BIN)
 	    echo "  MISS: $$pat"; FAIL=1; \
 	  fi; \
 	done < $(FIXTURE_DIR)/expected.txt; \
-	if [ $$FAIL -ne 0 ]; then echo "FAIL: 一部の違反が検出されませんでした"; exit 1; fi; \
+	if [ $$FAIL -ne 0 ]; then \
+	  echo "FAIL: 一部の違反が検出されませんでした"; \
+	  echo "--- stderr ---"; cat $(FIXTURE_DIR)/.last_run.err; echo "---"; \
+	  echo "--- stdout (head) ---"; echo "$$OUT" | head -30; echo "---"; \
+	  exit 1; \
+	fi; \
 	echo "PASS: 期待された違反を全て検出"
 
 # 健全なコードに対して 0 件の警告/エラーが出ることを確認 (誤検出ゼロ)。
 test-fixtures-clean: $(TARGET_BIN)
 	@echo "==> running cclint on $(CLEAN_FIXTURE_DIR) (期待: 0 件)"
-	@OUT=$$($(TARGET_BIN) $(CLEAN_FIXTURE_DIR) -c $(CLEAN_FIXTURE_DIR)/.cclint.toml --format json 2>/dev/null || true); \
+	@OUT=$$($(TARGET_BIN) $(CLEAN_FIXTURE_DIR) -c $(CLEAN_FIXTURE_DIR)/.cclint.toml --format json 2>$(CLEAN_FIXTURE_DIR)/.last_run.err); \
+	EC=$$?; \
 	echo "$$OUT" > $(CLEAN_FIXTURE_DIR)/.last_run.json; \
+	if [ $$EC -ne 0 ] && [ $$EC -ne 1 ]; then \
+	  echo "ERROR: cclint exited with $$EC"; \
+	  echo "--- stderr ---"; cat $(CLEAN_FIXTURE_DIR)/.last_run.err; echo "---"; \
+	  exit 1; \
+	fi; \
 	COUNT=$$(echo "$$OUT" | grep -c '"rule"' || true); \
 	if [ "$$COUNT" -eq 0 ]; then \
 	  echo "PASS: 誤検出 0 件"; \
 	else \
 	  echo "FAIL: 誤検出 $$COUNT 件"; \
+	  echo "--- stderr ---"; cat $(CLEAN_FIXTURE_DIR)/.last_run.err; echo "---"; \
 	  echo "$$OUT" | sed -n '1,80p'; \
 	  exit 1; \
 	fi
