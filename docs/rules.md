@@ -20,6 +20,8 @@
 | `no_global_variable.lua`           | グローバルなミュータブル変数を禁止します |
 | `no_typedef.lua`                   | `typedef` を禁止し，`using` を要求します |
 | `require_braces.lua`               | `if`/`else`/`for`/`while` の本体に `{}` を要求します |
+| `include_restriction.lua`          | `_internal.h` は対応する `_internal.cpp` からのみ include 可とします |
+| `call_only_from_main.lua`          | `init_secret` は main からのみ呼出し可とします |
 
 ## 設定例
 

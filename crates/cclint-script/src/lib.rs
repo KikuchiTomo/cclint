@@ -186,6 +186,15 @@ fn node_to_lua(lua: &Lua, n: &OwnedNode) -> mlua::Result<Table> {
     if let Some(ty) = &n.type_name {
         t.set("type_name", ty.clone())?;
     }
+    if let Some(r) = &n.referenced_name {
+        t.set("referenced_name", r.clone())?;
+    }
+    if let Some(r) = &n.referenced_usr {
+        t.set("referenced_usr", r.clone())?;
+    }
+    if let Some(f) = &n.included_file {
+        t.set("included_file", f.display().to_string())?;
+    }
     if let Some(s) = &n.span {
         let st = lua.create_table()?;
         st.set("file", s.file.display().to_string())?;
@@ -197,7 +206,9 @@ fn node_to_lua(lua: &Lua, n: &OwnedNode) -> mlua::Result<Table> {
     }
     let kids = lua.create_table()?;
     for (i, c) in n.children.iter().enumerate() {
-        kids.set(i + 1, node_to_lua(lua, c)?)?;
+        let child_tbl = node_to_lua(lua, c)?;
+        child_tbl.set("parent", t.clone())?;
+        kids.set(i + 1, child_tbl)?;
     }
     t.set("children", kids)?;
     Ok(t)

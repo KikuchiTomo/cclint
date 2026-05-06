@@ -49,8 +49,12 @@ cclint.register("ルール名", {
 | `is_virtual`        | bool    | 仮想関数か |
 | `is_pure_virtual`   | bool    | 純粋仮想関数か |
 | `type_name`         | string? | 型表記 |
+| `referenced_name`   | string? | 参照先の宣言の名前 (例: `CallExpr` → 呼ばれている関数名) |
+| `referenced_usr`    | string? | 参照先の USR |
+| `included_file`     | string? | `InclusionDirective` の場合，解決後のファイルパス |
 | `span`              | table?  | 位置情報 (`file`, `line`, `column`, `byte_start`, `byte_end`) |
 | `children`          | table   | 子ノードの配列 |
+| `parent`            | table?  | 親ノード (ルートのみ nil) |
 
 ## kind の例
 
@@ -101,8 +105,17 @@ cclint.register("private-prefix-for-classA", {
 })
 ```
 
+## include / call 関係の取得
+
+専用 API は用意しません．AST に既に含まれる情報を使ってください．
+
+- include は `InclusionDirective` ノードの `included_file` で解決後パスが取れる．
+- 呼出は `CallExpr` ノードの `referenced_name` / `referenced_usr` で呼出先が引ける．
+- 呼出元の関数は `parent` を辿って `FunctionDecl` / `Method` を探す．
+
+`examples/rules/include_restriction.lua` と `examples/rules/call_only_from_main.lua`
+が実装例です．
+
 ## 制限
 
-- ノードの親への参照はまだありません (子方向のみ辿れます)．
-- include グラフ・コールグラフの公開 API はまだありません．
 - 並列処理には対応していません．

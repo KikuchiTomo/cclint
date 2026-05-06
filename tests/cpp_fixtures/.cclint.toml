@@ -43,3 +43,9 @@ path = "../../examples/rules/no_typedef.lua"
 
 [[rules]]
 path = "../../examples/rules/require_braces.lua"
+
+[[rules]]
+path = "../../examples/rules/include_restriction.lua"
+
+[[rules]]
+path = "../../examples/rules/call_only_from_main.lua"

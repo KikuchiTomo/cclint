@@ -101,6 +101,12 @@ pub struct OwnedNode {
     pub is_virtual: bool,
     pub is_pure_virtual: bool,
     pub type_name: Option<String>,
+    /// このノードが参照する宣言の名前 (CallExpr → FunctionDecl 等)。
+    pub referenced_name: Option<String>,
+    /// 参照先の USR。同一の関数/宣言を一意に識別したいときに使う。
+    pub referenced_usr: Option<String>,
+    /// `#include` ディレクティブの場合、解決後のファイルパス。
+    pub included_file: Option<PathBuf>,
     pub span: Option<Span>,
     pub children: Vec<OwnedNode>,
 }
@@ -119,6 +125,9 @@ impl OwnedNode {
         let is_virtual = e.is_virtual_method();
         let is_pure_virtual = e.is_pure_virtual_method();
         let type_name = e.get_type().map(|t| t.get_display_name());
+        let referenced_name = e.get_reference().and_then(|r| r.get_name());
+        let referenced_usr = e.get_reference().and_then(|r| r.get_usr().map(|u| u.0));
+        let included_file = e.get_file().map(|f| PathBuf::from(f.get_path()));
         let span = e.get_range().map(|r| {
             let s = r.get_start().get_file_location();
             let end = r.get_end().get_file_location();
@@ -150,6 +159,9 @@ impl OwnedNode {
             is_virtual,
             is_pure_virtual,
             type_name,
+            referenced_name,
+            referenced_usr,
+            included_file,
             span,
             children,
         }

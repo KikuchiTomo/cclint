@@ -13,3 +13,5 @@ max-function-params
 no-global-variable
 no-typedef
 require-braces
+include-restriction
+call-only-from-main
