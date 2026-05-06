@@ -58,7 +58,11 @@ if [ "$OS" = "darwin" ]; then
     [ -f "$XCODE_LIB/libclang.dylib" ] && LIBCLANG_SRC="$XCODE_LIB/libclang.dylib"
   fi
 else
-  LLVM_CONFIG="$(command -v llvm-config-18 llvm-config-17 llvm-config-16 llvm-config-15 llvm-config-14 llvm-config 2>/dev/null | head -1 || true)"
+  # Pick the highest available llvm-config-<N> on PATH.
+  LLVM_CONFIG="$(ls /usr/bin/llvm-config-* /usr/local/bin/llvm-config-* 2>/dev/null | sort -V | tail -1 || true)"
+  if [ -z "$LLVM_CONFIG" ]; then
+    LLVM_CONFIG="$(command -v llvm-config 2>/dev/null || true)"
+  fi
   if [ -n "$LLVM_CONFIG" ]; then
     LIBDIR="$($LLVM_CONFIG --libdir)"
     for cand in "$LIBDIR/libclang.so" "$LIBDIR/libclang.so.1" $LIBDIR/libclang-*.so.*; do

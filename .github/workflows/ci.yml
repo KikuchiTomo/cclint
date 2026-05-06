@@ -28,11 +28,16 @@ jobs:
           toolchain: ${{ matrix.rust }}
           components: rustfmt, clippy
 
-      - name: Install libclang (Ubuntu)
+      - name: Install latest LLVM (Ubuntu)
         if: startsWith(matrix.os, 'ubuntu-')
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libclang-dev llvm-dev pkg-config
+          wget -O /tmp/llvm.sh https://apt.llvm.org/llvm.sh
+          chmod +x /tmp/llvm.sh
+          sudo /tmp/llvm.sh all
+          sudo apt-get install -y pkg-config
+          LLVM_VER=$(ls /usr/bin/llvm-config-* 2>/dev/null | sort -V | tail -1 | sed 's/.*-//')
+          echo "Installed LLVM: $LLVM_VER"
+          sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-$LLVM_VER 100
 
       - name: Install libclang (macOS)
         if: startsWith(matrix.os, 'macos-')
