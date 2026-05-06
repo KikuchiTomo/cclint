@@ -432,68 +432,7 @@ fn run() -> Result<ExitCode> {
         None
     };
 
-    // 直接 compile_commands.json にエントリがある cpp を先に parse して，
-    // include している header → source の対応を compile_db に書き戻す．
-    // これにより後段でヘッダを parse するとき ヘッダを include している
-    // ソースの引数が使える (clangd HeaderIncluderCache 相当)．
-    if let Some(db) = compile_db.as_mut() {
-        let direct_sources: Vec<&std::path::PathBuf> = files
-            .iter()
-            .filter(|f| {
-                let canon = f.canonicalize().unwrap_or((*f).clone());
-                db.has_direct_entry(&canon)
-            })
-            .collect();
-        if !direct_sources.is_empty() && args.verbose {
-            eprintln!(
-                "==> 事前 parse: 直接エントリ {} 件から include 関係を抽出",
-                direct_sources.len()
-            );
-        }
-        for f in &direct_sources {
-            let extra = db.arguments_for(f).unwrap_or_default();
-            let res = if let Some(s) = &session_inproc {
-                s.parse_file(f, &cfg.cpp_standard, &extra)
-            } else {
-                parse_in_subprocess(&exe, f, &args.config, &extra)
-            };
-            if let Ok((ast, _)) = res {
-                let mut headers: Vec<std::path::PathBuf> = Vec::new();
-                collect_inclusions(&ast, &mut headers);
-                db.record_includes(f, &headers);
-                // 既に AST を持ってるので保持して二度 parse しないようにする
-                parsed.push((f.to_path_buf(), ast));
-            }
-        }
-    }
-
-    // プログレスバー: stderr が TTY かつ --quiet でないとき表示．
-    let progress = if !args.quiet && !args.verbose && atty_stderr() {
-        let pb = indicatif::ProgressBar::new(files.len() as u64);
-        pb.set_style(
-            indicatif::ProgressStyle::with_template(
-                "{spinner:.green} [{elapsed_precise}] [{bar:30.cyan/blue}] {pos}/{len} {wide_msg}",
-            )
-            .unwrap()
-            .progress_chars("=>-"),
-        );
-        Some(pb)
-    } else {
-        None
-    };
-
-    let already_parsed: std::collections::HashSet<std::path::PathBuf> =
-        parsed.iter().map(|(p, _)| p.clone()).collect();
-
-    // 残ファイル: 直接 parse 済み以外 + ヘッダ等
-    let pending: Vec<std::path::PathBuf> = files
-        .iter()
-        .filter(|f| !already_parsed.contains(*f))
-        .cloned()
-        .collect();
-
-    // jobs を rayon に設定．--no-subprocess の場合は libclang が
-    // 同一プロセス内で並列に動かないため強制 1．
+    // jobs 解決．--no-subprocess は libclang 制約で 1 並列．
     let jobs = if args.no_subprocess {
         1
     } else if args.jobs == 0 {
@@ -511,8 +450,117 @@ fn run() -> Result<ExitCode> {
         eprintln!("==> 並列 parse: jobs={jobs}");
     }
 
-    // 並列 parse．compile_db は内部で Mutex なし HashMap だが ProjectIndex 経由
-    // で書き戻す訳ではないので &CompilationDatabase は単に共有して読むだけ．
+    // プログレスバー: stderr が TTY かつ --quiet でないとき表示．
+    let progress = if !args.quiet && !args.verbose && atty_stderr() {
+        let pb = indicatif::ProgressBar::new(files.len() as u64);
+        pb.set_style(
+            indicatif::ProgressStyle::with_template(
+                "{spinner:.green} [{elapsed_precise}] [{bar:30.cyan/blue}] {pos}/{len} {wide_msg}",
+            )
+            .unwrap()
+            .progress_chars("=>-"),
+        );
+        pb.enable_steady_tick(std::time::Duration::from_millis(120));
+        Some(pb)
+    } else {
+        None
+    };
+
+    // 直接 compile_commands.json にエントリがある cpp を先に parse して，
+    // include している header → source の対応を compile_db に書き戻す．
+    // これでヘッダを parse する際にそれを include しているソースの引数を
+    // 流用できる (clangd HeaderIncluderCache 相当)．
+    if let Some(db) = compile_db.as_mut() {
+        let direct_sources: Vec<std::path::PathBuf> = files
+            .iter()
+            .filter(|f| {
+                let canon = f.canonicalize().unwrap_or((*f).clone());
+                db.has_direct_entry(&canon)
+            })
+            .cloned()
+            .collect();
+        if !direct_sources.is_empty() {
+            eprintln!(
+                "==> pre-parse: {} 件の直接エントリから include 関係を抽出",
+                direct_sources.len()
+            );
+        }
+        let cpp_std = cfg.cpp_standard.clone();
+        let cfg_path = args.config.clone();
+        let exe_ref = &exe;
+        let progress_ref = &progress;
+        let inproc = session_inproc.is_some();
+
+        // 並列に parse．record_includes は後でメインスレッドが集約．
+        type PreParseRes = (
+            std::path::PathBuf,
+            Result<(cclint_ast::OwnedNode, Vec<Diagnostic>)>,
+        );
+        let pre_results: Vec<PreParseRes> = if inproc {
+            // session_inproc は Send 不可 (Lua との互換でラップしてないため)
+            let s = session_inproc.as_ref().unwrap();
+            direct_sources
+                .iter()
+                .map(|f| {
+                    if let Some(pb) = progress_ref {
+                        pb.set_message(format!(
+                            "(pre) {}",
+                            f.file_name().unwrap_or_default().to_string_lossy()
+                        ));
+                    }
+                    let extra = db.arguments_for(f).unwrap_or_default();
+                    let r = s.parse_file(f, &cpp_std, &extra);
+                    if let Some(pb) = progress_ref {
+                        pb.inc(1);
+                    }
+                    (f.clone(), r)
+                })
+                .collect()
+        } else {
+            pool.install(|| {
+                use rayon::prelude::*;
+                direct_sources
+                    .par_iter()
+                    .map(|f| {
+                        if let Some(pb) = progress_ref {
+                            pb.set_message(format!(
+                                "(pre) {}",
+                                f.file_name().unwrap_or_default().to_string_lossy()
+                            ));
+                        }
+                        let extra = db.arguments_for(f).unwrap_or_default();
+                        let r = parse_in_subprocess(exe_ref, f, &cfg_path, &extra);
+                        if let Some(pb) = progress_ref {
+                            pb.inc(1);
+                        }
+                        (f.clone(), r)
+                    })
+                    .collect()
+            })
+        };
+
+        // 集約: include 関係を db に書き戻し，AST を parsed に積む
+        for (f, res) in pre_results {
+            if let Ok((ast, _)) = res {
+                let mut headers: Vec<std::path::PathBuf> = Vec::new();
+                collect_inclusions(&ast, &mut headers);
+                db.record_includes(&f, &headers);
+                parsed.push((f, ast));
+            }
+        }
+    }
+
+    let already_parsed: std::collections::HashSet<std::path::PathBuf> =
+        parsed.iter().map(|(p, _)| p.clone()).collect();
+
+    // 残ファイル: 直接 parse 済み以外 + ヘッダ等
+    let pending: Vec<std::path::PathBuf> = files
+        .iter()
+        .filter(|f| !already_parsed.contains(*f))
+        .cloned()
+        .collect();
+
+    // 並列 parse．compile_db は読むだけ (record_includes は事前 parse 段で完了)．
     let extra_args_default = cfg.extra_args.clone();
     let cpp_std = cfg.cpp_standard.clone();
     let progress_ref = &progress;
