@@ -138,12 +138,16 @@ fn run() -> Result<ExitCode> {
 
     let session = Session::new()?;
     let mut all: Vec<Diagnostic> = Vec::new();
+
+    // フェーズ 1: 全ファイルを parse し，AST を一旦保持しつつプロジェクト
+    // インデックスを構築する．
+    let mut parsed: Vec<(std::path::PathBuf, cclint_ast::OwnedNode)> = Vec::new();
     for f in &files {
         match session.parse_file(f, &cfg.cpp_standard, &[]) {
             Ok((ast, mut diags)) => {
                 all.append(&mut diags);
-                let mut rule_diags = engine.run(&ast)?;
-                all.append(&mut rule_diags);
+                engine.add_project_root(f, &ast);
+                parsed.push((f.clone(), ast));
             }
             Err(e) => {
                 all.push(Diagnostic::new(
@@ -153,6 +157,13 @@ fn run() -> Result<ExitCode> {
                 ));
             }
         }
+    }
+
+    // フェーズ 2: 各 AST に対してルールを実行する．
+    // プロジェクトインデックスは Lua から `cclint.project_*` で参照可能．
+    for (_, ast) in &parsed {
+        let mut rule_diags = engine.run(ast)?;
+        all.append(&mut rule_diags);
     }
 
     // (rule, file, line, column, message) で重複を削除
@@ -176,5 +187,9 @@ fn run() -> Result<ExitCode> {
     let has_error = all.iter().any(|d| d.severity == Severity::Error);
     let has_warn = all.iter().any(|d| d.severity == Severity::Warning);
     let fail = has_error || (args.werror && has_warn);
-    Ok(if fail { ExitCode::from(1) } else { ExitCode::SUCCESS })
+    Ok(if fail {
+        ExitCode::from(1)
+    } else {
+        ExitCode::SUCCESS
+    })
 }

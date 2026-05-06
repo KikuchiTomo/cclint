@@ -49,3 +49,6 @@ path = "../../examples/rules/include_restriction.lua"
 
 [[rules]]
 path = "../../examples/rules/call_only_from_main.lua"
+
+[[rules]]
+path = "../../examples/rules/no_external_internal_ref.lua"

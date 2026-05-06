@@ -73,15 +73,17 @@ pub fn emit_text(diags: &[Diagnostic]) -> std::io::Result<()> {
                     let src = std::fs::read_to_string(&span.file).unwrap_or_default();
                     files.add(span.file.display().to_string(), src)
                 });
-                let label = Label::primary(id, span.byte_start..span.byte_end)
-                    .with_message(&d.message);
+                let label =
+                    Label::primary(id, span.byte_start..span.byte_end).with_message(&d.message);
                 let mut cd = match d.severity {
                     Severity::Error => CDiag::error(),
                     Severity::Warning => CDiag::warning(),
                     Severity::Info => CDiag::note(),
                     Severity::Hint => CDiag::help(),
                 };
-                cd = cd.with_message(format!("[{}] {}", d.rule, d.message)).with_labels(vec![label]);
+                cd = cd
+                    .with_message(format!("[{}] {}", d.rule, d.message))
+                    .with_labels(vec![label]);
                 if !d.notes.is_empty() {
                     cd = cd.with_notes(d.notes.clone());
                 }

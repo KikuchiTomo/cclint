@@ -46,7 +46,12 @@ fn default_cpp_standard() -> String {
     "c++17".into()
 }
 fn default_includes() -> Vec<String> {
-    vec!["**/*.cpp".into(), "**/*.cc".into(), "**/*.h".into(), "**/*.hpp".into()]
+    vec![
+        "**/*.cpp".into(),
+        "**/*.cc".into(),
+        "**/*.h".into(),
+        "**/*.hpp".into(),
+    ]
 }
 
 impl Config {
@@ -56,8 +61,8 @@ impl Config {
         if !path.exists() {
             return Ok(Self::default());
         }
-        let text =
-            std::fs::read_to_string(path).with_context(|| format!("読込失敗: {}", path.display()))?;
+        let text = std::fs::read_to_string(path)
+            .with_context(|| format!("読込失敗: {}", path.display()))?;
         let cfg: Self = toml::from_str(&text)
             .with_context(|| format!("TOML パース失敗: {}", path.display()))?;
         Ok(cfg)
