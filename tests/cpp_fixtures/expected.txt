@@ -1,0 +1,15 @@
+# make test-fixtures が JSON 出力に対して 1 行 1 パターンで grep する。
+private-prefix-for-classA
+header-pragma-once
+forbid-global-new
+class-pascal-case
+function-snake-case
+no-using-namespace-in-header
+no-c-style-cast
+forbid-plain-enum
+explicit-single-arg-ctor
+virtual-destructor-required
+max-function-params
+no-global-variable
+no-typedef
+require-braces

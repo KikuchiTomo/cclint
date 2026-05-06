@@ -1,174 +1,62 @@
-# Claude Code 開発ガイド
-
-このドキュメントは、Claude Codeを使用してcclintプロジェクトを開発する際のガイドラインです。
+# Claude Code 開発ガイド (cclint)
 
 ## プロジェクト概要
 
-**プロジェクト名**: cclint - Customizable C++ Linter
-**開発言語**: C++17
-**対象環境**: Ubuntu 20.04+, macOS 11+
-**開発体制**: Claude Code支援による開発
+**cclint** — libclang + Lua の C++ linter。
 
-## 重要な原則
+- 言語: Rust (stable)
+- AST: libclang を内部組み込み (`clang` crate FFI)
+- ルール記述: Lua 5.4 (`mlua` crate, vendored)
+- 設定: `.cclint.toml`
 
-### 1. TODOリストの管理（最重要）
-
-**docs/TODO.md** はプロジェクトの進捗管理の中心です。すべての作業はTODOリストに基づいて行います。
-
-#### 作業開始前の必須手順
+## ディレクトリ構成
 
 ```
-1. docs/TODO.mdを開いて確認する
-2. 作業するタスクを見つける
-3. タスクのステータスを [ ] から [>] に変更する
-4. 依存関係を確認する
-5. 作業を開始する
+crates/
+  cclint-cli/         # バイナリ (clap)
+  cclint-config/      # .cclint.toml ローダ
+  cclint-ast/         # libclang ラッパ + OwnedNode
+  cclint-script/      # Lua バインディング
+  cclint-diagnostic/  # 診断データ + codespan-reporting 出力
+examples/rules/       # サンプル Lua ルール
+tests/cpp_fixtures/   # e2e テスト用の C++ プロジェクト
+Makefile              # build / run / test / install / clean
 ```
 
-#### 作業中の手順
+## 開発コマンド
 
 ```
-1. 新しいタスクが見つかったらTODO.mdに追加する
-2. ブロック事項があれば [!] にして理由を記載する
-3. 進捗をこまめにTODO.mdに反映する
-4. 関連するドキュメントも併せて更新する
+make build          # リリースビルド
+make test           # cargo test + fixture 検出 e2e
+make test-rust      # cargo test のみ
+make test-fixtures  # fixture の e2e のみ
+make fmt / lint
+make install / uninstall
+make clean
 ```
 
-#### 作業完了後の必須手順
+## 設計上の不変条件
 
-```
-1. タスクのステータスを [>] から [x] に変更する
-2. 実装したコードをテストする
-3. 関連ドキュメントを更新する
-4. 変更をコミットする
-5. TODO.mdの変更もコミットに含める
-```
+- **デフォルトでルール 0**。組込ルールは追加しない。
+- **すべての Lua ルール名・メッセージは UTF-8**。日本語 OK。
+- **AST ノードは値型 `OwnedNode`** に変換してから Lua へ渡す。
+  libclang の `Entity` を直接 Lua に渡さないこと (寿命管理が破綻するため)。
+- **clang 診断はそのまま `Diagnostic` として流す**。構文エラーが見えなくならないように。
 
-## Phase/実装計画完了時のサブエージェント検証手順
+## 拡張ポイント
 
-### 概要
+将来的に増やすべき API:
 
-各Phase（または大きな実装計画）の完了時には、実装漏れや保留事項がないかをサブエージェントに確認させます。これにより、計画された機能が全て実装されていることを保証します。
+- `ctx:include_graph()` — include グラフ (cross-file ルール用)
+- `ctx:call_graph()`    — 関数呼び出しグラフ (例: 「main からしか呼ばない」)
+- `ctx:lifetime_events()` — new/delete の対応追跡
+- ノードの親参照 (`node:parent()`) — 現在は子方向のみ
 
-### 手順
+これらは `cclint-ast` に解析パスを足し、`cclint-script` で `ctx` テーブルに
+バインドする形で追加する。
 
-1. **検証タイミング**
-   - Phase完了時
-   - マイルストーン達成時
-   - 大きな機能実装完了時
+## 注意
 
-2. **サブエージェントの起動**
-
-   以下のコマンドで Explore エージェントを起動します：
-
-   ```
-   Task tool with subagent_type=Explore
-   ```
-
-3. **検証タスクの指示**
-
-   サブエージェントに以下を指示します：
-
-   ```
-   docs/PARSER_IMPLEMENTATION_PLAN.md（または該当する計画ドキュメント）を読み、
-   Phase X（または該当Phase）について以下を確認してください：
-
-   1. チェックリストで [ ] (未完了) の項目がないか
-   2. "TODO" や "保留" などの文言がないか
-   3. "Phase X で実装する" と書かれている機能が全て実装されているか
-   4. 実装されたコードと計画の整合性
-
-   発見した問題をリストアップして報告してください。
-   ```
-
-4. **結果の確認**
-
-   - サブエージェントの報告を確認
-   - 問題が見つかった場合は対応
-   - 問題がない場合は次のPhaseへ進む
-
-5. **記録**
-
-   - 検証結果をコミットメッセージに記載
-   - 重大な問題があった場合はTODO.mdに追加
-
-### 例
-
-```markdown
-Phase 2 完了後の検証：
-
-1. サブエージェントを起動
-   - Task tool (subagent_type=Explore)
-
-2. 指示内容：
-   "docs/PARSER_IMPLEMENTATION_PLAN.mdのPhase 2セクションを確認し、
-    全ての機能が実装されているか、保留項目がないかチェックしてください。"
-
-3. 検証結果：
-   - ✓ 全てのチェックリスト項目が完了
-   - ✓ 保留項目なし
-   - ✓ 実装と計画の整合性OK
-
-4. コミットメッセージに記載：
-   "Verified by subagent: All Phase 2 features implemented, no pending items"
-```
-
-### 注意事項
-
-- 検証は**必ず実施**すること（スキップ不可）
-- サブエージェントの報告を鵜呑みにせず、重要な指摘は自分でも確認
-- 計画ドキュメント（PARSER_IMPLEMENTATION_PLAN.md等）は最新状態に保つ
-- 検証で問題が見つかった場合は、次のPhaseに進む前に対応
-
-## 長時間作業モード
-
-### 指示内容
-
-ユーザーが不在の間、token使い切るまで自律的に作業を続ける場合の手順：
-
-1. **PRを分けない**: 適宜commitしながら同じブランチで作業を続ける
-2. **TODOリストに従う**: docs/TODO.mdにあるタスクを一つずつ実行
-3. **途中で止めない**: token使い切るまでずっと作業を続ける
-4. **適宜commit**: 意味のある単位でcommitする（PRは後でまとめて作成）
-5. **承認不要**: ユーザーの承認を待たずに進める
-
-### 作業の進め方
-
-```
-1. docs/TODO.mdを読む
-2. 未着手のタスクを見つける
-3. タスクを [>] に変更
-4. タスクを実装
-5. テストする
-6. commitする
-7. タスクを [x] に変更
-8. TODO.mdもcommitする
-9. 次のタスクへ（1に戻る）
-10. token切れまで繰り返す
-```
-
-### commitメッセージの形式
-
-```
-<type>: <タスクの簡潔な説明>
-
-実装内容の詳細:
-- 具体的な変更1
-- 具体的な変更2
-- 具体的な変更3
-
-関連TODO項目: [Milestone X]
-
-Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
-```
-
-## 最後に
-
-このプロジェクトの成功の鍵は：
-1. **TODO.mdの適切な管理**
-2. **実装計画の検証（サブエージェント活用）**
-3. **継続的なドキュメント更新**
-
-これらを徹底することで、プロジェクトの方向性が保たれ、実装漏れを防げます。
-
-Happy Coding! 🚀
+- `clang` crate は `Clang::new()` をプロセスで一回しか呼べない。
+  `Session` で 1 回作って使い回す。
+- 並列化は将来の課題。現状は逐次処理。

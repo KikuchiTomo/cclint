@@ -1,0 +1,13 @@
+[package]
+name = "cclint-script"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+mlua.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+cclint-ast.workspace = true
+cclint-diagnostic.workspace = true

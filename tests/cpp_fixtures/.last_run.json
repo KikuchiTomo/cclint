@@ -1,0 +1,327 @@
+[
+  {
+    "rule": "header-pragma-once",
+    "severity": "warning",
+    "message": "ヘッダ `/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/foo.h` に #pragma once がありません",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/foo.h",
+      "byte_start": 0,
+      "byte_end": 0,
+      "line": 1,
+      "column": 1
+    },
+    "notes": []
+  },
+  {
+    "rule": "private-prefix-for-classA",
+    "severity": "warning",
+    "message": "クラス `FooClassA` の private メンバ `bad_y` は `private_` で始めてください",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/foo.h",
+      "byte_start": 230,
+      "byte_end": 239,
+      "line": 9,
+      "column": 5
+    },
+    "notes": []
+  },
+  {
+    "rule": "forbid-global-new",
+    "severity": "warning",
+    "message": "`new` の直接使用は避け、std::make_unique / std::make_shared を検討してください",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/main.cpp",
+      "byte_start": 44,
+      "byte_end": 55,
+      "line": 4,
+      "column": 14
+    },
+    "notes": []
+  },
+  {
+    "rule": "clang",
+    "severity": "error",
+    "message": "'vector' file not found",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/violations.h",
+      "byte_start": 83,
+      "byte_end": 83,
+      "line": 4,
+      "column": 10
+    },
+    "notes": []
+  },
+  {
+    "rule": "no-global-variable",
+    "severity": "warning",
+    "message": "グローバル変数 `g_counter` は禁止 (const/constexpr のみ可)",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/violations.cpp",
+      "byte_start": 71,
+      "byte_end": 88,
+      "line": 4,
+      "column": 1
+    },
+    "notes": []
+  },
+  {
+    "rule": "no-using-namespace-in-header",
+    "severity": "error",
+    "message": "ヘッダ内の `using namespace ` は禁止です",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/violations.h",
+      "byte_start": 127,
+      "byte_end": 150,
+      "line": 6,
+      "column": 1
+    },
+    "notes": []
+  },
+  {
+    "rule": "forbid-plain-enum",
+    "severity": "warning",
+    "message": "素の enum `Color` は禁止: enum class を使ってください",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/violations.h",
+      "byte_start": 188,
+      "byte_end": 219,
+      "line": 9,
+      "column": 1
+    },
+    "notes": []
+  },
+  {
+    "rule": "class-pascal-case",
+    "severity": "warning",
+    "message": "クラス名 `lower_case_class` は PascalCase ではありません",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/violations.h",
+      "byte_start": 263,
+      "byte_end": 441,
+      "line": 12,
+      "column": 1
+    },
+    "notes": []
+  },
+  {
+    "rule": "virtual-destructor-required",
+    "severity": "error",
+    "message": "クラス `lower_case_class` は仮想関数を持つので virtual デストラクタが必要です",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/violations.h",
+      "byte_start": 263,
+      "byte_end": 441,
+      "line": 12,
+      "column": 1
+    },
+    "notes": []
+  },
+  {
+    "rule": "explicit-single-arg-ctor",
+    "severity": "warning",
+    "message": "単一引数のコンストラクタ `Foo` は explicit を付けてください",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/violations.h",
+      "byte_start": 548,
+      "byte_end": 558,
+      "line": 21,
+      "column": 5
+    },
+    "notes": []
+  },
+  {
+    "rule": "no-typedef",
+    "severity": "warning",
+    "message": "typedef `MyInt` は禁止: `using MyInt = ...;` を使ってください",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/violations.h",
+      "byte_start": 595,
+      "byte_end": 612,
+      "line": 25,
+      "column": 1
+    },
+    "notes": []
+  },
+  {
+    "rule": "max-function-params",
+    "severity": "warning",
+    "message": "関数 `too_many_params` の引数が 6 個 (上限 5)",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/violations.h",
+      "byte_start": 653,
+      "byte_end": 775,
+      "line": 28,
+      "column": 1
+    },
+    "notes": []
+  },
+  {
+    "rule": "no-c-style-cast",
+    "severity": "warning",
+    "message": "C スタイルキャストは禁止: static_cast / reinterpret_cast / const_cast を使ってください",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/violations.h",
+      "byte_start": 725,
+      "byte_end": 732,
+      "line": 28,
+      "column": 73
+    },
+    "notes": []
+  },
+  {
+    "rule": "no-c-style-cast",
+    "severity": "warning",
+    "message": "C スタイルキャストは禁止: static_cast / reinterpret_cast / const_cast を使ってください",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/violations.h",
+      "byte_start": 733,
+      "byte_end": 740,
+      "line": 28,
+      "column": 81
+    },
+    "notes": []
+  },
+  {
+    "rule": "no-c-style-cast",
+    "severity": "warning",
+    "message": "C スタイルキャストは禁止: static_cast / reinterpret_cast / const_cast を使ってください",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/violations.h",
+      "byte_start": 741,
+      "byte_end": 748,
+      "line": 28,
+      "column": 89
+    },
+    "notes": []
+  },
+  {
+    "rule": "no-c-style-cast",
+    "severity": "warning",
+    "message": "C スタイルキャストは禁止: static_cast / reinterpret_cast / const_cast を使ってください",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/violations.h",
+      "byte_start": 749,
+      "byte_end": 756,
+      "line": 28,
+      "column": 97
+    },
+    "notes": []
+  },
+  {
+    "rule": "no-c-style-cast",
+    "severity": "warning",
+    "message": "C スタイルキャストは禁止: static_cast / reinterpret_cast / const_cast を使ってください",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/violations.h",
+      "byte_start": 757,
+      "byte_end": 764,
+      "line": 28,
+      "column": 105
+    },
+    "notes": []
+  },
+  {
+    "rule": "no-c-style-cast",
+    "severity": "warning",
+    "message": "C スタイルキャストは禁止: static_cast / reinterpret_cast / const_cast を使ってください",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/violations.h",
+      "byte_start": 765,
+      "byte_end": 772,
+      "line": 28,
+      "column": 113
+    },
+    "notes": []
+  },
+  {
+    "rule": "function-snake-case",
+    "severity": "warning",
+    "message": "関数名 `BadFunctionName` は snake_case ではありません",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/violations.cpp",
+      "byte_start": 139,
+      "byte_end": 183,
+      "line": 7,
+      "column": 1
+    },
+    "notes": []
+  },
+  {
+    "rule": "no-c-style-cast",
+    "severity": "warning",
+    "message": "C スタイルキャストは禁止: static_cast / reinterpret_cast / const_cast を使ってください",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/violations.cpp",
+      "byte_start": 274,
+      "byte_end": 283,
+      "line": 11,
+      "column": 12
+    },
+    "notes": []
+  },
+  {
+    "rule": "require-braces",
+    "severity": "warning",
+    "message": "if の本体は `{}` で囲んでください",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/violations.cpp",
+      "byte_start": 380,
+      "byte_end": 393,
+      "line": 16,
+      "column": 16
+    },
+    "notes": []
+  },
+  {
+    "rule": "require-braces",
+    "severity": "warning",
+    "message": "else の本体は `{}` で囲んでください",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/violations.cpp",
+      "byte_start": 404,
+      "byte_end": 417,
+      "line": 17,
+      "column": 10
+    },
+    "notes": []
+  },
+  {
+    "rule": "require-braces",
+    "severity": "warning",
+    "message": "ForStmt の本体は `{}` で囲んでください",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/violations.cpp",
+      "byte_start": 424,
+      "byte_end": 466,
+      "line": 19,
+      "column": 5
+    },
+    "notes": []
+  },
+  {
+    "rule": "require-braces",
+    "severity": "warning",
+    "message": "WhileStmt の本体は `{}` で囲んでください",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/violations.cpp",
+      "byte_start": 473,
+      "byte_end": 490,
+      "line": 21,
+      "column": 5
+    },
+    "notes": []
+  },
+  {
+    "rule": "clang",
+    "severity": "warning",
+    "message": "#pragma once in main file",
+    "span": {
+      "file": "/Users/tomokikuchi/repos/cclint/default/tests/cpp_fixtures/src/violations.h",
+      "byte_start": 8,
+      "byte_end": 8,
+      "line": 1,
+      "column": 9
+    },
+    "notes": []
+  }
+]

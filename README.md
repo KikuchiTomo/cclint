@@ -1,156 +1,114 @@
 # cclint
 
-A customizable C++ linter with Lua-scriptable rules.
+**Customizable C++ Linter** — libclang による AST 解析と Lua スクリプトによる
+完全カスタマイズ可能なルール記述を組み合わせた C++ 用 linter。
 
-## Why cclint?
+## 特徴
 
-Want to add custom linting rules to your C++ project without the complexity of building against large frameworks? cclint lets you write rules in Lua.
+- **Rust 製**, libclang を内部組み込み (FFI でリンク)。
+- **AST 全要素にアクセスできる Lua API**。`cclint.register` で任意のルールを定義。
+- **デフォルトでルールゼロ**。必要なものだけ書く / 配る。
+- **日本語ルール名・日本語メッセージ**完全対応。
+- C++ 構文エラーは clang の診断としてそのまま整形表示。
 
-- Write custom rules in Lua with full AST access
-- No recompilation - edit Lua scripts and run
-- Lightweight standalone tool
-- Fast - multi-threaded analysis with file caching
+## 必要なもの
 
-## Quick Start
+- Rust (stable, 1.75+)
+- libclang (`brew install llvm` または apt の `libclang-dev` 等)
+- C 開発ツールチェーン
 
-```bash
-# Build
-git clone https://github.com/KikuchiTomo/cclint.git
-cd cclint
-make build
-
-# Run with custom rule
-./build/src/cclint --config=.cclint.yaml g++ main.cpp
-```
-
-## Build Requirements
-
-- CMake 3.16+
-- C++17 compiler (g++ or clang++)
-- LuaJIT 2.1+ (optional, for Lua rule scripts)
-- yaml-cpp 0.7+ (optional, for YAML configuration)
-
-## Usage
+## ビルド & 実行
 
 ```bash
-# Basic
-./build/src/cclint g++ main.cpp
-
-# With config
-./build/src/cclint --config=.cclint.yaml g++ main.cpp
-
-# JSON output
-./build/src/cclint --format=json g++ main.cpp
+make build      # リリースビルド
+make run        # tests/cpp_fixtures に対して example ルール実行
+make test       # cargo test + 違反検出 e2e テスト
+make install    # /usr/local/bin/cclint にインストール
+make clean
 ```
 
-## Configuration
+## 使い方
 
-`.cclint.yaml`:
+`.cclint.toml` をプロジェクト直下に置く:
 
-```yaml
-version: "1.0"
+```toml
+cpp_standard = "c++17"
+include_patterns = ["src/**/*.cpp", "src/**/*.h"]
+exclude_patterns = ["build/**"]
 
-lua_scripts:
-  - path: path/to/rule.lua
-    priority: 100
+[[rules]]
+path = "rules/private_prefix.lua"
 
-include_patterns:
-  - "*.cpp"
-  - "*.hpp"
-
-exclude_patterns:
-  - "build/**"
-
-output_format: "text"
-num_threads: 0
-enable_cache: true
+[[rules]]
+path = "rules/forbid_global_new.lua"
 ```
 
-## Writing Rules
+`cclint .` で実行。`--format json` で機械可読出力。
 
-`my_rule.lua`:
+## ルールの書き方 (Lua)
 
 ```lua
-rule_description = "Check class naming convention"
-rule_category = "naming"
-
-function check_ast()
-    local classes = cclint.get_classes()
-    for _, cls in ipairs(classes) do
-        if not cls.name:match("^[A-Z]") then
-            cclint.report_warning(cls.line, 1,
-                "Class name should start with uppercase: " .. cls.name)
-        end
+cclint.register("ルール名 (日本語OK)", {
+  description = "説明",
+  severity = "warning",   -- error / warning / info / hint
+  match = function(node) return node.kind == "ClassDecl" end,
+  check = function(node, ctx)
+    if not node.name:match("ClassA$") then return end
+    for _, child in ipairs(node.children) do
+      if child.kind == "FieldDecl" and child.access == "private"
+         and not child.name:match("^private_") then
+        cclint.report_warn(child, "private_ プレフィックスが必要です")
+      end
     end
-end
+  end,
+})
 ```
 
-## Lua API
+### 公開 API
 
-### Classes & Structs
-- `cclint.get_classes()` - All classes/structs
-- `cclint.get_class_info(name)` - Class details
-- `cclint.get_methods(class_name)` - Methods in class
-- `cclint.get_method_info(class, method)` - Method details
-- `cclint.get_fields(class_name)` - Member variables
-- `cclint.get_field_info(class, field)` - Field details
-- `cclint.get_constructors()` - All constructors
-- `cclint.get_destructor_info(class)` - Destructor details
-- `cclint.get_operators()` - Operator overloads
+| 関数 | 用途 |
+|---|---|
+| `cclint.register(name, def)` | ルール登録 |
+| `cclint.report_error(target, msg)` | エラーを報告 |
+| `cclint.report_warn(target, msg)`  | 警告を報告 |
+| `cclint.report_info(target, msg)`  | 情報を報告 |
+| `cclint.report_hint(target, msg)`  | ヒントを報告 |
 
-### Functions & Variables
-- `cclint.get_functions()` - All functions
-- `cclint.get_variables()` - Global variables
-- `cclint.get_variable_info(name)` - Variable details
+`target` は AST ノード or `{ span = { file=, line=, column=, byte_start=, byte_end= } }`。
 
-### Types
-- `cclint.get_enums()` - All enums
-- `cclint.get_typedefs()` - All typedefs
-- `cclint.get_usings()` - Using declarations
-- `cclint.get_namespaces()` - All namespaces
-- `cclint.get_templates()` - Template declarations
+### ノード属性
 
-### Control Flow
-- `cclint.get_switches()` - Switch statements
-- `cclint.get_if_statements()` - If statements
-- `cclint.get_loops()` - Loops
-- `cclint.get_try_statements()` - Try-catch blocks
-- `cclint.get_return_statements()` - Return statements
-
-### Call Graph
-- `cclint.get_call_graph()` - Function call graph
-- `cclint.get_function_calls()` - All function calls
-- `cclint.get_callers(function)` - Functions calling target
-- `cclint.get_callees(function)` - Functions called by target
-
-### Advanced
-- `cclint.get_lambdas()` - Lambda expressions
-- `cclint.get_friends()` - Friend declarations
-- `cclint.get_inheritance_tree()` - Class hierarchy
-- `cclint.get_attributes()` - C++ attributes
-
-### Preprocessor
-- `cclint.get_macros()` - Macro definitions
-- `cclint.get_macro_info(name)` - Macro details
-- `cclint.get_comments()` - Comments
-- `cclint.get_includes()` - Include directives
-
-### Reporting
-- `cclint.report_error(line, col, msg)`
-- `cclint.report_warning(line, col, msg)`
-- `cclint.report_info(line, col, msg)`
-
-### File Context
-- `file_path` - Current file path
-- `file_lines` - Array of lines
-
-## Testing
-
-```bash
-cd build
-ctest --output-on-failure
+```
+kind, name, display_name, spelling, usr,
+access ("public"/"protected"/"private"),
+is_definition, is_const, is_static, is_virtual, is_pure_virtual,
+type_name, span = {file, line, column, byte_start, byte_end},
+children = [ ... ]
 ```
 
-## License
+`kind` は libclang の `CursorKind` (`ClassDecl`, `FieldDecl`, `FunctionDecl`,
+`CXXMethodDecl`, `CXXNewExpr`, `CXXDeleteExpr` など) をそのまま文字列化したもの。
 
-See LICENSE file for details.
+## サンプルルール (`examples/rules/`)
+
+| ファイル | 概要 |
+|---|---|
+| `private_prefix.lua`              | 特定 suffix のクラスで `private_` 命名強制 |
+| `forbid_global_new.lua`           | 素の `new` 禁止 |
+| `header_pragma_once.lua`          | ヘッダに `#pragma once` 必須 |
+| `lifo_new_delete.lua`             | `new`/`delete` の LIFO 順序チェック (雛形) |
+| `class_pascal_case.lua`           | クラス/構造体名は PascalCase |
+| `function_snake_case.lua`         | 自由関数は snake_case |
+| `no_using_namespace_in_header.lua`| ヘッダで `using namespace` 禁止 |
+| `no_c_style_cast.lua`             | C スタイルキャスト禁止 |
+| `forbid_plain_enum.lua`           | 素の `enum` 禁止 (`enum class` 必須) |
+| `explicit_single_arg_ctor.lua`    | 単一引数コンストラクタは `explicit` 必須 |
+| `virtual_destructor.lua`          | 仮想関数を持つクラスは virtual デストラクタ必須 |
+| `max_function_params.lua`         | 引数 5 個まで |
+| `no_global_variable.lua`          | グローバル変数禁止 (const/constexpr 除く) |
+| `no_typedef.lua`                  | `typedef` 禁止 (`using` 推奨) |
+| `require_braces.lua`              | `if/else/for/while` 本体は必ず `{}` で囲む |
+
+## ライセンス
+
+Apache-2.0

@@ -1,64 +1,9 @@
-# Prerequisites
-*.d
+# Rust
+/target
+**/*.rs.bk
+Cargo.lock.bak
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Linker files
-*.ilk
-
-# Debugger Files
-*.pdb
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-cclint
-/test
-*.exe
-*.out
-*.app
-
-# Debug information files
-*.dwo
-
-# Build directories
-build/
-build-*/
-cmake-build-*/
-_codeql_build_dir/
-_codeql_detected_source_root
-
-# CMake
-CMakeCache.txt
-CMakeFiles/
-cmake_install.cmake
-# Makefile is tracked
-*.cmake
-!CMakeLists.txt
-!cmake/*.cmake
-
-# Cache
+# cclint
 .cclint_cache/
 *.cache
 
@@ -70,32 +15,14 @@ cmake_install.cmake
 *~
 .DS_Store
 
-# Test outputs
-Testing/
-CTestTestfile.cmake
+# Test fixtures build artifacts
+tests/cpp_fixtures/build/
+tests/cpp_fixtures/**/compile_commands.json.local
+
+# Logs
 *.log
 
-# Package files
-*.deb
-*.rpm
-*.tar.gz
-*.zip
-
-# Profiling
-gmon.out
-*.gcda
-*.gcno
-*.gcov
-
-# Temporary files
+# OS
 *.tmp
 *.bak
 *.orig
-
-# Third-party (if not using submodules properly)
-third_party/*/
-!third_party/README.md
-
-# CodeQL build artifacts
-_codeql_build_dir/
-_codeql_detected_source_root

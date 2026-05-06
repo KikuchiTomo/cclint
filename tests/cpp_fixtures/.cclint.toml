@@ -1,0 +1,45 @@
+cpp_standard = "c++17"
+include_patterns = ["src/**/*.cpp", "src/**/*.h", "src/**/*.hpp"]
+exclude_patterns = ["build/**"]
+
+[[rules]]
+path = "../../examples/rules/private_prefix.lua"
+
+[[rules]]
+path = "../../examples/rules/forbid_global_new.lua"
+
+[[rules]]
+path = "../../examples/rules/header_pragma_once.lua"
+
+[[rules]]
+path = "../../examples/rules/class_pascal_case.lua"
+
+[[rules]]
+path = "../../examples/rules/function_snake_case.lua"
+
+[[rules]]
+path = "../../examples/rules/no_using_namespace_in_header.lua"
+
+[[rules]]
+path = "../../examples/rules/no_c_style_cast.lua"
+
+[[rules]]
+path = "../../examples/rules/forbid_plain_enum.lua"
+
+[[rules]]
+path = "../../examples/rules/explicit_single_arg_ctor.lua"
+
+[[rules]]
+path = "../../examples/rules/virtual_destructor.lua"
+
+[[rules]]
+path = "../../examples/rules/max_function_params.lua"
+
+[[rules]]
+path = "../../examples/rules/no_global_variable.lua"
+
+[[rules]]
+path = "../../examples/rules/no_typedef.lua"
+
+[[rules]]
+path = "../../examples/rules/require_braces.lua"
