@@ -42,7 +42,7 @@ FIXTURE_DIR := tests/cpp_fixtures
 CLEAN_FIXTURE_DIR := tests/cpp_fixtures_clean
 EXAMPLE_RULES := examples/rules
 
-.PHONY: all build run test test-rust test-fixtures test-fixtures-clean install uninstall clean fmt lint check help
+.PHONY: all build run test test-rust test-fixtures test-fixtures-clean dist install uninstall clean fmt lint check help
 
 all: build
 
@@ -54,6 +54,7 @@ help:
 	@echo "make test-fixtures - C++ fixture に対する検出テストのみ"
 	@echo "make fmt         - cargo fmt"
 	@echo "make lint        - cargo clippy"
+	@echo "make dist        - 配布用 tarball (cclint + libclang) を作る"
 	@echo "make install     - $(BINDIR) に cclint をインストール"
 	@echo "make uninstall   - $(BINDIR)/cclint を削除"
 	@echo "make clean       - target/ を削除"
@@ -113,6 +114,9 @@ lint:
 
 check:
 	$(CARGO) check --workspace
+
+dist: build
+	./scripts/dist.sh dist
 
 install: build
 	install -d $(DESTDIR)$(BINDIR)

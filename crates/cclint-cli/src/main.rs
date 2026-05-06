@@ -49,11 +49,59 @@ fn main() -> ExitCode {
         .with_target(false)
         .init();
 
+    setup_bundled_libclang();
+
     match run() {
         Ok(code) => code,
         Err(e) => {
             eprintln!("cclint: エラー: {e:#}");
             ExitCode::from(2)
+        }
+    }
+}
+
+/// バイナリの隣 (`<bin>/../lib/libclang.*`) に同梱された libclang があれば
+/// LIBCLANG_PATH を自動設定する．ユーザが明示的に LIBCLANG_PATH を指定して
+/// いれば尊重する．
+fn setup_bundled_libclang() {
+    if std::env::var_os("LIBCLANG_PATH").is_some() {
+        return;
+    }
+    let exe = match std::env::current_exe() {
+        Ok(p) => p,
+        Err(_) => return,
+    };
+    let lib_dir = match exe.parent().and_then(|p| p.parent()) {
+        Some(parent) => parent.join("lib"),
+        None => return,
+    };
+    if !lib_dir.is_dir() {
+        return;
+    }
+    let candidates = [
+        "libclang.dylib",
+        "libclang.so",
+        "libclang.so.1",
+        "libclang-18.so.18.1",
+        "libclang.so.18",
+        "libclang.so.17",
+        "libclang.so.14",
+    ];
+    for name in candidates {
+        if lib_dir.join(name).exists() {
+            std::env::set_var("LIBCLANG_PATH", &lib_dir);
+            return;
+        }
+    }
+    // glob: libclang.so.*
+    if let Ok(rd) = std::fs::read_dir(&lib_dir) {
+        for entry in rd.flatten() {
+            let n = entry.file_name();
+            let s = n.to_string_lossy();
+            if s.starts_with("libclang") && (s.contains(".so") || s.ends_with(".dylib")) {
+                std::env::set_var("LIBCLANG_PATH", &lib_dir);
+                return;
+            }
         }
     }
 }
