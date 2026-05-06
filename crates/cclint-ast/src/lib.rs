@@ -232,23 +232,38 @@ fn shell_split(s: &str) -> Vec<String> {
     out
 }
 
-/// compile_commands.json のコマンドから linter に有用な引数だけ残す。
+/// compile_commands.json のコマンドから linter (= parse のみ) に有用な引数だけ残す。
+/// link 系・出力系・入力ソース名は捨てる．残すのは include / define / std / target / sysroot 系．
 fn filter_args(raw: &[String], target: &Path) -> Vec<String> {
     let mut out = Vec::new();
     let mut iter = raw.iter().peekable();
-    // 最初の要素 (compiler 実行ファイル名) はスキップ
-    iter.next();
+    iter.next(); // compiler executable
     while let Some(a) = iter.next() {
         match a.as_str() {
-            "-c" | "-o" => {
-                // -c file / -o foo.o の引数も飛ばす
+            // 出力指定: 引数 1 個一緒に飛ばす
+            "-c" | "-o" | "-MF" | "-MT" | "-MQ" => {
                 iter.next();
             }
-            // 出力依存の引数も除去
-            "-MD" | "-MMD" | "-MP" => {}
-            "-MF" | "-MT" | "-MQ" => {
+            // 単独で意味を持たない出力フラグ
+            "-MD" | "-MMD" | "-MP" | "-MMP" | "-M" | "-MM" => {}
+            // リンカ系: -L <path>, -l <name> (空白区切り)
+            "-L" | "-l" => {
                 iter.next();
             }
+            // リンカ系: 単一トークン
+            s if s.starts_with("-L")
+                || s.starts_with("-l")
+                || s.starts_with("-Wl,")
+                || s == "-pie"
+                || s == "-shared"
+                || s == "-static"
+                || s == "-rdynamic"
+                || s == "-pthread" =>
+            {
+                // -pthread は実は preprocess 影響あるが多くの環境で不要．残しても害なし
+                // にしたいケースは存在するが unused warning を避けるため落とす．
+            }
+            // 入力ソースファイル
             s if s.ends_with(".cpp")
                 || s.ends_with(".cc")
                 || s.ends_with(".cxx")
@@ -256,7 +271,6 @@ fn filter_args(raw: &[String], target: &Path) -> Vec<String> {
                 || s.ends_with(".m")
                 || s.ends_with(".mm") =>
             {
-                // 入力ソースファイル名は除く
                 if Path::new(s) == target
                     || std::path::PathBuf::from(s).file_name() == target.file_name()
                 {
@@ -264,6 +278,8 @@ fn filter_args(raw: &[String], target: &Path) -> Vec<String> {
                 }
                 out.push(a.clone());
             }
+            // .o / .a / .so 等のリンク対象オブジェクトファイル
+            s if s.ends_with(".o") || s.ends_with(".a") || s.ends_with(".so") => {}
             _ => out.push(a.clone()),
         }
     }
