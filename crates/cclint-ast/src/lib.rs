@@ -19,6 +19,9 @@ pub struct Session {
 /// libclang の `CompilationDatabase` を使わず serde_json で自前パースする。
 pub struct CompilationDatabase {
     by_file: std::collections::HashMap<PathBuf, Vec<String>>,
+    /// ヘッダパス -> そのヘッダを include しているソースファイル．
+    /// clangd の HeaderIncluderCache 相当で，ヘッダの引数 fallback の最優先源．
+    header_to_source: std::collections::HashMap<PathBuf, PathBuf>,
 }
 
 #[derive(serde::Deserialize)]
@@ -36,6 +39,7 @@ impl CompilationDatabase {
     pub fn from_file(json_path: &Path) -> Result<Self> {
         let mut db = Self {
             by_file: std::collections::HashMap::new(),
+            header_to_source: std::collections::HashMap::new(),
         };
         db.add_file(json_path)?;
         Ok(db)
@@ -50,6 +54,7 @@ impl CompilationDatabase {
     pub fn from_files(json_paths: &[PathBuf]) -> Result<Self> {
         let mut db = Self {
             by_file: std::collections::HashMap::new(),
+            header_to_source: std::collections::HashMap::new(),
         };
         for p in json_paths {
             if let Err(e) = db.add_file(p) {
@@ -87,14 +92,34 @@ impl CompilationDatabase {
     }
 
     /// 与えられたソースファイルに対するコンパイラ引数を取り出す。
-    /// 直接の登録が無ければ最近傍のソースファイルの引数で代用する
-    /// (ヘッダは compile_commands.json に通常含まれないため)。
+    /// 引き優先順:
+    ///   1. compile_commands.json の直接エントリ
+    ///   2. このヘッダを include しているソースの引数 (record_includes 由来)
+    ///   3. ファイル名類似度に基づく最近傍探索 (clangd Interpolating 相当)
     pub fn arguments_for(&self, file: &Path) -> Option<Vec<String>> {
         let canon = file.canonicalize().unwrap_or(file.to_path_buf());
         if let Some(args) = self.by_file.get(&canon) {
             return Some(args.clone());
         }
+        if let Some(src) = self.header_to_source.get(&canon) {
+            if let Some(args) = self.by_file.get(src) {
+                return Some(args.clone());
+            }
+        }
         self.nearest_args(&canon)
+    }
+
+    /// ソース `source` が AST 上で include しているヘッダ群を記録する．
+    /// 後続のヘッダ parse 時に，この関係から source の引数を流用する．
+    pub fn record_includes(&mut self, source: &Path, included_headers: &[PathBuf]) {
+        let s_canon = source.canonicalize().unwrap_or(source.to_path_buf());
+        for h in included_headers {
+            let h_canon = h.canonicalize().unwrap_or(h.clone());
+            // 既に登録があれば上書きしない (最初に見つかったソースが勝ち)
+            self.header_to_source
+                .entry(h_canon)
+                .or_insert_with(|| s_canon.clone());
+        }
     }
 
     /// ヘッダ用フォールバック: 同じディレクトリ → 兄弟 (include↔src) →
@@ -137,6 +162,12 @@ impl CompilationDatabase {
 
     pub fn entry_count(&self) -> usize {
         self.by_file.len()
+    }
+
+    /// `file` が compile_commands.json に直接登録されているか．
+    pub fn has_direct_entry(&self, file: &Path) -> bool {
+        let canon = file.canonicalize().unwrap_or(file.to_path_buf());
+        self.by_file.contains_key(&canon)
     }
 }
 

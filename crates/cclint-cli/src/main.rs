@@ -305,6 +305,18 @@ fn default_cdb_dirs(root: &std::path::Path, parents: u32) -> Vec<std::path::Path
     dirs
 }
 
+/// AST を walk し InclusionDirective ノードの included_file をすべて集める．
+fn collect_inclusions(node: &cclint_ast::OwnedNode, out: &mut Vec<std::path::PathBuf>) {
+    if node.kind == "InclusionDirective" {
+        if let Some(f) = &node.included_file {
+            out.push(f.clone());
+        }
+    }
+    for c in &node.children {
+        collect_inclusions(c, out);
+    }
+}
+
 fn atty_stderr() -> bool {
     use std::io::IsTerminal;
     std::io::stderr().is_terminal()
@@ -396,7 +408,7 @@ fn run() -> Result<ExitCode> {
 
     let mut all: Vec<Diagnostic> = Vec::new();
 
-    let compile_db: Option<CompilationDatabase> = resolve_compile_db(&args, &cfg, &root);
+    let mut compile_db: Option<CompilationDatabase> = resolve_compile_db(&args, &cfg, &root);
     if compile_db.is_none() && cfg.extra_args.is_empty() && !files.is_empty() {
         eprintln!(
             "cclint: ヒント: compile_commands.json が見つかりません． \
@@ -416,6 +428,41 @@ fn run() -> Result<ExitCode> {
         None
     };
 
+    // 直接 compile_commands.json にエントリがある cpp を先に parse して，
+    // include している header → source の対応を compile_db に書き戻す．
+    // これにより後段でヘッダを parse するとき ヘッダを include している
+    // ソースの引数が使える (clangd HeaderIncluderCache 相当)．
+    if let Some(db) = compile_db.as_mut() {
+        let direct_sources: Vec<&std::path::PathBuf> = files
+            .iter()
+            .filter(|f| {
+                let canon = f.canonicalize().unwrap_or((*f).clone());
+                db.has_direct_entry(&canon)
+            })
+            .collect();
+        if !direct_sources.is_empty() && args.verbose {
+            eprintln!(
+                "==> 事前 parse: 直接エントリ {} 件から include 関係を抽出",
+                direct_sources.len()
+            );
+        }
+        for f in &direct_sources {
+            let extra = db.arguments_for(f).unwrap_or_default();
+            let res = if let Some(s) = &session_inproc {
+                s.parse_file(f, &cfg.cpp_standard, &extra)
+            } else {
+                parse_in_subprocess(&exe, f, &args.config, &extra)
+            };
+            if let Ok((ast, _)) = res {
+                let mut headers: Vec<std::path::PathBuf> = Vec::new();
+                collect_inclusions(&ast, &mut headers);
+                db.record_includes(f, &headers);
+                // 既に AST を持ってるので保持して二度 parse しないようにする
+                parsed.push((f.to_path_buf(), ast));
+            }
+        }
+    }
+
     // プログレスバー: stderr が TTY かつ --quiet でないとき表示．
     let progress = if !args.quiet && !args.verbose && atty_stderr() {
         let pb = indicatif::ProgressBar::new(files.len() as u64);
@@ -431,7 +478,15 @@ fn run() -> Result<ExitCode> {
         None
     };
 
+    let already_parsed: std::collections::HashSet<std::path::PathBuf> =
+        parsed.iter().map(|(p, _)| p.clone()).collect();
     for f in &files {
+        if already_parsed.contains(f) {
+            if let Some(pb) = &progress {
+                pb.inc(1);
+            }
+            continue;
+        }
         if args.verbose {
             use std::io::Write;
             let _ = writeln!(std::io::stderr(), "==> parse: {}", f.display());
