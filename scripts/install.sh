@@ -60,6 +60,41 @@ if [ "$VERSION" = "latest" ]; then
   fi
 fi
 
+# 既存インストール検出 + バージョン比較
+EXISTING="$PREFIX/bin/cclint"
+if [ -x "$EXISTING" ]; then
+  CURRENT_VER="$("$EXISTING" --version 2>/dev/null | awk '{print $2}' || true)"
+  TARGET_VER="${VERSION#v}"
+  if [ -n "$CURRENT_VER" ]; then
+    info "既存インストール検出: $EXISTING (v$CURRENT_VER)"
+    if [ "$CURRENT_VER" = "$TARGET_VER" ]; then
+      green "既に $VERSION がインストール済みです．何もしません．"
+      exit 0
+    fi
+    # バージョン比較 (sort -V で古い方を先頭に)
+    OLDER="$(printf '%s\n%s\n' "$CURRENT_VER" "$TARGET_VER" | sort -V | head -1)"
+    if [ "$OLDER" = "$TARGET_VER" ] && [ "$CURRENT_VER" != "$TARGET_VER" ]; then
+      red "警告: 既存版 (v$CURRENT_VER) の方が新しい．ダウングレードします．"
+    else
+      info "アップデートあり: v$CURRENT_VER → v$TARGET_VER"
+    fi
+    # 確認プロンプト ($CCLINT_YES=1 でスキップ可能)
+    if [ "${CCLINT_YES:-0}" != "1" ] && [ "${CCLINT_FORCE:-0}" != "1" ]; then
+      printf "アップデートしますか? [y/N]: "
+      ANS=""
+      if [ -r /dev/tty ]; then
+        read -r ANS < /dev/tty || true
+      else
+        read -r ANS || true
+      fi
+      case "$ANS" in
+        y|Y|yes|YES) ;;
+        *) info "キャンセルしました．"; exit 0 ;;
+      esac
+    fi
+  fi
+fi
+
 VERSION_NO_V="${VERSION#v}"
 TARBALL="cclint-${VERSION_NO_V}-${OS}-${ARCH}.tar.gz"
 URL="https://github.com/$REPO/releases/download/${VERSION}/${TARBALL}"
