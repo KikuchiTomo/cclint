@@ -35,6 +35,10 @@ struct Args {
     /// 警告も終了コード非ゼロとして扱う
     #[arg(long)]
     werror: bool,
+
+    /// 進捗を表示する (どのファイルを parse 中か stderr に出す)
+    #[arg(short = 'v', long)]
+    verbose: bool,
 }
 
 #[derive(clap::ValueEnum, Clone, Debug)]
@@ -145,6 +149,11 @@ fn run() -> Result<ExitCode> {
     // SEGV する可能性があるためスキップする．
     let mut parsed: Vec<(std::path::PathBuf, cclint_ast::OwnedNode)> = Vec::new();
     for f in &files {
+        if args.verbose {
+            use std::io::Write;
+            let _ = writeln!(std::io::stderr(), "==> parse: {}", f.display());
+            let _ = std::io::stderr().flush();
+        }
         match session.parse_file(f, &cfg.cpp_standard, &[]) {
             Ok((ast, mut diags)) => {
                 let has_fatal = diags
