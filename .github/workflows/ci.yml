@@ -2,214 +2,58 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop, feature/* ]
+    branches: [main, develop, "feature/*"]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
+
+env:
+  CARGO_TERM_COLOR: always
 
 jobs:
-  build-ubuntu:
-    name: Build on Ubuntu
-    runs-on: ubuntu-22.04
-
+  test:
+    name: ${{ matrix.os }} / rust ${{ matrix.rust }}
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        compiler: [g++-11, g++-12, clang++-14, clang++-15]
-        build_type: [Release, Debug]
-
+        os: [ubuntu-22.04, ubuntu-24.04, macos-14, macos-15]
+        rust: [stable]
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y cmake libyaml-cpp-dev libluajit-5.1-dev llvm-15-dev libclang-15-dev
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ matrix.rust }}
+          components: rustfmt, clippy
 
-    - name: Install compiler
-      run: |
-        if [[ "${{ matrix.compiler }}" == g++* ]]; then
-          sudo apt-get install -y ${{ matrix.compiler }}
-        else
-          sudo apt-get install -y ${{ matrix.compiler }}
-        fi
+      - name: Install libclang (Ubuntu)
+        if: startsWith(matrix.os, 'ubuntu-')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libclang-dev llvm-dev pkg-config
 
-    - name: Configure CMake
-      run: |
-        export CXX=${{ matrix.compiler }}
-        mkdir build
-        cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ..
+      - name: Install libclang (macOS)
+        if: startsWith(matrix.os, 'macos-')
+        run: xcrun --find clang
 
-    - name: Build
-      run: |
-        cd build
-        make -j$(nproc)
+      - name: Cargo cache
+        uses: Swatinem/rust-cache@v2
 
-    - name: Check binary
-      run: |
-        ./build/src/cclint --version
-        ./build/src/cclint --help
+      - name: Format
+        run: cargo fmt --all -- --check
 
-    - name: Test basic functionality
-      run: |
-        echo '#include <iostream>' > test.cpp
-        echo 'int main() { return 0; }' >> test.cpp
-        ./build/src/cclint -v ${{ matrix.compiler }} -std=c++17 test.cpp
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
 
-    - name: Upload binary artifact
-      if: matrix.build_type == 'Release' && matrix.compiler == 'g++-11'
-      uses: actions/upload-artifact@v4
-      with:
-        name: cclint-ubuntu-${{ matrix.compiler }}
-        path: build/src/cclint
+      - name: Build
+        run: make build
 
-  build-macos:
-    name: Build on macOS
-    runs-on: macos-latest
+      - name: Test (rust)
+        run: make test-rust
 
-    strategy:
-      matrix:
-        build_type: [Release, Debug]
+      - name: Test (positive fixtures - 期待した違反が出る)
+        run: make test-fixtures
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Install dependencies
-      run: |
-        brew install cmake
-
-    - name: Configure CMake
-      run: |
-        mkdir build
-        cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ..
-
-    - name: Build
-      run: |
-        cd build
-        make -j$(sysctl -n hw.ncpu)
-
-    - name: Check binary
-      run: |
-        ./build/src/cclint --version
-        ./build/src/cclint --help
-
-    - name: Test basic functionality
-      run: |
-        echo '#include <iostream>' > test.cpp
-        echo 'int main() { return 0; }' >> test.cpp
-        ./build/src/cclint -v clang++ -std=c++17 test.cpp
-
-    - name: Upload binary artifact
-      if: matrix.build_type == 'Release'
-      uses: actions/upload-artifact@v4
-      with:
-        name: cclint-macos
-        path: build/src/cclint
-
-  code-quality:
-    name: Code Quality Checks
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y clang-format-14 cmake libyaml-cpp-dev libluajit-5.1-dev llvm-15-dev libclang-15-dev
-
-    - name: Check code formatting
-      run: |
-        find src \( -name '*.cpp' -o -name '*.hpp' \) | xargs clang-format-14 --dry-run --Werror
-
-    # clang-tidy check temporarily disabled due to dependency issues in CI
-    # - name: Install clang-tidy
-    #   run: |
-    #     sudo apt-get install -y clang-tidy-14 g++
-    #
-    # - name: Run clang-tidy
-    #   run: |
-    #     mkdir build
-    #     cd build
-    #     cmake ..
-    #     cd ..
-    #     clang-tidy-14 src/main.cpp src/cli/*.cpp src/config/*.cpp -- -std=c++17 || true
-
-  lua-scripts-check:
-    name: Validate Lua Scripts
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Install Lua
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y lua5.3
-
-    - name: Check Lua syntax
-      run: |
-        find rules -name '*.lua' -exec luac -p {} \;
-
-    - name: Count Lua scripts
-      run: |
-        SCRIPT_COUNT=$(find rules -name '*.lua' | wc -l)
-        echo "Found $SCRIPT_COUNT Lua rule scripts"
-        if [ $SCRIPT_COUNT -ne 40 ]; then
-          echo "Expected 40 Lua scripts, found $SCRIPT_COUNT"
-          exit 1
-        fi
-
-  documentation-check:
-    name: Documentation Check
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Check required documentation files
-      run: |
-        REQUIRED_DOCS="README.md docs/TODO.md CHANGELOG.md CONTRIBUTING.md"
-        for doc in $REQUIRED_DOCS; do
-          if [ ! -f "$doc" ]; then
-            echo "Missing required documentation: $doc"
-            exit 1
-          fi
-        done
-
-    - name: Check for broken links in README
-      run: |
-        # Simple check for .md files referenced in README
-        if grep -E '\[.*\]\(.*\.md\)' README.md; then
-          echo "Found markdown links in README"
-        fi
-
-  summary:
-    name: CI Summary
-    runs-on: ubuntu-latest
-    needs: [build-ubuntu, build-macos, code-quality, lua-scripts-check, documentation-check]
-    if: always()
-
-    steps:
-    - name: Check results
-      run: |
-        echo "CI Pipeline Summary:"
-        echo "- Build Ubuntu: ${{ needs.build-ubuntu.result }}"
-        echo "- Build macOS: ${{ needs.build-macos.result }}"
-        echo "- Code Quality: ${{ needs.code-quality.result }}"
-        echo "- Lua Scripts: ${{ needs.lua-scripts-check.result }}"
-        echo "- Documentation: ${{ needs.documentation-check.result }}"
-
-    - name: Fail if any job failed
-      if: |
-        needs.build-ubuntu.result == 'failure' ||
-        needs.build-macos.result == 'failure' ||
-        needs.code-quality.result == 'failure' ||
-        needs.lua-scripts-check.result == 'failure' ||
-        needs.documentation-check.result == 'failure'
-      run: exit 1
+      - name: Test (negative fixtures - 誤検出が無い)
+        run: make test-fixtures-clean

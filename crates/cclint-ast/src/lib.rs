@@ -31,7 +31,9 @@ impl Session {
     ) -> Result<(OwnedNode, Vec<Diagnostic>)> {
         let index = clang::Index::new(&self._clang, false, false);
         let std_arg = format!("-std={}", cpp_standard);
-        let mut args: Vec<&str> = vec![&std_arg, "-x", "c++"];
+        // ヘッダを TU として parse すると "#pragma once in main file" 警告が出るので抑制。
+        let mut args: Vec<&str> =
+            vec![&std_arg, "-x", "c++", "-Wno-pragma-once-outside-header"];
         for a in extra_args {
             args.push(a);
         }

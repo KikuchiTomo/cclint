@@ -18,6 +18,7 @@ Cargo.lock.bak
 # Test fixtures build artifacts
 tests/cpp_fixtures/build/
 tests/cpp_fixtures/**/compile_commands.json.local
+tests/cpp_fixtures*/.last_run.json
 
 # Logs
 *.log
