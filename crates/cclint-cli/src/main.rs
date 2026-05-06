@@ -519,10 +519,8 @@ fn run() -> Result<ExitCode> {
     let exe_ref = &exe;
     let cfg_path = args.config.clone();
     let inproc = session_inproc.is_some();
-    let parse_results: Vec<(
-        std::path::PathBuf,
-        Result<(cclint_ast::OwnedNode, Vec<Diagnostic>)>,
-    )> = pool.install(|| {
+    type ParseOutcome = Result<(cclint_ast::OwnedNode, Vec<Diagnostic>)>;
+    let parse_results: Vec<(std::path::PathBuf, ParseOutcome)> = pool.install(|| {
         use rayon::prelude::*;
         pending
             .par_iter()
