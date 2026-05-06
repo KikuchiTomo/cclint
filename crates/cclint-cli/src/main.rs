@@ -36,9 +36,13 @@ struct Args {
     #[arg(long)]
     werror: bool,
 
-    /// 進捗を表示する (どのファイルを parse 中か stderr に出す)
+    /// 進捗詳細を表示する (どのファイルを parse 中か stderr に出す)
     #[arg(short = 'v', long)]
     verbose: bool,
+
+    /// プログレスバーを抑制する
+    #[arg(short = 'q', long)]
+    quiet: bool,
 
     /// 内部用: 1 ファイルだけ parse し AST+診断を JSON で stdout に書き出す。
     /// 親プロセスが各ファイルをサブプロセスで parse することで，libclang が
@@ -118,6 +122,11 @@ fn setup_bundled_libclang() {
             }
         }
     }
+}
+
+fn atty_stderr() -> bool {
+    use std::io::IsTerminal;
+    std::io::stderr().is_terminal()
 }
 
 #[cfg(unix)]
@@ -216,11 +225,33 @@ fn run() -> Result<ExitCode> {
         None
     };
 
+    // プログレスバー: stderr が TTY かつ --quiet でないとき表示．
+    let progress = if !args.quiet && !args.verbose && atty_stderr() {
+        let pb = indicatif::ProgressBar::new(files.len() as u64);
+        pb.set_style(
+            indicatif::ProgressStyle::with_template(
+                "{spinner:.green} [{elapsed_precise}] [{bar:30.cyan/blue}] {pos}/{len} {wide_msg}",
+            )
+            .unwrap()
+            .progress_chars("=>-"),
+        );
+        Some(pb)
+    } else {
+        None
+    };
+
     for f in &files {
         if args.verbose {
             use std::io::Write;
             let _ = writeln!(std::io::stderr(), "==> parse: {}", f.display());
             let _ = std::io::stderr().flush();
+        }
+        if let Some(pb) = &progress {
+            let name = f
+                .file_name()
+                .map(|s| s.to_string_lossy().to_string())
+                .unwrap_or_default();
+            pb.set_message(name);
         }
         let result: Result<(cclint_ast::OwnedNode, Vec<Diagnostic>)> =
             if let Some(s) = &session_inproc {
@@ -256,6 +287,12 @@ fn run() -> Result<ExitCode> {
                 ));
             }
         }
+        if let Some(pb) = &progress {
+            pb.inc(1);
+        }
+    }
+    if let Some(pb) = progress {
+        pb.finish_with_message("parse 完了");
     }
 
     // フェーズ 2: 各 AST に対してルールを実行する．

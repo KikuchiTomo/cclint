@@ -9,7 +9,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.2.4"
+version = "0.2.5"
 edition = "2021"
 rust-version = "1.75"
 license = "GPL-3.0-or-later"
@@ -30,6 +30,7 @@ glob = "0.3"
 unicode-width = "0.1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+indicatif = "0.17"
 
 cclint-ast = { path = "crates/cclint-ast" }
 cclint-script = { path = "crates/cclint-script" }
