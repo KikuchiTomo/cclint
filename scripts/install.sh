@@ -2,16 +2,16 @@
 # cclint インストーラ．curl 一発で入れるためのスクリプト．
 #
 # 使い方:
-#   curl -fsSL https://raw.githubusercontent.com/tomokikuchi/cclint/main/scripts/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/KikuchiTomo/cclint/main/scripts/install.sh | bash
 #
 # 環境変数:
 #   CCLINT_VERSION  インストールするバージョン (デフォルト: latest)
 #   CCLINT_PREFIX   インストール先 (デフォルト: $HOME/.local)
-#   CCLINT_REPO     リポジトリ (デフォルト: tomokikuchi/cclint)
+#   CCLINT_REPO     リポジトリ (デフォルト: KikuchiTomo/cclint)
 
 set -euo pipefail
 
-REPO="${CCLINT_REPO:-tomokikuchi/cclint}"
+REPO="${CCLINT_REPO:-KikuchiTomo/cclint}"
 VERSION="${CCLINT_VERSION:-latest}"
 PREFIX="${CCLINT_PREFIX:-$HOME/.local}"
 
