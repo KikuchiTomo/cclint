@@ -219,13 +219,16 @@ fn resolve_compile_db(
         return None;
     }
 
-    for p in &json_paths {
-        eprintln!("==> compile_commands: {}", p.display());
+    if args.verbose {
+        for p in &json_paths {
+            eprintln!("    {}", p.display());
+        }
     }
     match CompilationDatabase::from_files(&json_paths) {
         Ok(db) => {
             eprintln!(
-                "==> compile_commands: {} 件のエントリを統合",
+                "==> compile_commands: {} ファイル / {} エントリ",
+                json_paths.len(),
                 db.entry_count()
             );
             Some(db)
@@ -327,11 +330,23 @@ fn collect_inclusions(node: &cclint_ast::OwnedNode, out: &mut Vec<std::path::Pat
 /// system clang/g++ の `-E -x c++ -v < /dev/null` 出力からパスを取り出して
 /// `-isystem <path>` で渡せば解決する．
 fn detect_system_includes() -> Vec<String> {
-    // macOS の Xcode libclang は自分で stdlib を見つける (むしろ -isystem で
-    // 同じパスを再渡しすると Xcode 26 系で SEGV する個体差があるためスキップ)．
+    // macOS: -isysroot 1 つだけで Xcode libclang が stdlib を見つけられる．
+    // -isystem を多数渡すより安定．
     if cfg!(target_os = "macos") {
+        if let Ok(out) = std::process::Command::new("xcrun")
+            .args(["--show-sdk-path"])
+            .output()
+        {
+            if out.status.success() {
+                let sdk = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                if !sdk.is_empty() && std::path::Path::new(&sdk).exists() {
+                    return vec!["-isysroot".to_string(), sdk];
+                }
+            }
+        }
         return Vec::new();
     }
+
     let cands: &[&[&str]] = &[
         &["clang", "-E", "-x", "c++", "-v", "-"],
         &["clang++", "-E", "-x", "c++", "-v", "-"],
@@ -562,10 +577,15 @@ fn run() -> Result<ExitCode> {
             .cloned()
             .collect();
         if !direct_sources.is_empty() {
-            eprintln!(
-                "==> pre-parse: {} 件の直接エントリから include 関係を抽出",
+            let msg = format!(
+                "==> pre-parse: {} files (extracting include graph)",
                 direct_sources.len()
             );
+            if let Some(pb) = &progress {
+                pb.println(msg);
+            } else {
+                eprintln!("{msg}");
+            }
         }
         let cpp_std = cfg.cpp_standard.clone();
         let cfg_path = args.config.clone();
@@ -658,9 +678,13 @@ fn run() -> Result<ExitCode> {
             .par_iter()
             .map(|f| {
                 if args.verbose {
-                    use std::io::Write;
-                    let _ = writeln!(std::io::stderr(), "==> parse: {}", f.display());
-                    let _ = std::io::stderr().flush();
+                    if let Some(pb) = progress_ref {
+                        pb.println(format!("==> parse: {}", f.display()));
+                    } else {
+                        use std::io::Write;
+                        let _ = writeln!(std::io::stderr(), "==> parse: {}", f.display());
+                        let _ = std::io::stderr().flush();
+                    }
                 }
                 if let Some(pb) = progress_ref {
                     let name = f
@@ -717,17 +741,16 @@ fn run() -> Result<ExitCode> {
         let f_disp = f.display().to_string();
         match result {
             Ok((ast, mut diags)) => {
-                let has_fatal = diags
+                let first_fatal: Option<String> = diags
                     .iter()
-                    .any(|d| d.severity == Severity::Error && d.rule == "clang");
+                    .find(|d| d.severity == Severity::Error && d.rule == "clang")
+                    .map(|d| d.message.clone());
                 all.append(&mut diags);
-                if has_fatal {
+                if let Some(reason) = first_fatal {
                     all.push(Diagnostic::new(
                         "cclint",
                         Severity::Warning,
-                        format!(
-                            "clang の致命的エラーがあるため `{f_disp}` のルール実行をスキップします"
-                        ),
+                        format!("`{f_disp}` をスキップ: {reason}"),
                     ));
                     continue;
                 }

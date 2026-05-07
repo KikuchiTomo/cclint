@@ -210,6 +210,11 @@ fn to_anyhow(e: mlua::Error) -> anyhow::Error {
 }
 
 fn collect<'a>(n: &'a OwnedNode, out: &mut Vec<&'a OwnedNode>) {
+    // システムヘッダ内のノードは lint 対象外 (ユーザコードでは無いため)．
+    // 例: /usr/include/.../bits/types.h の __fsid_t に命名規則を適用しない．
+    if n.is_in_system_header {
+        return;
+    }
     out.push(n);
     for c in &n.children {
         collect(c, out);
