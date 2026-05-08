@@ -354,25 +354,10 @@ impl Session {
             diags.push(diag);
         }
 
-        // fatal error 出てる時点で AST が壊れている．古い libclang で
-        // from_entity が SEGV することがあるため，AST 走査をスキップして
-        // ダミーの空 TU ノードを返す．
-        if has_fatal {
-            let root = OwnedNode {
-                kind: "TranslationUnit".to_string(),
-                name: path.display().to_string(),
-                span: Some(Span {
-                    file: path.to_path_buf(),
-                    byte_start: 0,
-                    byte_end: 0,
-                    line: 1,
-                    column: 1,
-                }),
-                ..Default::default()
-            };
-            return Ok((root, diags));
-        }
-
+        // fatal でも libclang は recovery AST を返してくれる．サブプロセス
+        // 隔離があるので走査時に SEGV しても親プロセスは影響なし．部分的な
+        // AST でもルールは可能な限り走らせるべき．
+        let _ = has_fatal;
         let mut root = OwnedNode::from_entity(&tu.get_entity(), path);
         root.kind = "TranslationUnit".to_string();
         if root.span.is_none() {

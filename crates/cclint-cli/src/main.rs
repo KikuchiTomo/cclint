@@ -741,19 +741,9 @@ fn run() -> Result<ExitCode> {
         let f_disp = f.display().to_string();
         match result {
             Ok((ast, mut diags)) => {
-                let first_fatal: Option<String> = diags
-                    .iter()
-                    .find(|d| d.severity == Severity::Error && d.rule == "clang")
-                    .map(|d| d.message.clone());
+                // fatal error があっても部分的な AST は使える．サブプロセス隔離で
+                // SEGV のリスクは隔離済みなので，ルール実行はそのまま続ける．
                 all.append(&mut diags);
-                if let Some(reason) = first_fatal {
-                    all.push(Diagnostic::new(
-                        "cclint",
-                        Severity::Warning,
-                        format!("`{f_disp}` をスキップ: {reason}"),
-                    ));
-                    continue;
-                }
                 engine.add_project_root(&f, &ast);
                 parsed.push((f, ast));
             }
